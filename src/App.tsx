@@ -25,14 +25,27 @@ function LoadingScreen() {
   return (
     <div style={{
       position: 'fixed', inset: 0,
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
+      display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       background: '#1a1a2e', color: '#FFD700',
-      fontSize: 24, fontFamily: 'system-ui',
+      fontSize: 20, fontFamily: 'system-ui', gap: 16,
     }}>
-      <div style={{ textAlign: 'center' }}>
-        <div style={{ marginBottom: 16 }}><Lollipop size={48} /></div>
-        <div>Loading Golden City...</div>
+      <div style={{ animation: 'pulse 1.5s ease-in-out infinite' }}>
+        <Lollipop size={48} />
       </div>
+      <div>Loading Golden City...</div>
+      <div style={{
+        width: 160, height: 4, borderRadius: 2,
+        background: 'rgba(255,215,0,0.15)', overflow: 'hidden',
+      }}>
+        <div style={{
+          width: '40%', height: '100%', background: '#FFD700',
+          borderRadius: 2, animation: 'slideRight 1.2s ease-in-out infinite',
+        }} />
+      </div>
+      <style>{`
+        @keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+        @keyframes slideRight { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
+      `}</style>
     </div>
   );
 }
@@ -50,9 +63,15 @@ function NavBar() {
       padding: '0 16px', gap: 4,
       fontFamily: 'system-ui, -apple-system, sans-serif',
     }}>
+      <style>{`
+        .nav-link:hover { background: rgba(255, 215, 0, 0.06) !important; color: rgba(255,255,255,0.85) !important; }
+        .nav-link:focus-visible { outline: 2px solid #FFD700; outline-offset: -2px; }
+        @media (max-width: 900px) { .nav-label { display: none; } }
+        @media (max-width: 600px) { .nav-link { padding: 8px 8px !important; } }
+      `}</style>
       <div style={{
         fontWeight: 700, fontSize: 16, color: '#FFD700',
-        marginRight: 24, letterSpacing: '0.5px',
+        marginRight: 24, letterSpacing: '0.5px', whiteSpace: 'nowrap',
       }}>
         <ChocolateBar size={18} /> Wolf of Wall Sweet
       </div>
@@ -62,6 +81,7 @@ function NavBar() {
           to={item.path}
           end={item.path === '/'}
           onClick={() => setCurrentPage(item.page)}
+          className="nav-link"
           style={({ isActive }) => ({
             display: 'flex', alignItems: 'center', gap: 6,
             padding: '8px 14px', borderRadius: 8,
@@ -72,7 +92,7 @@ function NavBar() {
           })}
         >
           <span>{item.icon}</span>
-          <span>{item.label}</span>
+          <span className="nav-label">{item.label}</span>
         </NavLink>
       ))}
       <div style={{ flex: 1 }} />
@@ -180,7 +200,7 @@ export default function App() {
         fontFamily: 'system-ui, -apple-system, sans-serif',
       }}>
         <NavBar />
-        <div style={{ paddingTop: 48, width: '100%', height: 'calc(100vh - 48px)' }}>
+        <div style={{ marginTop: 48, width: '100%', height: 'calc(100vh - 48px)' }}>
           <Suspense fallback={<LoadingScreen />}>
             <Routes>
               <Route path="/" element={<GoldenCityPage />} />

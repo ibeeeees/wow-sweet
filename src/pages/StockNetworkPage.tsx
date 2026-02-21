@@ -290,13 +290,11 @@ export default function StockNetworkPage() {
   }, []);
 
   return (
-    <div style={{ display: 'flex', width: '100vw', height: '100vh', background: PAGE_BG, color: TEXT_COLOR, fontFamily: 'system-ui, sans-serif' }}>
+    <div style={{ display: 'flex', width: '100%', height: '100%', background: PAGE_BG, color: TEXT_COLOR, fontFamily: 'system-ui, sans-serif' }}>
       {/* ---- LEFT PANEL (30%) ---- */}
       <div
         style={{
-          width: '30%',
-          minWidth: 280,
-          maxWidth: 400,
+          width: 'clamp(240px, 25vw, 400px)' as any,
           background: PANEL_BG,
           borderRight: `1px solid ${BORDER_COLOR}`,
           overflowY: 'auto',
@@ -338,7 +336,7 @@ export default function StockNetworkPage() {
               {correlationThreshold.toFixed(2)}
             </span>
           </div>
-          <div style={{ fontSize: 11, color: '#888', marginTop: 4 }}>
+          <div style={{ fontSize: 11, color: '#aaa', marginTop: 4 }}>
             {filteredEdges.length} edges shown
           </div>
         </div>

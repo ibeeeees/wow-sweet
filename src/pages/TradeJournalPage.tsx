@@ -555,7 +555,7 @@ export default function TradeJournalPage() {
     <div style={{ width: '100%', height: '100%', background: PAGE_BG, display: 'flex', overflow: 'hidden' }}>
       {/* Left: Import Panel */}
       <div style={{
-        width: 320, borderRight: '1px solid rgba(255,215,0,0.15)',
+        width: 'clamp(260px, 28vw, 360px)' as any, borderRight: '1px solid rgba(255,215,0,0.15)',
         padding: 16, overflowY: 'auto', flexShrink: 0,
         display: 'flex', flexDirection: 'column', gap: 12,
       }}>

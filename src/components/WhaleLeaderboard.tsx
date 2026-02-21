@@ -18,7 +18,7 @@ export function WhaleLeaderboard() {
   const setGeminiEnabled = useStore((s) => s.setGeminiEnabled);
 
   // Drag state
-  const [pos, setPos] = useState({ x: window.innerWidth - 292, y: 56 });
+  const [pos, setPos] = useState({ x: Math.min(window.innerWidth - 292, window.innerWidth * 0.7), y: 56 });
   const dragging = useRef(false);
   const offset = useRef({ x: 0, y: 0 });
 
@@ -36,6 +36,12 @@ export function WhaleLeaderboard() {
     e.preventDefault();
   }, [pos]);
 
+  const onTouchStart = useCallback((e: React.TouchEvent) => {
+    const t = e.touches[0];
+    dragging.current = true;
+    offset.current = { x: t.clientX - pos.x, y: t.clientY - pos.y };
+  }, [pos]);
+
   useEffect(() => {
     const onMouseMove = (e: MouseEvent) => {
       if (!dragging.current) return;
@@ -44,11 +50,23 @@ export function WhaleLeaderboard() {
       setPos({ x: nx, y: ny });
     };
     const onMouseUp = () => { dragging.current = false; };
+    const onTouchMove = (e: TouchEvent) => {
+      if (!dragging.current) return;
+      const t = e.touches[0];
+      const nx = Math.max(0, Math.min(window.innerWidth - 280, t.clientX - offset.current.x));
+      const ny = Math.max(0, Math.min(window.innerHeight - 100, t.clientY - offset.current.y));
+      setPos({ x: nx, y: ny });
+    };
+    const onTouchEnd = () => { dragging.current = false; };
     window.addEventListener('mousemove', onMouseMove);
     window.addEventListener('mouseup', onMouseUp);
+    window.addEventListener('touchmove', onTouchMove);
+    window.addEventListener('touchend', onTouchEnd);
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
       window.removeEventListener('mouseup', onMouseUp);
+      window.removeEventListener('touchmove', onTouchMove);
+      window.removeEventListener('touchend', onTouchEnd);
     };
   }, []);
 
@@ -59,7 +77,7 @@ export function WhaleLeaderboard() {
       position: 'fixed',
       left: pos.x,
       top: pos.y,
-      width: 280,
+      width: 'min(280px, calc(100vw - 32px))',
       maxHeight: expanded ? '80vh' : 'auto',
       overflowY: expanded ? 'auto' : 'visible',
       zIndex: 900,
@@ -73,6 +91,7 @@ export function WhaleLeaderboard() {
       {/* Drag Handle Header */}
       <div
         onMouseDown={onMouseDown}
+        onTouchStart={onTouchStart}
         style={{
           fontSize: 11,
           fontWeight: 700,
@@ -117,7 +136,7 @@ export function WhaleLeaderboard() {
             }}>
               {WHALE_ICONS[whale.id] || whale.icon} {whale.name}
             </div>
-            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.55)' }}>
               {whale.strategy}
             </div>
           </div>

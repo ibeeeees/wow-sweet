@@ -134,9 +134,6 @@ export const Minimap: React.FC = () => {
 // --------------- Styles ---------------
 
 const containerStyle: React.CSSProperties = {
-  position: 'fixed',
-  top: 12,
-  right: 12,
   width: MAP_SIZE,
   height: MAP_SIZE,
   background: 'rgba(26, 26, 46, 0.85)',

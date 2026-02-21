@@ -292,7 +292,7 @@ export const StoreDetail: React.FC = () => {
         <div style={dividerStyle} />
 
         {/* Main Content Area */}
-        <div style={{ display: 'flex', gap: 16, flex: 1, minHeight: 0 }}>
+        <div style={{ display: 'flex', gap: 16, flex: 1, minHeight: 0, flexWrap: 'wrap' }}>
 
           {/* Left: Door crowd visualization */}
           <div style={{
@@ -423,10 +423,10 @@ const backdropStyle: React.CSSProperties = {
 
 const overlayStyle: React.CSSProperties = {
   position: 'fixed',
-  top: '10%',
-  left: '15%',
-  right: '15%',
-  bottom: '10%',
+  top: 'clamp(16px, 5%, 10%)',
+  left: 'clamp(8px, 5%, 15%)',
+  right: 'clamp(8px, 5%, 15%)',
+  bottom: 'clamp(16px, 5%, 10%)',
   background: 'rgba(20, 18, 36, 0.96)',
   backdropFilter: 'blur(20px)',
   WebkitBackdropFilter: 'blur(20px)',

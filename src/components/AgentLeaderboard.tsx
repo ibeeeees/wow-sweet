@@ -65,7 +65,7 @@ const AgentRow: React.FC<{ entry: LeaderboardEntry }> = ({ entry }) => {
             </div>
           )}
         </div>
-        <span style={{ fontSize: 10, color: '#666', marginLeft: 4 }}>
+        <span style={{ fontSize: 10, color: '#999', marginLeft: 4 }}>
           {expanded ? '\u25B2' : '\u25BC'}
         </span>
       </button>
@@ -128,7 +128,7 @@ export const AgentLeaderboard: React.FC = () => {
       {!collapsed && (
         <div style={listStyle}>
           {top5.length === 0 && (
-            <div style={{ fontSize: 10, color: '#666', textAlign: 'center', padding: 8 }}>
+            <div style={{ fontSize: 10, color: '#888', textAlign: 'center', padding: 8 }}>
               No agent data yet
             </div>
           )}
@@ -144,7 +144,7 @@ export const AgentLeaderboard: React.FC = () => {
 // --------------- Styles ---------------
 
 const containerStyle: React.CSSProperties = {
-  width: 280,
+  width: 'clamp(220px, 25vw, 280px)' as any,
   background: 'rgba(26, 26, 46, 0.85)',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',

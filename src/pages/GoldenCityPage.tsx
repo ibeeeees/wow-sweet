@@ -5,6 +5,7 @@
 import React, { Suspense, lazy } from 'react';
 import { useStore } from '../store/useStore';
 import { WhaleLeaderboard } from '../components/WhaleLeaderboard';
+import { Lollipop } from '../components/CandyIcons';
 
 // Lazy-load heavy 3D components
 const CandyCity = lazy(() => import('../components/CandyCity'));
@@ -17,20 +18,30 @@ const AgentLeaderboard = lazy(() => import('../components/AgentLeaderboard'));
 const PAGE_BG = '#1a1a2e';
 
 const LoadingFallback: React.FC = () => (
-  <div
-    style={{
-      position: 'absolute',
-      inset: 0,
-      display: 'flex',
-      alignItems: 'center',
-      justifyContent: 'center',
-      background: PAGE_BG,
-      color: '#FFD700',
-      fontFamily: 'monospace',
-      fontSize: 18,
-    }}
-  >
-    Loading Golden City...
+  <div style={{
+    position: 'absolute', inset: 0,
+    display: 'flex', flexDirection: 'column',
+    alignItems: 'center', justifyContent: 'center',
+    background: PAGE_BG, color: '#FFD700',
+    fontFamily: 'monospace', fontSize: 18, gap: 12,
+  }}>
+    <div style={{ animation: 'pulse 1.5s ease-in-out infinite' }}>
+      <Lollipop size={48} />
+    </div>
+    <div>Loading Golden City...</div>
+    <div style={{
+      width: 160, height: 4, borderRadius: 2,
+      background: 'rgba(255,215,0,0.15)', overflow: 'hidden',
+    }}>
+      <div style={{
+        width: '40%', height: '100%', background: '#FFD700',
+        borderRadius: 2, animation: 'slideRight 1.2s ease-in-out infinite',
+      }} />
+    </div>
+    <style>{`
+      @keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
+      @keyframes slideRight { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
+    `}</style>
   </div>
 );
 
@@ -38,7 +49,13 @@ export default function GoldenCityPage() {
   const selectedStock = useStore((s) => s.selectedStock);
 
   return (
-    <div style={{ position: 'relative', width: '100vw', height: '100vh', background: PAGE_BG, overflow: 'hidden' }}>
+    <div style={{ position: 'relative', width: '100%', height: '100%', background: PAGE_BG, overflow: 'hidden' }}>
+      <style>{`
+        @media (max-width: 768px) {
+          .city-minimap { display: none !important; }
+          .city-agent-lb { display: none !important; }
+        }
+      `}</style>
       {/* Full-screen 3D candy city */}
       <Suspense fallback={<LoadingFallback />}>
         <div style={{ position: 'absolute', inset: 0 }}>
@@ -81,6 +98,7 @@ export default function GoldenCityPage() {
       {/* Minimap overlay — bottom left, above time slider */}
       <Suspense fallback={null}>
         <div
+          className="city-minimap"
           style={{
             position: 'absolute',
             bottom: 72,
@@ -96,6 +114,7 @@ export default function GoldenCityPage() {
       {/* Agent leaderboard overlay — left side, above minimap */}
       <Suspense fallback={null}>
         <div
+          className="city-agent-lb"
           style={{
             position: 'absolute',
             bottom: 260,

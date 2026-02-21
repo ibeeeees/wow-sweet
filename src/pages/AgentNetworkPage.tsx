@@ -401,7 +401,7 @@ export default function AgentNetworkPage() {
     <div style={{ width: '100%', height: '100%', background: PAGE_BG, display: 'flex' }}>
       {/* Left Panel */}
       <div style={{
-        width: 260, borderRight: '1px solid rgba(255,215,0,0.15)',
+        width: 'clamp(200px, 22vw, 300px)' as any, borderRight: '1px solid rgba(255,215,0,0.15)',
         padding: 16, overflowY: 'auto', flexShrink: 0,
       }}>
         <h2 style={{ fontSize: 16, color: ACCENT, margin: '0 0 12px', fontFamily: 'monospace' }}>

@@ -982,8 +982,8 @@ export default function AgentReactionsPage() {
     return (
       <div
         style={{
-          width: '100vw',
-          height: '100vh',
+          width: '100%',
+          height: '100%',
           background: PAGE_BG,
           display: 'flex',
           alignItems: 'center',
@@ -1001,8 +1001,8 @@ export default function AgentReactionsPage() {
   return (
     <div
       style={{
-        width: '100vw',
-        height: '100vh',
+        width: '100%',
+        height: '100%',
         background: PAGE_BG,
         display: 'flex',
         flexDirection: 'column',
@@ -1012,14 +1012,14 @@ export default function AgentReactionsPage() {
       }}
     >
       {/* Main content area */}
-      <div style={{ flex: 1, display: 'flex', gap: 8, padding: '12px 12px 0 12px', minHeight: 0 }}>
-        {/* Left column (20%) — Whale + Agent Leaderboard */}
-        <div style={{ width: '20%', minWidth: 180 }}>
+      <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 8, padding: '12px 12px 0 12px', minHeight: 0 }}>
+        {/* Left column — Whale + Agent Leaderboard */}
+        <div style={{ flex: '1 1 180px', minWidth: 180, maxWidth: 280 }}>
           <Leaderboard whales={whales} featuredAgents={featuredAgents} />
         </div>
 
-        {/* Center (50%) — Agent Heatmap */}
-        <div style={{ width: '50%', minWidth: 300 }}>
+        {/* Center — Agent Heatmap */}
+        <div style={{ flex: '3 1 300px', minWidth: 300 }}>
           <AgentHeatmap
             stocks={stocks}
             storeAgentCounts={storeAgentCounts}
@@ -1028,8 +1028,8 @@ export default function AgentReactionsPage() {
           />
         </div>
 
-        {/* Right (30%) — Store Pressure Map */}
-        <div style={{ width: '30%', minWidth: 200 }}>
+        {/* Right — Store Pressure Map */}
+        <div style={{ flex: '2 1 200px', minWidth: 200 }}>
           <StorePressureMap
             stocks={stocks}
             storeAgentCounts={storeAgentCounts}
@@ -1040,7 +1040,7 @@ export default function AgentReactionsPage() {
       </div>
 
       {/* Bottom — Decision Stream */}
-      <div style={{ padding: '8px 12px 12px 12px', flexShrink: 0, maxHeight: 130 }}>
+      <div style={{ padding: '8px 12px 12px 12px', flexShrink: 0, maxHeight: 'clamp(100px, 15vh, 160px)' as any }}>
         <DecisionStream whales={whales} chain={chain} featuredAgents={featuredAgents} />
       </div>
     </div>

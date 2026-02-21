@@ -240,7 +240,9 @@ const containerStyle: React.CSSProperties = {
   bottom: 0,
   left: 0,
   width: '100%',
-  height: 64,
+  height: 'auto',
+  minHeight: 56,
+  maxHeight: 96,
   background: 'rgba(26, 26, 46, 0.92)',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',
@@ -261,7 +263,8 @@ const topRowStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   gap: 8,
-  flexWrap: 'nowrap',
+  flexWrap: 'wrap',
+  justifyContent: 'center',
 };
 
 const modeBtnStyle: React.CSSProperties = {
@@ -302,13 +305,13 @@ const sliderRowStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
   width: '100%',
-  maxWidth: 720,
+  maxWidth: 'min(720px, 90vw)' as any,
   gap: 8,
 };
 
 const yearLabelStyle: React.CSSProperties = {
   fontSize: 10,
-  color: '#888',
+  color: '#aaa',
   minWidth: 30,
   textAlign: 'center',
 };

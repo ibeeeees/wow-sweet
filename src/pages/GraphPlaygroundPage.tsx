@@ -627,8 +627,8 @@ export default function GraphPlaygroundPage() {
     return (
       <div
         style={{
-          width: '100vw',
-          height: '100vh',
+          width: '100%',
+          height: '100%',
           background: PAGE_BG,
           display: 'flex',
           alignItems: 'center',
@@ -646,8 +646,8 @@ export default function GraphPlaygroundPage() {
   return (
     <div
       style={{
-        width: '100vw',
-        height: '100vh',
+        width: '100%',
+        height: '100%',
         background: '#0a0a1e',
         position: 'relative',
         overflow: 'hidden',
