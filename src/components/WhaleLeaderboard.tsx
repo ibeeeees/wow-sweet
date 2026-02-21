@@ -1,9 +1,10 @@
 // ============================================================
 // Wolf of Wall Sweet — Whale Arena Leaderboard
 // Shows 4 competing hedge fund factions + Gemini reasoning chain
+// Draggable anywhere on screen
 // ============================================================
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { getWhales, type WhaleFund } from '../services/whaleArena';
 import { getLatestChain, type ReasoningChain } from '../services/geminiService';
 
@@ -11,6 +12,11 @@ export function WhaleLeaderboard() {
   const [whales, setWhales] = useState<WhaleFund[]>(getWhales());
   const [chain, setChain] = useState<ReasoningChain | null>(null);
   const [expanded, setExpanded] = useState(false);
+
+  // Drag state
+  const [pos, setPos] = useState({ x: window.innerWidth - 292, y: 56 });
+  const dragging = useRef(false);
+  const offset = useRef({ x: 0, y: 0 });
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -20,13 +26,35 @@ export function WhaleLeaderboard() {
     return () => clearInterval(interval);
   }, []);
 
+  const onMouseDown = useCallback((e: React.MouseEvent) => {
+    dragging.current = true;
+    offset.current = { x: e.clientX - pos.x, y: e.clientY - pos.y };
+    e.preventDefault();
+  }, [pos]);
+
+  useEffect(() => {
+    const onMouseMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      const nx = Math.max(0, Math.min(window.innerWidth - 280, e.clientX - offset.current.x));
+      const ny = Math.max(0, Math.min(window.innerHeight - 100, e.clientY - offset.current.y));
+      setPos({ x: nx, y: ny });
+    };
+    const onMouseUp = () => { dragging.current = false; };
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+    };
+  }, []);
+
   const sorted = [...whales].sort((a, b) => b.totalProfit - a.totalProfit);
 
   return (
     <div style={{
       position: 'fixed',
-      top: 56,
-      right: 12,
+      left: pos.x,
+      top: pos.y,
       width: 280,
       maxHeight: expanded ? '80vh' : 'auto',
       overflowY: expanded ? 'auto' : 'visible',
@@ -38,18 +66,23 @@ export function WhaleLeaderboard() {
       fontFamily: 'monospace',
       backdropFilter: 'blur(12px)',
     }}>
-      {/* Header */}
-      <div style={{
-        fontSize: 11,
-        fontWeight: 700,
-        color: '#FFD700',
-        letterSpacing: '1px',
-        marginBottom: 8,
-        textAlign: 'center',
-        borderBottom: '1px solid rgba(255, 215, 0, 0.15)',
-        paddingBottom: 6,
-      }}>
-        {'\u{1F3A9}'} WHALE ARENA LEADERBOARD
+      {/* Drag Handle Header */}
+      <div
+        onMouseDown={onMouseDown}
+        style={{
+          fontSize: 11,
+          fontWeight: 700,
+          color: '#FFD700',
+          letterSpacing: '1px',
+          marginBottom: 8,
+          textAlign: 'center',
+          borderBottom: '1px solid rgba(255, 215, 0, 0.15)',
+          paddingBottom: 6,
+          cursor: 'grab',
+          userSelect: 'none',
+        }}
+      >
+        {'\u2630'} {'\u{1F3A9}'} WHALE ARENA LEADERBOARD
       </div>
 
       {/* Whale Rankings */}

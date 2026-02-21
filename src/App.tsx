@@ -8,12 +8,16 @@ const GoldenCityPage = lazy(() => import('./pages/GoldenCityPage'));
 const StockNetworkPage = lazy(() => import('./pages/StockNetworkPage'));
 const AgentReactionsPage = lazy(() => import('./pages/AgentReactionsPage'));
 const GraphPlaygroundPage = lazy(() => import('./pages/GraphPlaygroundPage'));
+const AgentNetworkPage = lazy(() => import('./pages/AgentNetworkPage'));
+const TradeJournalPage = lazy(() => import('./pages/TradeJournalPage'));
 
 const NAV_ITEMS: { path: string; label: string; icon: string; page: PageName }[] = [
   { path: '/', label: 'City', icon: '\u{1F3D9}', page: 'city' },
   { path: '/network', label: 'Stock Network', icon: '\u{1F4CA}', page: 'network' },
   { path: '/agents', label: 'Agent Reactions', icon: '\u{1F916}', page: 'agents' },
+  { path: '/agent-network', label: 'Agent Network', icon: '\u{1F578}', page: 'agent-network' },
   { path: '/playground', label: 'Playground', icon: '\u{1F3AE}', page: 'playground' },
+  { path: '/journal', label: 'Trade Journal', icon: '\u{1F4D3}', page: 'journal' },
 ];
 
 function LoadingScreen() {
@@ -109,12 +113,51 @@ export default function App() {
       setStocks(stocks);
       setBaseStocks(stocks);
       setCorrelationEdges(edges);
-      const leaders = Array.from({ length: 100 }, (_, i) => ({
-        id: `agent_${Math.floor(Math.random() * 99999)}`,
-        name: `Agent_${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
-        profit: Math.floor(50000 - i * 400 + Math.random() * 200),
-        rank: i + 1,
-      }));
+      // Generate realistic leaderboard with trade details
+      const agentNames = [
+        'CandyTrader', 'SugarRush', 'GummyBear', 'ChocolateChip', 'LollipopKing',
+        'MintCondition', 'CaramelQueen', 'ToffeeHammer', 'JellyRoller', 'FudgeMaster',
+        'TaffyPuller', 'BonbonBoss', 'NougatNinja', 'TruffleHunter', 'PralineKnight',
+        'SorbetSniper', 'WaferWolf', 'MarzibanMage', 'LicoriceViper', 'DropKicker',
+      ];
+      const actions: Array<'BUY' | 'CALL' | 'PUT' | 'SHORT'> = ['BUY', 'CALL', 'PUT', 'SHORT'];
+      const reasons = [
+        'Deep drawdown reversal signal (DD -18%, RSI oversold)',
+        'Golden ticket dip + positive forward skew detected',
+        'Volume spike + mean reversion setup (z-score -2.1)',
+        'Sector rotation into oversold territory',
+        'Momentum breakout above BB upper band',
+        'Convexity play: asymmetric risk/reward profile',
+        'SPY underperformance + favorable vol regime',
+        'MACD crossover with bullish divergence',
+        'Fortune cookie signal: limited downside, high upside potential',
+        'Shock absorption: post-jawbreaker recovery pattern',
+      ];
+      const leaders = Array.from({ length: 20 }, (_, i) => {
+        const profit = Math.floor(85000 - i * 3800 + Math.random() * 2000);
+        const numTrades = 5 + Math.floor(Math.random() * 15);
+        const wins = Math.floor(numTrades * (0.55 + Math.random() * 0.35));
+        const tradeTickers = stocks.slice(0, 50).sort(() => Math.random() - 0.5).slice(0, numTrades);
+        const trades = tradeTickers.map((s, ti) => ({
+          ticker: s.ticker,
+          action: actions[Math.floor(Math.random() * actions.length)],
+          profit: Math.floor((ti < wins ? 1 : -1) * (500 + Math.random() * 8000)),
+          entryDate: `2023-${String(6 + Math.floor(ti / 4)).padStart(2, '0')}-${String(1 + (ti * 3) % 28).padStart(2, '0')}`,
+          reasoning: reasons[Math.floor(Math.random() * reasons.length)],
+        }));
+        const currentStock = stocks[Math.floor(Math.random() * Math.min(stocks.length, 30))];
+        return {
+          id: `agent_${1000 + i}`,
+          name: agentNames[i % agentNames.length] + (i >= agentNames.length ? `_${i}` : ''),
+          profit,
+          rank: i + 1,
+          trades,
+          currentAction: actions[Math.floor(Math.random() * actions.length)],
+          currentTicker: currentStock?.ticker || 'AAPL',
+          winRate: wins / numTrades,
+          totalTrades: numTrades,
+        };
+      });
       setAgentLeaderboard(leaders);
     }
     init();
@@ -142,7 +185,9 @@ export default function App() {
               <Route path="/" element={<GoldenCityPage />} />
               <Route path="/network" element={<StockNetworkPage />} />
               <Route path="/agents" element={<AgentReactionsPage />} />
+              <Route path="/agent-network" element={<AgentNetworkPage />} />
               <Route path="/playground" element={<GraphPlaygroundPage />} />
+              <Route path="/journal" element={<TradeJournalPage />} />
             </Routes>
           </Suspense>
         </div>

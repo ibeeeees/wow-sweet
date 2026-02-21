@@ -1,5 +1,5 @@
 {
-  "generated_at": "2026-02-21T08:34:56Z",
+  "generated_at": "2026-02-21T16:30:26Z",
   "snapshot_date": "2023-09-01",
   "dataset_end_date": "2023-11-29",
   "regime": "elevated",
@@ -93,7 +93,7 @@
       "drawdown_current": -0.3113,
       "volume_percentile": 0.0342,
       "volatility_percentile": 0.2027,
-      "brand_color": "hsl(79, 70%, 50%)",
+      "brand_color": "hsl(263, 70%, 50%)",
       "store_dimensions": {
         "width": 1.64,
         "height": 2.3,
@@ -237,7 +237,7 @@
       "drawdown_current": -0.2501,
       "volume_percentile": 0.0159,
       "volatility_percentile": 0.2203,
-      "brand_color": "hsl(151, 70%, 50%)",
+      "brand_color": "hsl(25, 70%, 50%)",
       "store_dimensions": {
         "width": 2.42,
         "height": 3.28,
@@ -285,7 +285,7 @@
       "drawdown_current": -0.191,
       "volume_percentile": 0.3394,
       "volatility_percentile": 0.2259,
-      "brand_color": "hsl(335, 70%, 50%)",
+      "brand_color": "hsl(348, 70%, 50%)",
       "store_dimensions": {
         "width": 1.73,
         "height": 2.42,
@@ -333,7 +333,7 @@
       "drawdown_current": -0.1818,
       "volume_percentile": 0.3442,
       "volatility_percentile": 0.3727,
-      "brand_color": "hsl(0, 70%, 50%)",
+      "brand_color": "hsl(170, 70%, 50%)",
       "store_dimensions": {
         "width": 1.98,
         "height": 2.72,
@@ -381,7 +381,7 @@
       "drawdown_current": -0.0814,
       "volume_percentile": 0.1256,
       "volatility_percentile": 0.1692,
-      "brand_color": "hsl(127, 70%, 50%)",
+      "brand_color": "hsl(154, 70%, 50%)",
       "store_dimensions": {
         "width": 2.04,
         "height": 2.8,
@@ -429,7 +429,7 @@
       "drawdown_current": -0.1693,
       "volume_percentile": 0.7766,
       "volatility_percentile": 0.2275,
-      "brand_color": "hsl(64, 70%, 50%)",
+      "brand_color": "hsl(221, 70%, 50%)",
       "store_dimensions": {
         "width": 1.98,
         "height": 2.73,
@@ -477,7 +477,7 @@
       "drawdown_current": -0.0369,
       "volume_percentile": 0.3792,
       "volatility_percentile": 0.0375,
-      "brand_color": "hsl(10, 70%, 50%)",
+      "brand_color": "hsl(200, 70%, 50%)",
       "store_dimensions": {
         "width": 1.66,
         "height": 2.32,
@@ -525,7 +525,7 @@
       "drawdown_current": -0.1755,
       "volume_percentile": 0.1502,
       "volatility_percentile": 0.1149,
-      "brand_color": "hsl(351, 70%, 50%)",
+      "brand_color": "hsl(67, 70%, 50%)",
       "store_dimensions": {
         "width": 1.43,
         "height": 2.04,
@@ -573,7 +573,7 @@
       "drawdown_current": -0.2345,
       "volume_percentile": 0.4571,
       "volatility_percentile": 0.087,
-      "brand_color": "hsl(36, 70%, 50%)",
+      "brand_color": "hsl(245, 70%, 50%)",
       "store_dimensions": {
         "width": 1.95,
         "height": 2.68,
@@ -621,7 +621,7 @@
       "drawdown_current": -0.0354,
       "volume_percentile": 0.0572,
       "volatility_percentile": 0.1636,
-      "brand_color": "hsl(334, 70%, 50%)",
+      "brand_color": "hsl(179, 70%, 50%)",
       "store_dimensions": {
         "width": 2.02,
         "height": 2.78,
@@ -669,7 +669,7 @@
       "drawdown_current": -0.0701,
       "volume_percentile": 0.0159,
       "volatility_percentile": 0.0535,
-      "brand_color": "hsl(143, 70%, 50%)",
+      "brand_color": "hsl(276, 70%, 50%)",
       "store_dimensions": {
         "width": 2.33,
         "height": 3.17,
@@ -717,7 +717,7 @@
       "drawdown_current": -0.1994,
       "volume_percentile": 0.2218,
       "volatility_percentile": 0.7007,
-      "brand_color": "hsl(199, 70%, 50%)",
+      "brand_color": "hsl(35, 70%, 50%)",
       "store_dimensions": {
         "width": 1.67,
         "height": 2.33,
@@ -765,7 +765,7 @@
       "drawdown_current": -0.0627,
       "volume_percentile": 0.0278,
       "volatility_percentile": 0.411,
-      "brand_color": "hsl(45, 70%, 50%)",
+      "brand_color": "hsl(335, 70%, 50%)",
       "store_dimensions": {
         "width": 2.58,
         "height": 3.48,
@@ -813,7 +813,7 @@
       "drawdown_current": -0.324,
       "volume_percentile": 0.434,
       "volatility_percentile": 0.4565,
-      "brand_color": "hsl(154, 70%, 50%)",
+      "brand_color": "hsl(359, 70%, 50%)",
       "store_dimensions": {
         "width": 2.98,
         "height": 3.97,
@@ -861,7 +861,7 @@
       "drawdown_current": -0.0076,
       "volume_percentile": 0.027,
       "volatility_percentile": 0.2131,
-      "brand_color": "hsl(147, 70%, 50%)",
+      "brand_color": "hsl(113, 70%, 50%)",
       "store_dimensions": {
         "width": 1.26,
         "height": 1.82,
@@ -909,7 +909,7 @@
       "drawdown_current": -0.0925,
       "volume_percentile": 0.0215,
       "volatility_percentile": 0.573,
-      "brand_color": "hsl(333, 70%, 50%)",
+      "brand_color": "hsl(117, 70%, 50%)",
       "store_dimensions": {
         "width": 1.9,
         "height": 2.63,
@@ -957,7 +957,7 @@
       "drawdown_current": -0.0372,
       "volume_percentile": 0.0127,
       "volatility_percentile": 0.0686,
-      "brand_color": "hsl(334, 70%, 50%)",
+      "brand_color": "hsl(341, 70%, 50%)",
       "store_dimensions": {
         "width": 1.1,
         "height": 1.62,
@@ -1005,7 +1005,7 @@
       "drawdown_current": -0.3733,
       "volume_percentile": 0.4213,
       "volatility_percentile": 0.2953,
-      "brand_color": "hsl(144, 70%, 50%)",
+      "brand_color": "hsl(216, 70%, 50%)",
       "store_dimensions": {
         "width": 1.67,
         "height": 2.34,
@@ -1101,7 +1101,7 @@
       "drawdown_current": -0.2242,
       "volume_percentile": 0.2675,
       "volatility_percentile": 0.2283,
-      "brand_color": "hsl(235, 70%, 50%)",
+      "brand_color": "hsl(54, 70%, 50%)",
       "store_dimensions": {
         "width": 1.05,
         "height": 1.57,
@@ -1149,7 +1149,7 @@
       "drawdown_current": -0.0296,
       "volume_percentile": 0.0056,
       "volatility_percentile": 0.1317,
-      "brand_color": "hsl(251, 70%, 50%)",
+      "brand_color": "hsl(333, 70%, 50%)",
       "store_dimensions": {
         "width": 1.29,
         "height": 1.86,
@@ -1197,7 +1197,7 @@
       "drawdown_current": -0.0676,
       "volume_percentile": 0.0366,
       "volatility_percentile": 0.0535,
-      "brand_color": "hsl(159, 70%, 50%)",
+      "brand_color": "hsl(94, 70%, 50%)",
       "store_dimensions": {
         "width": 1.25,
         "height": 1.81,
@@ -1245,7 +1245,7 @@
       "drawdown_current": -0.0035,
       "volume_percentile": 0.1995,
       "volatility_percentile": 0.0591,
-      "brand_color": "hsl(183, 70%, 50%)",
+      "brand_color": "hsl(306, 70%, 50%)",
       "store_dimensions": {
         "width": 1.87,
         "height": 2.59,
@@ -1293,7 +1293,7 @@
       "drawdown_current": -0.4134,
       "volume_percentile": 0.5016,
       "volatility_percentile": 0.2298,
-      "brand_color": "hsl(223, 70%, 50%)",
+      "brand_color": "hsl(153, 70%, 50%)",
       "store_dimensions": {
         "width": 1.6,
         "height": 2.25,
@@ -1341,7 +1341,7 @@
       "drawdown_current": -0.2604,
       "volume_percentile": 0.2615,
       "volatility_percentile": 0.2993,
-      "brand_color": "hsl(212, 70%, 50%)",
+      "brand_color": "hsl(262, 70%, 50%)",
       "store_dimensions": {
         "width": 1.11,
         "height": 1.63,
@@ -1389,7 +1389,7 @@
       "drawdown_current": -0.0546,
       "volume_percentile": 0.9809,
       "volatility_percentile": 0.8196,
-      "brand_color": "hsl(337, 70%, 50%)",
+      "brand_color": "hsl(88, 70%, 50%)",
       "store_dimensions": {
         "width": 1.8,
         "height": 2.5,
@@ -1437,7 +1437,7 @@
       "drawdown_current": -0.2472,
       "volume_percentile": 0.2615,
       "volatility_percentile": 0.0974,
-      "brand_color": "hsl(264, 70%, 50%)",
+      "brand_color": "hsl(112, 70%, 50%)",
       "store_dimensions": {
         "width": 1.21,
         "height": 1.77,
@@ -1485,7 +1485,7 @@
       "drawdown_current": -0.1783,
       "volume_percentile": 0.1097,
       "volatility_percentile": 0.087,
-      "brand_color": "hsl(303, 70%, 50%)",
+      "brand_color": "hsl(90, 70%, 50%)",
       "store_dimensions": {
         "width": 2.15,
         "height": 2.94,
@@ -1533,7 +1533,7 @@
       "drawdown_current": -0.07,
       "volume_percentile": 0.0068,
       "volatility_percentile": 0.1006,
-      "brand_color": "hsl(93, 70%, 50%)",
+      "brand_color": "hsl(95, 70%, 50%)",
       "store_dimensions": {
         "width": 1.02,
         "height": 1.53,
@@ -1677,7 +1677,7 @@
       "drawdown_current": -0.0181,
       "volume_percentile": 0.1367,
       "volatility_percentile": 0.1875,
-      "brand_color": "hsl(160, 70%, 50%)",
+      "brand_color": "hsl(100, 70%, 50%)",
       "store_dimensions": {
         "width": 1.39,
         "height": 1.99,
@@ -1725,7 +1725,7 @@
       "drawdown_current": -0.3558,
       "volume_percentile": 0.0183,
       "volatility_percentile": 0.0439,
-      "brand_color": "hsl(177, 70%, 50%)",
+      "brand_color": "hsl(266, 70%, 50%)",
       "store_dimensions": {
         "width": 1.44,
         "height": 2.05,
@@ -1773,7 +1773,7 @@
       "drawdown_current": -0.2491,
       "volume_percentile": 0.6113,
       "volatility_percentile": 0.2139,
-      "brand_color": "hsl(7, 70%, 50%)",
+      "brand_color": "hsl(211, 70%, 50%)",
       "store_dimensions": {
         "width": 2.37,
         "height": 3.21,
@@ -1821,7 +1821,7 @@
       "drawdown_current": -0.0395,
       "volume_percentile": 0.0636,
       "volatility_percentile": 0.431,
-      "brand_color": "hsl(186, 70%, 50%)",
+      "brand_color": "hsl(341, 70%, 50%)",
       "store_dimensions": {
         "width": 1.04,
         "height": 1.55,
@@ -1869,7 +1869,7 @@
       "drawdown_current": -0.0129,
       "volume_percentile": 0.7051,
       "volatility_percentile": 0.0096,
-      "brand_color": "hsl(124, 70%, 50%)",
+      "brand_color": "hsl(104, 70%, 50%)",
       "store_dimensions": {
         "width": 2.52,
         "height": 3.4,
@@ -1965,7 +1965,7 @@
       "drawdown_current": -0.2163,
       "volume_percentile": 0.1017,
       "volatility_percentile": 0.1756,
-      "brand_color": "hsl(173, 70%, 50%)",
+      "brand_color": "hsl(111, 70%, 50%)",
       "store_dimensions": {
         "width": 2.76,
         "height": 3.7,
@@ -2013,7 +2013,7 @@
       "drawdown_current": -0.0194,
       "volume_percentile": 0.4539,
       "volatility_percentile": 0.482,
-      "brand_color": "hsl(6, 70%, 50%)",
+      "brand_color": "hsl(310, 70%, 50%)",
       "store_dimensions": {
         "width": 2.61,
         "height": 3.52,
@@ -2061,7 +2061,7 @@
       "drawdown_current": -0.4323,
       "volume_percentile": 0.1574,
       "volatility_percentile": 0.0279,
-      "brand_color": "hsl(193, 70%, 50%)",
+      "brand_color": "hsl(269, 70%, 50%)",
       "store_dimensions": {
         "width": 2.85,
         "height": 3.81,
@@ -2109,7 +2109,7 @@
       "drawdown_current": -0.0311,
       "volume_percentile": 0.059,
       "volatility_percentile": 0.1942,
-      "brand_color": "hsl(288, 70%, 50%)",
+      "brand_color": "hsl(207, 70%, 50%)",
       "store_dimensions": {
         "width": 2.4,
         "height": 3.25,
@@ -2205,7 +2205,7 @@
       "drawdown_current": -0.1124,
       "volume_percentile": 0.1773,
       "volatility_percentile": 0.0351,
-      "brand_color": "hsl(101, 70%, 50%)",
+      "brand_color": "hsl(173, 70%, 50%)",
       "store_dimensions": {
         "width": 1.64,
         "height": 2.3,
@@ -2253,7 +2253,7 @@
       "drawdown_current": -0.4911,
       "volume_percentile": 0.4086,
       "volatility_percentile": 0.0351,
-      "brand_color": "hsl(293, 70%, 50%)",
+      "brand_color": "hsl(123, 70%, 50%)",
       "store_dimensions": {
         "width": 1.72,
         "height": 2.4,
@@ -2301,7 +2301,7 @@
       "drawdown_current": -0.7287,
       "volume_percentile": 0.2504,
       "volatility_percentile": 0.2275,
-      "brand_color": "hsl(230, 70%, 50%)",
+      "brand_color": "hsl(134, 70%, 50%)",
       "store_dimensions": {
         "width": 2.93,
         "height": 3.91,
@@ -2349,7 +2349,7 @@
       "drawdown_current": -0.0036,
       "volume_percentile": 0.1041,
       "volatility_percentile": 0.2666,
-      "brand_color": "hsl(313, 70%, 50%)",
+      "brand_color": "hsl(13, 70%, 50%)",
       "store_dimensions": {
         "width": 1.56,
         "height": 2.2,
@@ -2397,7 +2397,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.12,
       "volatility_percentile": 0.095,
-      "brand_color": "hsl(91, 70%, 50%)",
+      "brand_color": "hsl(195, 70%, 50%)",
       "store_dimensions": {
         "width": 1.15,
         "height": 1.69,
@@ -2445,7 +2445,7 @@
       "drawdown_current": -0.0589,
       "volume_percentile": 0.5811,
       "volatility_percentile": 0.087,
-      "brand_color": "hsl(283, 70%, 50%)",
+      "brand_color": "hsl(80, 70%, 50%)",
       "store_dimensions": {
         "width": 1.48,
         "height": 2.1,
@@ -2493,7 +2493,7 @@
       "drawdown_current": -0.4856,
       "volume_percentile": 0.8339,
       "volatility_percentile": 0.6409,
-      "brand_color": "hsl(281, 70%, 50%)",
+      "brand_color": "hsl(106, 70%, 50%)",
       "store_dimensions": {
         "width": 1.3,
         "height": 1.87,
@@ -2541,7 +2541,7 @@
       "drawdown_current": -0.1772,
       "volume_percentile": 0.0882,
       "volatility_percentile": 0.5658,
-      "brand_color": "hsl(99, 70%, 50%)",
+      "brand_color": "hsl(273, 70%, 50%)",
       "store_dimensions": {
         "width": 1.7,
         "height": 2.37,
@@ -2589,7 +2589,7 @@
       "drawdown_current": -0.1038,
       "volume_percentile": 0.0604,
       "volatility_percentile": 0.0646,
-      "brand_color": "hsl(303, 70%, 50%)",
+      "brand_color": "hsl(253, 70%, 50%)",
       "store_dimensions": {
         "width": 2.26,
         "height": 3.07,
@@ -2637,7 +2637,7 @@
       "drawdown_current": -0.2191,
       "volume_percentile": 0.539,
       "volatility_percentile": 0.1891,
-      "brand_color": "hsl(99, 70%, 50%)",
+      "brand_color": "hsl(22, 70%, 50%)",
       "store_dimensions": {
         "width": 2.86,
         "height": 3.82,
@@ -2685,7 +2685,7 @@
       "drawdown_current": -0.1459,
       "volume_percentile": 0.0525,
       "volatility_percentile": 0.0607,
-      "brand_color": "hsl(212, 70%, 50%)",
+      "brand_color": "hsl(200, 70%, 50%)",
       "store_dimensions": {
         "width": 1.51,
         "height": 2.13,
@@ -2733,7 +2733,7 @@
       "drawdown_current": -0.0997,
       "volume_percentile": 0.0827,
       "volatility_percentile": 0.0487,
-      "brand_color": "hsl(353, 70%, 50%)",
+      "brand_color": "hsl(336, 70%, 50%)",
       "store_dimensions": {
         "width": 1.03,
         "height": 1.54,
@@ -2781,7 +2781,7 @@
       "drawdown_current": -0.3929,
       "volume_percentile": 0.0711,
       "volatility_percentile": 0.1556,
-      "brand_color": "hsl(67, 70%, 50%)",
+      "brand_color": "hsl(118, 70%, 50%)",
       "store_dimensions": {
         "width": 1.96,
         "height": 2.7,
@@ -2829,7 +2829,7 @@
       "drawdown_current": -0.0616,
       "volume_percentile": 0.4157,
       "volatility_percentile": 0.0208,
-      "brand_color": "hsl(183, 70%, 50%)",
+      "brand_color": "hsl(19, 70%, 50%)",
       "store_dimensions": {
         "width": 2.55,
         "height": 3.43,
@@ -2925,7 +2925,7 @@
       "drawdown_current": -0.0403,
       "volume_percentile": 0.0525,
       "volatility_percentile": 0.5235,
-      "brand_color": "hsl(10, 70%, 50%)",
+      "brand_color": "hsl(168, 70%, 50%)",
       "store_dimensions": {
         "width": 2.36,
         "height": 3.2,
@@ -2973,7 +2973,7 @@
       "drawdown_current": -0.2853,
       "volume_percentile": 0.5016,
       "volatility_percentile": 0.3504,
-      "brand_color": "hsl(99, 70%, 50%)",
+      "brand_color": "hsl(195, 70%, 50%)",
       "store_dimensions": {
         "width": 2.45,
         "height": 3.31,
@@ -3021,7 +3021,7 @@
       "drawdown_current": -0.4501,
       "volume_percentile": 0.6368,
       "volatility_percentile": 0.5433,
-      "brand_color": "hsl(337, 70%, 50%)",
+      "brand_color": "hsl(292, 70%, 50%)",
       "store_dimensions": {
         "width": 2.27,
         "height": 3.09,
@@ -3069,7 +3069,7 @@
       "drawdown_current": -0.0456,
       "volume_percentile": 0.1526,
       "volatility_percentile": 0.1572,
-      "brand_color": "hsl(75, 70%, 50%)",
+      "brand_color": "hsl(268, 70%, 50%)",
       "store_dimensions": {
         "width": 2.87,
         "height": 3.84,
@@ -3117,7 +3117,7 @@
       "drawdown_current": -0.1732,
       "volume_percentile": 0.496,
       "volatility_percentile": 0.1604,
-      "brand_color": "hsl(318, 70%, 50%)",
+      "brand_color": "hsl(3, 70%, 50%)",
       "store_dimensions": {
         "width": 2.78,
         "height": 3.73,
@@ -3165,7 +3165,7 @@
       "drawdown_current": -0.0191,
       "volume_percentile": 0.0064,
       "volatility_percentile": 0.0311,
-      "brand_color": "hsl(158, 70%, 50%)",
+      "brand_color": "hsl(9, 70%, 50%)",
       "store_dimensions": {
         "width": 1.07,
         "height": 1.59,
@@ -3213,7 +3213,7 @@
       "drawdown_current": -0.1418,
       "volume_percentile": 0.0819,
       "volatility_percentile": 0.008,
-      "brand_color": "hsl(191, 70%, 50%)",
+      "brand_color": "hsl(102, 70%, 50%)",
       "store_dimensions": {
         "width": 2.56,
         "height": 3.45,
@@ -3261,7 +3261,7 @@
       "drawdown_current": -0.2344,
       "volume_percentile": 0.5316,
       "volatility_percentile": 0.1686,
-      "brand_color": "hsl(276, 70%, 50%)",
+      "brand_color": "hsl(145, 70%, 50%)",
       "store_dimensions": {
         "width": 2.19,
         "height": 2.99,
@@ -3309,7 +3309,7 @@
       "drawdown_current": -0.3832,
       "volume_percentile": 0.4261,
       "volatility_percentile": 0.826,
-      "brand_color": "hsl(269, 70%, 50%)",
+      "brand_color": "hsl(257, 70%, 50%)",
       "store_dimensions": {
         "width": 2.55,
         "height": 3.44,
@@ -3405,7 +3405,7 @@
       "drawdown_current": -0.421,
       "volume_percentile": 0.6486,
       "volatility_percentile": 0.2115,
-      "brand_color": "hsl(211, 70%, 50%)",
+      "brand_color": "hsl(354, 70%, 50%)",
       "store_dimensions": {
         "width": 2.2,
         "height": 3.01,
@@ -3453,7 +3453,7 @@
       "drawdown_current": -0.3102,
       "volume_percentile": 0.0994,
       "volatility_percentile": 0.1971,
-      "brand_color": "hsl(247, 70%, 50%)",
+      "brand_color": "hsl(142, 70%, 50%)",
       "store_dimensions": {
         "width": 2.8,
         "height": 3.74,
@@ -3501,7 +3501,7 @@
       "drawdown_current": -0.0505,
       "volume_percentile": 0.0946,
       "volatility_percentile": 0.0208,
-      "brand_color": "hsl(110, 70%, 50%)",
+      "brand_color": "hsl(34, 70%, 50%)",
       "store_dimensions": {
         "width": 2.3,
         "height": 3.13,
@@ -3549,7 +3549,7 @@
       "drawdown_current": -0.5028,
       "volume_percentile": 0.4248,
       "volatility_percentile": 0.6901,
-      "brand_color": "hsl(156, 70%, 50%)",
+      "brand_color": "hsl(235, 70%, 50%)",
       "store_dimensions": {
         "width": 2.23,
         "height": 3.03,
@@ -3597,7 +3597,7 @@
       "drawdown_current": -0.0615,
       "volume_percentile": 0.2476,
       "volatility_percentile": 0.6177,
-      "brand_color": "hsl(84, 70%, 50%)",
+      "brand_color": "hsl(243, 70%, 50%)",
       "store_dimensions": {
         "width": 1.58,
         "height": 2.22,
@@ -3645,7 +3645,7 @@
       "drawdown_current": -0.4955,
       "volume_percentile": 0.996,
       "volatility_percentile": 0.9322,
-      "brand_color": "hsl(259, 70%, 50%)",
+      "brand_color": "hsl(92, 70%, 50%)",
       "store_dimensions": {
         "width": 1.74,
         "height": 2.43,
@@ -3693,7 +3693,7 @@
       "drawdown_current": -0.0807,
       "volume_percentile": 0.0763,
       "volatility_percentile": 0.3799,
-      "brand_color": "hsl(313, 70%, 50%)",
+      "brand_color": "hsl(172, 70%, 50%)",
       "store_dimensions": {
         "width": 2.13,
         "height": 2.91,
@@ -3741,7 +3741,7 @@
       "drawdown_current": -0.1944,
       "volume_percentile": 0.5723,
       "volatility_percentile": 0.0902,
-      "brand_color": "hsl(7, 70%, 50%)",
+      "brand_color": "hsl(340, 70%, 50%)",
       "store_dimensions": {
         "width": 2.11,
         "height": 2.88,
@@ -3837,7 +3837,7 @@
       "drawdown_current": -0.2043,
       "volume_percentile": 0.3307,
       "volatility_percentile": 0.0646,
-      "brand_color": "hsl(263, 70%, 50%)",
+      "brand_color": "hsl(109, 70%, 50%)",
       "store_dimensions": {
         "width": 1.61,
         "height": 2.27,
@@ -3885,7 +3885,7 @@
       "drawdown_current": -0.1547,
       "volume_percentile": 0.4333,
       "volatility_percentile": 0.0483,
-      "brand_color": "hsl(264, 70%, 50%)",
+      "brand_color": "hsl(122, 70%, 50%)",
       "store_dimensions": {
         "width": 2.34,
         "height": 3.18,
@@ -3933,7 +3933,7 @@
       "drawdown_current": -0.2359,
       "volume_percentile": 0.4833,
       "volatility_percentile": 0.1317,
-      "brand_color": "hsl(336, 70%, 50%)",
+      "brand_color": "hsl(101, 70%, 50%)",
       "store_dimensions": {
         "width": 1.33,
         "height": 1.91,
@@ -3981,7 +3981,7 @@
       "drawdown_current": -0.1911,
       "volume_percentile": 0.7806,
       "volatility_percentile": 0.4549,
-      "brand_color": "hsl(204, 70%, 50%)",
+      "brand_color": "hsl(144, 70%, 50%)",
       "store_dimensions": {
         "width": 2.05,
         "height": 2.81,
@@ -4029,7 +4029,7 @@
       "drawdown_current": -0.278,
       "volume_percentile": 0.5501,
       "volatility_percentile": 0.0024,
-      "brand_color": "hsl(326, 70%, 50%)",
+      "brand_color": "hsl(282, 70%, 50%)",
       "store_dimensions": {
         "width": 2.67,
         "height": 3.59,
@@ -4077,7 +4077,7 @@
       "drawdown_current": -0.3741,
       "volume_percentile": 0.3315,
       "volatility_percentile": 0.5563,
-      "brand_color": "hsl(60, 70%, 50%)",
+      "brand_color": "hsl(237, 70%, 50%)",
       "store_dimensions": {
         "width": 2.17,
         "height": 2.96,
@@ -4125,7 +4125,7 @@
       "drawdown_current": -0.1783,
       "volume_percentile": 0.4952,
       "volatility_percentile": 0.0407,
-      "brand_color": "hsl(217, 70%, 50%)",
+      "brand_color": "hsl(334, 70%, 50%)",
       "store_dimensions": {
         "width": 1.95,
         "height": 2.69,
@@ -4173,7 +4173,7 @@
       "drawdown_current": -0.4186,
       "volume_percentile": 0.1208,
       "volatility_percentile": 0.1381,
-      "brand_color": "hsl(307, 70%, 50%)",
+      "brand_color": "hsl(81, 70%, 50%)",
       "store_dimensions": {
         "width": 2.58,
         "height": 3.47,
@@ -4221,7 +4221,7 @@
       "drawdown_current": -0.209,
       "volume_percentile": 0.0525,
       "volatility_percentile": 0.0551,
-      "brand_color": "hsl(230, 70%, 50%)",
+      "brand_color": "hsl(82, 70%, 50%)",
       "store_dimensions": {
         "width": 1.35,
         "height": 1.94,
@@ -4269,7 +4269,7 @@
       "drawdown_current": -0.1046,
       "volume_percentile": 0.3514,
       "volatility_percentile": 0.2466,
-      "brand_color": "hsl(233, 70%, 50%)",
+      "brand_color": "hsl(267, 70%, 50%)",
       "store_dimensions": {
         "width": 1.71,
         "height": 2.39,
@@ -4317,7 +4317,7 @@
       "drawdown_current": -0.5563,
       "volume_percentile": 0.4992,
       "volatility_percentile": 0.5555,
-      "brand_color": "hsl(255, 70%, 50%)",
+      "brand_color": "hsl(335, 70%, 50%)",
       "store_dimensions": {
         "width": 1.55,
         "height": 2.18,
@@ -4365,7 +4365,7 @@
       "drawdown_current": -0.1837,
       "volume_percentile": 0.628,
       "volatility_percentile": 0.1947,
-      "brand_color": "hsl(170, 70%, 50%)",
+      "brand_color": "hsl(110, 70%, 50%)",
       "store_dimensions": {
         "width": 1.36,
         "height": 1.95,
@@ -4413,7 +4413,7 @@
       "drawdown_current": -0.02,
       "volume_percentile": 0.0715,
       "volatility_percentile": 0.016,
-      "brand_color": "hsl(288, 70%, 50%)",
+      "brand_color": "hsl(238, 70%, 50%)",
       "store_dimensions": {
         "width": 2.03,
         "height": 2.79,
@@ -4461,7 +4461,7 @@
       "drawdown_current": -0.0797,
       "volume_percentile": 0.1045,
       "volatility_percentile": 0.0072,
-      "brand_color": "hsl(241, 70%, 50%)",
+      "brand_color": "hsl(129, 70%, 50%)",
       "store_dimensions": {
         "width": 2.27,
         "height": 3.08,
@@ -4509,7 +4509,7 @@
       "drawdown_current": -0.0869,
       "volume_percentile": 0.0401,
       "volatility_percentile": 0.0407,
-      "brand_color": "hsl(323, 70%, 50%)",
+      "brand_color": "hsl(51, 70%, 50%)",
       "store_dimensions": {
         "width": 1.05,
         "height": 1.56,
@@ -4557,7 +4557,7 @@
       "drawdown_current": -0.2779,
       "volume_percentile": 0.1709,
       "volatility_percentile": 0.2514,
-      "brand_color": "hsl(206, 70%, 50%)",
+      "brand_color": "hsl(13, 70%, 50%)",
       "store_dimensions": {
         "width": 1.69,
         "height": 2.36,
@@ -4605,7 +4605,7 @@
       "drawdown_current": -0.3066,
       "volume_percentile": 0.6526,
       "volatility_percentile": 0.3416,
-      "brand_color": "hsl(33, 70%, 50%)",
+      "brand_color": "hsl(163, 70%, 50%)",
       "store_dimensions": {
         "width": 1.57,
         "height": 2.21,
@@ -4653,7 +4653,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.2083,
       "volatility_percentile": 0.0766,
-      "brand_color": "hsl(339, 70%, 50%)",
+      "brand_color": "hsl(99, 70%, 50%)",
       "store_dimensions": {
         "width": 1.73,
         "height": 2.41,
@@ -4701,7 +4701,7 @@
       "drawdown_current": -0.4155,
       "volume_percentile": 0.3219,
       "volatility_percentile": 0.1365,
-      "brand_color": "hsl(342, 70%, 50%)",
+      "brand_color": "hsl(359, 70%, 50%)",
       "store_dimensions": {
         "width": 2.07,
         "height": 2.84,
@@ -4749,7 +4749,7 @@
       "drawdown_current": -0.164,
       "volume_percentile": 0.0429,
       "volatility_percentile": 0.0104,
-      "brand_color": "hsl(319, 70%, 50%)",
+      "brand_color": "hsl(314, 70%, 50%)",
       "store_dimensions": {
         "width": 2.54,
         "height": 3.42,
@@ -4797,7 +4797,7 @@
       "drawdown_current": -0.0303,
       "volume_percentile": 0.6153,
       "volatility_percentile": 0.0056,
-      "brand_color": "hsl(263, 70%, 50%)",
+      "brand_color": "hsl(68, 70%, 50%)",
       "store_dimensions": {
         "width": 1.88,
         "height": 2.6,
@@ -4845,7 +4845,7 @@
       "drawdown_current": -0.0713,
       "volume_percentile": 0.159,
       "volatility_percentile": 0.0511,
-      "brand_color": "hsl(335, 70%, 50%)",
+      "brand_color": "hsl(33, 70%, 50%)",
       "store_dimensions": {
         "width": 2.14,
         "height": 2.93,
@@ -4893,7 +4893,7 @@
       "drawdown_current": -0.1811,
       "volume_percentile": 0.124,
       "volatility_percentile": 0.0742,
-      "brand_color": "hsl(19, 70%, 50%)",
+      "brand_color": "hsl(96, 70%, 50%)",
       "store_dimensions": {
         "width": 2.84,
         "height": 3.8,
@@ -4941,7 +4941,7 @@
       "drawdown_current": -0.1392,
       "volume_percentile": 0.1494,
       "volatility_percentile": 0.0072,
-      "brand_color": "hsl(80, 70%, 50%)",
+      "brand_color": "hsl(265, 70%, 50%)",
       "store_dimensions": {
         "width": 1.86,
         "height": 2.57,
@@ -4989,7 +4989,7 @@
       "drawdown_current": -0.2182,
       "volume_percentile": 0.2778,
       "volatility_percentile": 0.2434,
-      "brand_color": "hsl(269, 70%, 50%)",
+      "brand_color": "hsl(325, 70%, 50%)",
       "store_dimensions": {
         "width": 2.28,
         "height": 3.1,
@@ -5037,7 +5037,7 @@
       "drawdown_current": -0.0557,
       "volume_percentile": 0.0445,
       "volatility_percentile": 0.0447,
-      "brand_color": "hsl(120, 70%, 50%)",
+      "brand_color": "hsl(182, 70%, 50%)",
       "store_dimensions": {
         "width": 2.18,
         "height": 2.98,
@@ -5085,7 +5085,7 @@
       "drawdown_current": -0.6176,
       "volume_percentile": 0.3498,
       "volatility_percentile": 0.0822,
-      "brand_color": "hsl(281, 70%, 50%)",
+      "brand_color": "hsl(302, 70%, 50%)",
       "store_dimensions": {
         "width": 2.21,
         "height": 3.02,
@@ -5133,7 +5133,7 @@
       "drawdown_current": -0.2418,
       "volume_percentile": 0.3641,
       "volatility_percentile": 0.1476,
-      "brand_color": "hsl(149, 70%, 50%)",
+      "brand_color": "hsl(8, 70%, 50%)",
       "store_dimensions": {
         "width": 2.45,
         "height": 3.32,
@@ -5181,7 +5181,7 @@
       "drawdown_current": -0.0994,
       "volume_percentile": 0.0207,
       "volatility_percentile": 0.012,
-      "brand_color": "hsl(72, 70%, 50%)",
+      "brand_color": "hsl(313, 70%, 50%)",
       "store_dimensions": {
         "width": 1.34,
         "height": 1.93,
@@ -5277,7 +5277,7 @@
       "drawdown_current": -0.1195,
       "volume_percentile": 0.0072,
       "volatility_percentile": 0.2291,
-      "brand_color": "hsl(127, 70%, 50%)",
+      "brand_color": "hsl(215, 70%, 50%)",
       "store_dimensions": {
         "width": 2.63,
         "height": 3.54,
@@ -5325,7 +5325,7 @@
       "drawdown_current": -0.2632,
       "volume_percentile": 0.7218,
       "volatility_percentile": 0.2211,
-      "brand_color": "hsl(317, 70%, 50%)",
+      "brand_color": "hsl(333, 70%, 50%)",
       "store_dimensions": {
         "width": 2.17,
         "height": 2.97,
@@ -5421,7 +5421,7 @@
       "drawdown_current": -0.3732,
       "volume_percentile": 0.4491,
       "volatility_percentile": 0.0447,
-      "brand_color": "hsl(327, 70%, 50%)",
+      "brand_color": "hsl(12, 70%, 50%)",
       "store_dimensions": {
         "width": 1.2,
         "height": 1.75,
@@ -5517,7 +5517,7 @@
       "drawdown_current": -0.0579,
       "volume_percentile": 0.306,
       "volatility_percentile": 0.0088,
-      "brand_color": "hsl(316, 70%, 50%)",
+      "brand_color": "hsl(54, 70%, 50%)",
       "store_dimensions": {
         "width": 2.75,
         "height": 3.69,
@@ -5565,7 +5565,7 @@
       "drawdown_current": -0.0747,
       "volume_percentile": 0.1312,
       "volatility_percentile": 0.0726,
-      "brand_color": "hsl(233, 70%, 50%)",
+      "brand_color": "hsl(36, 70%, 50%)",
       "store_dimensions": {
         "width": 1.54,
         "height": 2.17,
@@ -5661,7 +5661,7 @@
       "drawdown_current": -0.0138,
       "volume_percentile": 0.1502,
       "volatility_percentile": 0.0096,
-      "brand_color": "hsl(71, 70%, 50%)",
+      "brand_color": "hsl(132, 70%, 50%)",
       "store_dimensions": {
         "width": 1.85,
         "height": 2.56,
@@ -5709,7 +5709,7 @@
       "drawdown_current": -0.0684,
       "volume_percentile": 0.0986,
       "volatility_percentile": 0.0734,
-      "brand_color": "hsl(11, 70%, 50%)",
+      "brand_color": "hsl(285, 70%, 50%)",
       "store_dimensions": {
         "width": 1.8,
         "height": 2.49,
@@ -5805,7 +5805,7 @@
       "drawdown_current": -0.2189,
       "volume_percentile": 0.7214,
       "volatility_percentile": 0.2506,
-      "brand_color": "hsl(142, 70%, 50%)",
+      "brand_color": "hsl(148, 70%, 50%)",
       "store_dimensions": {
         "width": 1.24,
         "height": 1.8,
@@ -5853,7 +5853,7 @@
       "drawdown_current": -0.1775,
       "volume_percentile": 0.5851,
       "volatility_percentile": 0.0575,
-      "brand_color": "hsl(37, 70%, 50%)",
+      "brand_color": "hsl(150, 70%, 50%)",
       "store_dimensions": {
         "width": 1.23,
         "height": 1.79,
@@ -5901,7 +5901,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.0866,
       "volatility_percentile": 0.0726,
-      "brand_color": "hsl(253, 70%, 50%)",
+      "brand_color": "hsl(302, 70%, 50%)",
       "store_dimensions": {
         "width": 2.33,
         "height": 3.16,
@@ -5949,7 +5949,7 @@
       "drawdown_current": -0.1358,
       "volume_percentile": 0.9817,
       "volatility_percentile": 0.1133,
-      "brand_color": "hsl(176, 70%, 50%)",
+      "brand_color": "hsl(62, 70%, 50%)",
       "store_dimensions": {
         "width": 1.89,
         "height": 2.61,
@@ -5997,7 +5997,7 @@
       "drawdown_current": -0.2755,
       "volume_percentile": 0.0493,
       "volatility_percentile": 0.3823,
-      "brand_color": "hsl(190, 70%, 50%)",
+      "brand_color": "hsl(263, 70%, 50%)",
       "store_dimensions": {
         "width": 1.06,
         "height": 1.58,
@@ -6045,7 +6045,7 @@
       "drawdown_current": -0.5238,
       "volume_percentile": 0.6884,
       "volatility_percentile": 0.9769,
-      "brand_color": "hsl(270, 70%, 50%)",
+      "brand_color": "hsl(207, 70%, 50%)",
       "store_dimensions": {
         "width": 1.52,
         "height": 2.15,
@@ -6093,7 +6093,7 @@
       "drawdown_current": -0.42,
       "volume_percentile": 0.8307,
       "volatility_percentile": 0.5698,
-      "brand_color": "hsl(74, 70%, 50%)",
+      "brand_color": "hsl(145, 70%, 50%)",
       "store_dimensions": {
         "width": 2.92,
         "height": 3.91,
@@ -6141,7 +6141,7 @@
       "drawdown_current": -0.1996,
       "volume_percentile": 0.5016,
       "volatility_percentile": 0.3536,
-      "brand_color": "hsl(335, 70%, 50%)",
+      "brand_color": "hsl(228, 70%, 50%)",
       "store_dimensions": {
         "width": 1.47,
         "height": 2.09,
@@ -6189,7 +6189,7 @@
       "drawdown_current": -0.2098,
       "volume_percentile": 0.0477,
       "volatility_percentile": 0.1453,
-      "brand_color": "hsl(9, 70%, 50%)",
+      "brand_color": "hsl(280, 70%, 50%)",
       "store_dimensions": {
         "width": 2.16,
         "height": 2.95,
@@ -6237,7 +6237,7 @@
       "drawdown_current": -0.2062,
       "volume_percentile": 0.1498,
       "volatility_percentile": 0.0215,
-      "brand_color": "hsl(85, 70%, 50%)",
+      "brand_color": "hsl(346, 70%, 50%)",
       "store_dimensions": {
         "width": 1.27,
         "height": 1.84,
@@ -6285,7 +6285,7 @@
       "drawdown_current": -0.1505,
       "volume_percentile": 0.225,
       "volatility_percentile": 0.4469,
-      "brand_color": "hsl(291, 70%, 50%)",
+      "brand_color": "hsl(196, 70%, 50%)",
       "store_dimensions": {
         "width": 1.68,
         "height": 2.35,
@@ -6333,7 +6333,7 @@
       "drawdown_current": -0.0606,
       "volume_percentile": 0.0533,
       "volatility_percentile": 0.2259,
-      "brand_color": "hsl(163, 70%, 50%)",
+      "brand_color": "hsl(12, 70%, 50%)",
       "store_dimensions": {
         "width": 1.28,
         "height": 1.85,
@@ -6477,7 +6477,7 @@
       "drawdown_current": -0.3561,
       "volume_percentile": 0.4571,
       "volatility_percentile": 0.9354,
-      "brand_color": "hsl(94, 70%, 50%)",
+      "brand_color": "hsl(193, 70%, 50%)",
       "store_dimensions": {
         "width": 1.36,
         "height": 1.95,
@@ -6525,7 +6525,7 @@
       "drawdown_current": -0.2161,
       "volume_percentile": 0.7003,
       "volatility_percentile": 0.0295,
-      "brand_color": "hsl(27, 70%, 50%)",
+      "brand_color": "hsl(93, 70%, 50%)",
       "store_dimensions": {
         "width": 2.52,
         "height": 3.39,
@@ -6573,7 +6573,7 @@
       "drawdown_current": -0.0114,
       "volume_percentile": 0.0485,
       "volatility_percentile": 0.2418,
-      "brand_color": "hsl(78, 70%, 50%)",
+      "brand_color": "hsl(211, 70%, 50%)",
       "store_dimensions": {
         "width": 1.37,
         "height": 1.96,
@@ -6621,7 +6621,7 @@
       "drawdown_current": -0.1216,
       "volume_percentile": 0.8116,
       "volatility_percentile": 0.0351,
-      "brand_color": "hsl(81, 70%, 50%)",
+      "brand_color": "hsl(245, 70%, 50%)",
       "store_dimensions": {
         "width": 1.63,
         "height": 2.29,
@@ -6669,7 +6669,7 @@
       "drawdown_current": -0.0794,
       "volume_percentile": 0.5437,
       "volatility_percentile": 0.0136,
-      "brand_color": "hsl(53, 70%, 50%)",
+      "brand_color": "hsl(5, 70%, 50%)",
       "store_dimensions": {
         "width": 2.8,
         "height": 3.75,
@@ -6765,7 +6765,7 @@
       "drawdown_current": -0.0944,
       "volume_percentile": 0.093,
       "volatility_percentile": 0.3232,
-      "brand_color": "hsl(191, 70%, 50%)",
+      "brand_color": "hsl(178, 70%, 50%)",
       "store_dimensions": {
         "width": 1.92,
         "height": 2.66,
@@ -6813,7 +6813,7 @@
       "drawdown_current": -0.0022,
       "volume_percentile": 0.0676,
       "volatility_percentile": 0.0391,
-      "brand_color": "hsl(245, 70%, 50%)",
+      "brand_color": "hsl(97, 70%, 50%)",
       "store_dimensions": {
         "width": 1.65,
         "height": 2.31,
@@ -6861,7 +6861,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.124,
       "volatility_percentile": 0.937,
-      "brand_color": "hsl(308, 70%, 50%)",
+      "brand_color": "hsl(147, 70%, 50%)",
       "store_dimensions": {
         "width": 2.22,
         "height": 3.02,
@@ -6909,7 +6909,7 @@
       "drawdown_current": -0.0941,
       "volume_percentile": 0.0262,
       "volatility_percentile": 0.0096,
-      "brand_color": "hsl(237, 70%, 50%)",
+      "brand_color": "hsl(122, 70%, 50%)",
       "store_dimensions": {
         "width": 1.4,
         "height": 2.0,
@@ -6957,7 +6957,7 @@
       "drawdown_current": -0.0804,
       "volume_percentile": 0.1757,
       "volatility_percentile": 0.3464,
-      "brand_color": "hsl(79, 70%, 50%)",
+      "brand_color": "hsl(312, 70%, 50%)",
       "store_dimensions": {
         "width": 2.2,
         "height": 3.0,
@@ -7005,7 +7005,7 @@
       "drawdown_current": -0.0268,
       "volume_percentile": 0.0135,
       "volatility_percentile": 0.3049,
-      "brand_color": "hsl(135, 70%, 50%)",
+      "brand_color": "hsl(103, 70%, 50%)",
       "store_dimensions": {
         "width": 1.53,
         "height": 2.16,
@@ -7053,7 +7053,7 @@
       "drawdown_current": -0.2409,
       "volume_percentile": 0.2289,
       "volatility_percentile": 0.0263,
-      "brand_color": "hsl(146, 70%, 50%)",
+      "brand_color": "hsl(112, 70%, 50%)",
       "store_dimensions": {
         "width": 2.43,
         "height": 3.29,
@@ -7101,7 +7101,7 @@
       "drawdown_current": -0.3331,
       "volume_percentile": 0.473,
       "volatility_percentile": 0.0032,
-      "brand_color": "hsl(78, 70%, 50%)",
+      "brand_color": "hsl(215, 70%, 50%)",
       "store_dimensions": {
         "width": 1.77,
         "height": 2.46,
@@ -7197,7 +7197,7 @@
       "drawdown_current": -0.0104,
       "volume_percentile": 0.0469,
       "volatility_percentile": 0.0894,
-      "brand_color": "hsl(276, 70%, 50%)",
+      "brand_color": "hsl(251, 70%, 50%)",
       "store_dimensions": {
         "width": 1.83,
         "height": 2.53,
@@ -7293,7 +7293,7 @@
       "drawdown_current": -0.0616,
       "volume_percentile": 0.0421,
       "volatility_percentile": 0.2346,
-      "brand_color": "hsl(286, 70%, 50%)",
+      "brand_color": "hsl(79, 70%, 50%)",
       "store_dimensions": {
         "width": 1.38,
         "height": 1.97,
@@ -7341,7 +7341,7 @@
       "drawdown_current": -0.1502,
       "volume_percentile": 0.0723,
       "volatility_percentile": 0.1189,
-      "brand_color": "hsl(247, 70%, 50%)",
+      "brand_color": "hsl(34, 70%, 50%)",
       "store_dimensions": {
         "width": 1.14,
         "height": 1.67,
@@ -7389,7 +7389,7 @@
       "drawdown_current": -0.1059,
       "volume_percentile": 0.6685,
       "volatility_percentile": 0.3025,
-      "brand_color": "hsl(254, 70%, 50%)",
+      "brand_color": "hsl(257, 70%, 50%)",
       "store_dimensions": {
         "width": 2.47,
         "height": 3.34,
@@ -7437,7 +7437,7 @@
       "drawdown_current": -0.3561,
       "volume_percentile": 0.3219,
       "volatility_percentile": 0.5275,
-      "brand_color": "hsl(282, 70%, 50%)",
+      "brand_color": "hsl(351, 70%, 50%)",
       "store_dimensions": {
         "width": 2.42,
         "height": 3.27,
@@ -7485,7 +7485,7 @@
       "drawdown_current": -0.1433,
       "volume_percentile": 0.1025,
       "volatility_percentile": 0.1301,
-      "brand_color": "hsl(46, 70%, 50%)",
+      "brand_color": "hsl(323, 70%, 50%)",
       "store_dimensions": {
         "width": 2.39,
         "height": 3.23,
@@ -7581,7 +7581,7 @@
       "drawdown_current": -0.0088,
       "volume_percentile": 0.3788,
       "volatility_percentile": 0.3121,
-      "brand_color": "hsl(229, 70%, 50%)",
+      "brand_color": "hsl(90, 70%, 50%)",
       "store_dimensions": {
         "width": 1.08,
         "height": 1.6,
@@ -7629,7 +7629,7 @@
       "drawdown_current": -0.0043,
       "volume_percentile": 0.0326,
       "volatility_percentile": 0.1373,
-      "brand_color": "hsl(296, 70%, 50%)",
+      "brand_color": "hsl(224, 70%, 50%)",
       "store_dimensions": {
         "width": 1.62,
         "height": 2.28,
@@ -7677,7 +7677,7 @@
       "drawdown_current": -0.4262,
       "volume_percentile": 0.7727,
       "volatility_percentile": 0.5762,
-      "brand_color": "hsl(314, 70%, 50%)",
+      "brand_color": "hsl(152, 70%, 50%)",
       "store_dimensions": {
         "width": 2.08,
         "height": 2.85,
@@ -7725,7 +7725,7 @@
       "drawdown_current": -0.1351,
       "volume_percentile": 0.2878,
       "volatility_percentile": 0.0168,
-      "brand_color": "hsl(37, 70%, 50%)",
+      "brand_color": "hsl(47, 70%, 50%)",
       "store_dimensions": {
         "width": 2.65,
         "height": 3.56,
@@ -7773,7 +7773,7 @@
       "drawdown_current": -0.0659,
       "volume_percentile": 0.0246,
       "volatility_percentile": 0.5946,
-      "brand_color": "hsl(26, 70%, 50%)",
+      "brand_color": "hsl(152, 70%, 50%)",
       "store_dimensions": {
         "width": 2.7,
         "height": 3.63,
@@ -7821,7 +7821,7 @@
       "drawdown_current": -0.3614,
       "volume_percentile": 0.3331,
       "volatility_percentile": 0.6808,
-      "brand_color": "hsl(48, 70%, 50%)",
+      "brand_color": "hsl(324, 70%, 50%)",
       "store_dimensions": {
         "width": 2.68,
         "height": 3.6,
@@ -7869,7 +7869,7 @@
       "drawdown_current": -0.168,
       "volume_percentile": 0.0485,
       "volatility_percentile": 0.0136,
-      "brand_color": "hsl(138, 70%, 50%)",
+      "brand_color": "hsl(50, 70%, 50%)",
       "store_dimensions": {
         "width": 2.7,
         "height": 3.62,
@@ -7917,7 +7917,7 @@
       "drawdown_current": -0.1839,
       "volume_percentile": 0.0461,
       "volatility_percentile": 0.0559,
-      "brand_color": "hsl(157, 70%, 50%)",
+      "brand_color": "hsl(234, 70%, 50%)",
       "store_dimensions": {
         "width": 1.08,
         "height": 1.59,
@@ -8013,7 +8013,7 @@
       "drawdown_current": -0.0479,
       "volume_percentile": 0.0461,
       "volatility_percentile": 0.0607,
-      "brand_color": "hsl(317, 70%, 50%)",
+      "brand_color": "hsl(242, 70%, 50%)",
       "store_dimensions": {
         "width": 1.19,
         "height": 1.74,
@@ -8061,7 +8061,7 @@
       "drawdown_current": -0.282,
       "volume_percentile": 0.6264,
       "volatility_percentile": 0.0439,
-      "brand_color": "hsl(343, 70%, 50%)",
+      "brand_color": "hsl(258, 70%, 50%)",
       "store_dimensions": {
         "width": 1.02,
         "height": 1.52,
@@ -8109,7 +8109,7 @@
       "drawdown_current": -0.2686,
       "volume_percentile": 0.0628,
       "volatility_percentile": 0.4094,
-      "brand_color": "hsl(54, 70%, 50%)",
+      "brand_color": "hsl(188, 70%, 50%)",
       "store_dimensions": {
         "width": 2.86,
         "height": 3.83,
@@ -8157,7 +8157,7 @@
       "drawdown_current": -0.2539,
       "volume_percentile": 0.5827,
       "volatility_percentile": 0.0607,
-      "brand_color": "hsl(198, 70%, 50%)",
+      "brand_color": "hsl(262, 70%, 50%)",
       "store_dimensions": {
         "width": 2.64,
         "height": 3.55,
@@ -8205,7 +8205,7 @@
       "drawdown_current": -0.5148,
       "volume_percentile": 0.1542,
       "volatility_percentile": 0.1149,
-      "brand_color": "hsl(184, 70%, 50%)",
+      "brand_color": "hsl(260, 70%, 50%)",
       "store_dimensions": {
         "width": 2.6,
         "height": 3.5,
@@ -8253,7 +8253,7 @@
       "drawdown_current": -0.7055,
       "volume_percentile": 0.2441,
       "volatility_percentile": 0.1714,
-      "brand_color": "hsl(117, 70%, 50%)",
+      "brand_color": "hsl(334, 70%, 50%)",
       "store_dimensions": {
         "width": 2.29,
         "height": 3.11,
@@ -8397,7 +8397,7 @@
       "drawdown_current": -0.194,
       "volume_percentile": 0.0358,
       "volatility_percentile": 0.0056,
-      "brand_color": "hsl(328, 70%, 50%)",
+      "brand_color": "hsl(88, 70%, 50%)",
       "store_dimensions": {
         "width": 1.2,
         "height": 1.76,
@@ -8445,7 +8445,7 @@
       "drawdown_current": -0.158,
       "volume_percentile": 0.0342,
       "volatility_percentile": 0.1125,
-      "brand_color": "hsl(139, 70%, 50%)",
+      "brand_color": "hsl(81, 70%, 50%)",
       "store_dimensions": {
         "width": 1.55,
         "height": 2.19,
@@ -8493,7 +8493,7 @@
       "drawdown_current": -0.2802,
       "volume_percentile": 0.1916,
       "volatility_percentile": 0.2458,
-      "brand_color": "hsl(52, 70%, 50%)",
+      "brand_color": "hsl(345, 70%, 50%)",
       "store_dimensions": {
         "width": 1.42,
         "height": 2.03,
@@ -8541,7 +8541,7 @@
       "drawdown_current": -0.0261,
       "volume_percentile": 0.0238,
       "volatility_percentile": 0.0718,
-      "brand_color": "hsl(45, 70%, 50%)",
+      "brand_color": "hsl(281, 70%, 50%)",
       "store_dimensions": {
         "width": 1.82,
         "height": 2.52,
@@ -8637,7 +8637,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.4348,
       "volatility_percentile": 0.1836,
-      "brand_color": "hsl(68, 70%, 50%)",
+      "brand_color": "hsl(235, 70%, 50%)",
       "store_dimensions": {
         "width": 1.01,
         "height": 1.51,
@@ -8685,7 +8685,7 @@
       "drawdown_current": -0.0909,
       "volume_percentile": 0.1455,
       "volatility_percentile": 0.3073,
-      "brand_color": "hsl(212, 70%, 50%)",
+      "brand_color": "hsl(299, 70%, 50%)",
       "store_dimensions": {
         "width": 1.94,
         "height": 2.67,
@@ -8733,7 +8733,7 @@
       "drawdown_current": -0.2073,
       "volume_percentile": 0.7075,
       "volatility_percentile": 0.1572,
-      "brand_color": "hsl(287, 70%, 50%)",
+      "brand_color": "hsl(26, 70%, 50%)",
       "store_dimensions": {
         "width": 2.09,
         "height": 2.86,
@@ -8781,7 +8781,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.1614,
       "volatility_percentile": 0.3113,
-      "brand_color": "hsl(23, 70%, 50%)",
+      "brand_color": "hsl(168, 70%, 50%)",
       "store_dimensions": {
         "width": 1.12,
         "height": 1.65,
@@ -8829,7 +8829,7 @@
       "drawdown_current": -0.0354,
       "volume_percentile": 0.6057,
       "volatility_percentile": 0.0303,
-      "brand_color": "hsl(98, 70%, 50%)",
+      "brand_color": "hsl(229, 70%, 50%)",
       "store_dimensions": {
         "width": 2.06,
         "height": 2.83,
@@ -8877,7 +8877,7 @@
       "drawdown_current": -0.0411,
       "volume_percentile": 0.1582,
       "volatility_percentile": 0.6568,
-      "brand_color": "hsl(321, 70%, 50%)",
+      "brand_color": "hsl(242, 70%, 50%)",
       "store_dimensions": {
         "width": 2.72,
         "height": 3.65,
@@ -8925,7 +8925,7 @@
       "drawdown_current": -0.0489,
       "volume_percentile": 0.074,
       "volatility_percentile": 0.1478,
-      "brand_color": "hsl(43, 70%, 50%)",
+      "brand_color": "hsl(244, 70%, 50%)",
       "store_dimensions": {
         "width": 1.81,
         "height": 2.51,
@@ -8973,7 +8973,7 @@
       "drawdown_current": -0.1433,
       "volume_percentile": 0.2305,
       "volatility_percentile": 0.0958,
-      "brand_color": "hsl(314, 70%, 50%)",
+      "brand_color": "hsl(203, 70%, 50%)",
       "store_dimensions": {
         "width": 2.83,
         "height": 3.79,
@@ -9021,7 +9021,7 @@
       "drawdown_current": -0.0588,
       "volume_percentile": 0.1121,
       "volatility_percentile": 0.9082,
-      "brand_color": "hsl(349, 70%, 50%)",
+      "brand_color": "hsl(83, 70%, 50%)",
       "store_dimensions": {
         "width": 2.23,
         "height": 3.04,
@@ -9213,7 +9213,7 @@
       "drawdown_current": -0.09,
       "volume_percentile": 0.0246,
       "volatility_percentile": 0.8795,
-      "brand_color": "hsl(278, 70%, 50%)",
+      "brand_color": "hsl(336, 70%, 50%)",
       "store_dimensions": {
         "width": 1.93,
         "height": 2.66,
@@ -9261,7 +9261,7 @@
       "drawdown_current": -0.0026,
       "volume_percentile": 0.0874,
       "volatility_percentile": 0.1437,
-      "brand_color": "hsl(36, 70%, 50%)",
+      "brand_color": "hsl(331, 70%, 50%)",
       "store_dimensions": {
         "width": 1.17,
         "height": 1.71,
@@ -9309,7 +9309,7 @@
       "drawdown_current": -0.6898,
       "volume_percentile": 0.0731,
       "volatility_percentile": 0.0104,
-      "brand_color": "hsl(58, 70%, 50%)",
+      "brand_color": "hsl(359, 70%, 50%)",
       "store_dimensions": {
         "width": 2.77,
         "height": 3.71,
@@ -9357,7 +9357,7 @@
       "drawdown_current": -0.2545,
       "volume_percentile": 0.0759,
       "volatility_percentile": 0.1445,
-      "brand_color": "hsl(138, 70%, 50%)",
+      "brand_color": "hsl(84, 70%, 50%)",
       "store_dimensions": {
         "width": 2.0,
         "height": 2.75,
@@ -9405,7 +9405,7 @@
       "drawdown_current": -0.6108,
       "volume_percentile": 0.5558,
       "volatility_percentile": 0.6881,
-      "brand_color": "hsl(90, 70%, 50%)",
+      "brand_color": "hsl(223, 70%, 50%)",
       "store_dimensions": {
         "width": 2.96,
         "height": 3.95,
@@ -9453,7 +9453,7 @@
       "drawdown_current": -0.0743,
       "volume_percentile": 0.0461,
       "volatility_percentile": 0.0032,
-      "brand_color": "hsl(15, 70%, 50%)",
+      "brand_color": "hsl(100, 70%, 50%)",
       "store_dimensions": {
         "width": 2.36,
         "height": 3.2,
@@ -9501,7 +9501,7 @@
       "drawdown_current": -0.4233,
       "volume_percentile": 0.0914,
       "volatility_percentile": 0.3128,
-      "brand_color": "hsl(261, 70%, 50%)",
+      "brand_color": "hsl(135, 70%, 50%)",
       "store_dimensions": {
         "width": 1.77,
         "height": 2.47,
@@ -9549,7 +9549,7 @@
       "drawdown_current": -0.1896,
       "volume_percentile": 0.3553,
       "volatility_percentile": 0.1588,
-      "brand_color": "hsl(237, 70%, 50%)",
+      "brand_color": "hsl(353, 70%, 50%)",
       "store_dimensions": {
         "width": 1.42,
         "height": 2.02,
@@ -9597,7 +9597,7 @@
       "drawdown_current": -0.2067,
       "volume_percentile": 0.7949,
       "volatility_percentile": 0.0702,
-      "brand_color": "hsl(61, 70%, 50%)",
+      "brand_color": "hsl(8, 70%, 50%)",
       "store_dimensions": {
         "width": 2.38,
         "height": 3.22,
@@ -9645,7 +9645,7 @@
       "drawdown_current": -0.1434,
       "volume_percentile": 0.1645,
       "volatility_percentile": 0.1141,
-      "brand_color": "hsl(77, 70%, 50%)",
+      "brand_color": "hsl(243, 70%, 50%)",
       "store_dimensions": {
         "width": 1.75,
         "height": 2.44,
@@ -9693,7 +9693,7 @@
       "drawdown_current": -0.2885,
       "volume_percentile": 0.0628,
       "volatility_percentile": 0.3639,
-      "brand_color": "hsl(236, 70%, 50%)",
+      "brand_color": "hsl(272, 70%, 50%)",
       "store_dimensions": {
         "width": 1.14,
         "height": 1.68,
@@ -9741,7 +9741,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.4181,
       "volatility_percentile": 0.0439,
-      "brand_color": "hsl(40, 70%, 50%)",
+      "brand_color": "hsl(75, 70%, 50%)",
       "store_dimensions": {
         "width": 2.08,
         "height": 2.84,
@@ -9789,7 +9789,7 @@
       "drawdown_current": -0.0619,
       "volume_percentile": 0.938,
       "volatility_percentile": 0.0008,
-      "brand_color": "hsl(4, 70%, 50%)",
+      "brand_color": "hsl(87, 70%, 50%)",
       "store_dimensions": {
         "width": 1.76,
         "height": 2.45,
@@ -9837,7 +9837,7 @@
       "drawdown_current": -0.3646,
       "volume_percentile": 0.0811,
       "volatility_percentile": 0.1093,
-      "brand_color": "hsl(264, 70%, 50%)",
+      "brand_color": "hsl(95, 70%, 50%)",
       "store_dimensions": {
         "width": 2.69,
         "height": 3.61,
@@ -9885,7 +9885,7 @@
       "drawdown_current": -0.7889,
       "volume_percentile": 0.3348,
       "volatility_percentile": 0.6422,
-      "brand_color": "hsl(131, 70%, 50%)",
+      "brand_color": "hsl(311, 70%, 50%)",
       "store_dimensions": {
         "width": 2.82,
         "height": 3.77,
@@ -9933,7 +9933,7 @@
       "drawdown_current": -0.2694,
       "volume_percentile": 0.1812,
       "volatility_percentile": 0.2283,
-      "brand_color": "hsl(73, 70%, 50%)",
+      "brand_color": "hsl(58, 70%, 50%)",
       "store_dimensions": {
         "width": 2.41,
         "height": 3.26,
@@ -9981,7 +9981,7 @@
       "drawdown_current": -0.0151,
       "volume_percentile": 0.0056,
       "volatility_percentile": 0.087,
-      "brand_color": "hsl(74, 70%, 50%)",
+      "brand_color": "hsl(218, 70%, 50%)",
       "store_dimensions": {
         "width": 1.11,
         "height": 1.64,
@@ -10029,7 +10029,7 @@
       "drawdown_current": -0.1309,
       "volume_percentile": 0.0525,
       "volatility_percentile": 0.079,
-      "brand_color": "hsl(218, 70%, 50%)",
+      "brand_color": "hsl(195, 70%, 50%)",
       "store_dimensions": {
         "width": 1.32,
         "height": 1.9,
@@ -10077,7 +10077,7 @@
       "drawdown_current": -0.0911,
       "volume_percentile": 0.6995,
       "volatility_percentile": 0.3935,
-      "brand_color": "hsl(349, 70%, 50%)",
+      "brand_color": "hsl(315, 70%, 50%)",
       "store_dimensions": {
         "width": 1.13,
         "height": 1.66,
@@ -10125,7 +10125,7 @@
       "drawdown_current": -0.0568,
       "volume_percentile": 0.4444,
       "volatility_percentile": 0.4222,
-      "brand_color": "hsl(158, 70%, 50%)",
+      "brand_color": "hsl(250, 70%, 50%)",
       "store_dimensions": {
         "width": 1.83,
         "height": 2.54,
@@ -10173,7 +10173,7 @@
       "drawdown_current": -0.0649,
       "volume_percentile": 0.3323,
       "volatility_percentile": 0.166,
-      "brand_color": "hsl(273, 70%, 50%)",
+      "brand_color": "hsl(330, 70%, 50%)",
       "store_dimensions": {
         "width": 1.3,
         "height": 1.88,
@@ -10221,7 +10221,7 @@
       "drawdown_current": -0.1648,
       "volume_percentile": 0.0207,
       "volatility_percentile": 0.0966,
-      "brand_color": "hsl(223, 70%, 50%)",
+      "brand_color": "hsl(186, 70%, 50%)",
       "store_dimensions": {
         "width": 2.46,
         "height": 3.33,
@@ -10317,7 +10317,7 @@
       "drawdown_current": -0.3517,
       "volume_percentile": 0.655,
       "volatility_percentile": 0.3512,
-      "brand_color": "hsl(152, 70%, 50%)",
+      "brand_color": "hsl(310, 70%, 50%)",
       "store_dimensions": {
         "width": 2.67,
         "height": 3.58,
@@ -10365,7 +10365,7 @@
       "drawdown_current": -0.2061,
       "volume_percentile": 0.6379,
       "volatility_percentile": 0.0654,
-      "brand_color": "hsl(7, 70%, 50%)",
+      "brand_color": "hsl(349, 70%, 50%)",
       "store_dimensions": {
         "width": 1.48,
         "height": 2.11,
@@ -10413,7 +10413,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.0882,
       "volatility_percentile": 0.0359,
-      "brand_color": "hsl(16, 70%, 50%)",
+      "brand_color": "hsl(55, 70%, 50%)",
       "store_dimensions": {
         "width": 2.77,
         "height": 3.72,
@@ -10461,7 +10461,7 @@
       "drawdown_current": -0.8744,
       "volume_percentile": 0.2798,
       "volatility_percentile": 0.1038,
-      "brand_color": "hsl(173, 70%, 50%)",
+      "brand_color": "hsl(237, 70%, 50%)",
       "store_dimensions": {
         "width": 2.91,
         "height": 3.89,
@@ -10509,7 +10509,7 @@
       "drawdown_current": -0.0094,
       "volume_percentile": 0.0556,
       "volatility_percentile": 0.2745,
-      "brand_color": "hsl(102, 70%, 50%)",
+      "brand_color": "hsl(231, 70%, 50%)",
       "store_dimensions": {
         "width": 1.22,
         "height": 1.77,
@@ -10557,7 +10557,7 @@
       "drawdown_current": -0.1266,
       "volume_percentile": 0.2742,
       "volatility_percentile": 0.0662,
-      "brand_color": "hsl(88, 70%, 50%)",
+      "brand_color": "hsl(154, 70%, 50%)",
       "store_dimensions": {
         "width": 2.3,
         "height": 3.12,
@@ -10605,7 +10605,7 @@
       "drawdown_current": -0.2536,
       "volume_percentile": 0.2019,
       "volatility_percentile": 0.146,
-      "brand_color": "hsl(228, 70%, 50%)",
+      "brand_color": "hsl(261, 70%, 50%)",
       "store_dimensions": {
         "width": 1.89,
         "height": 2.62,
@@ -10653,7 +10653,7 @@
       "drawdown_current": -0.1632,
       "volume_percentile": 0.1017,
       "volatility_percentile": 0.0646,
-      "brand_color": "hsl(316, 70%, 50%)",
+      "brand_color": "hsl(113, 70%, 50%)",
       "store_dimensions": {
         "width": 1.46,
         "height": 2.08,
@@ -10701,7 +10701,7 @@
       "drawdown_current": -0.1518,
       "volume_percentile": 0.1113,
       "volatility_percentile": 0.1349,
-      "brand_color": "hsl(193, 70%, 50%)",
+      "brand_color": "hsl(323, 70%, 50%)",
       "store_dimensions": {
         "width": 1.99,
         "height": 2.74,
@@ -10749,7 +10749,7 @@
       "drawdown_current": -0.292,
       "volume_percentile": 0.1765,
       "volatility_percentile": 0.1836,
-      "brand_color": "hsl(247, 70%, 50%)",
+      "brand_color": "hsl(314, 70%, 50%)",
       "store_dimensions": {
         "width": 1.86,
         "height": 2.58,
@@ -10797,7 +10797,7 @@
       "drawdown_current": -0.0457,
       "volume_percentile": 0.0994,
       "volatility_percentile": 0.0958,
-      "brand_color": "hsl(26, 70%, 50%)",
+      "brand_color": "hsl(92, 70%, 50%)",
       "store_dimensions": {
         "width": 1.33,
         "height": 1.92,
@@ -10845,7 +10845,7 @@
       "drawdown_current": -0.0677,
       "volume_percentile": 0.0334,
       "volatility_percentile": 0.1516,
-      "brand_color": "hsl(170, 70%, 50%)",
+      "brand_color": "hsl(74, 70%, 50%)",
       "store_dimensions": {
         "width": 1.39,
         "height": 1.98,
@@ -10893,7 +10893,7 @@
       "drawdown_current": -0.1915,
       "volume_percentile": 0.3164,
       "volatility_percentile": 0.154,
-      "brand_color": "hsl(156, 70%, 50%)",
+      "brand_color": "hsl(277, 70%, 50%)",
       "store_dimensions": {
         "width": 1.91,
         "height": 2.64,
@@ -10941,7 +10941,7 @@
       "drawdown_current": -0.3402,
       "volume_percentile": 0.0064,
       "volatility_percentile": 0.34,
-      "brand_color": "hsl(200, 70%, 50%)",
+      "brand_color": "hsl(29, 70%, 50%)",
       "store_dimensions": {
         "width": 2.95,
         "height": 3.94,
@@ -10989,7 +10989,7 @@
       "drawdown_current": -0.1703,
       "volume_percentile": 0.2464,
       "volatility_percentile": 0.0806,
-      "brand_color": "hsl(202, 70%, 50%)",
+      "brand_color": "hsl(89, 70%, 50%)",
       "store_dimensions": {
         "width": 1.52,
         "height": 2.14,
@@ -11037,7 +11037,7 @@
       "drawdown_current": -0.5006,
       "volume_percentile": 0.7409,
       "volatility_percentile": 0.502,
-      "brand_color": "hsl(280, 70%, 50%)",
+      "brand_color": "hsl(99, 70%, 50%)",
       "store_dimensions": {
         "width": 2.48,
         "height": 3.35,
@@ -11085,7 +11085,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.2385,
       "volatility_percentile": 0.3591,
-      "brand_color": "hsl(132, 70%, 50%)",
+      "brand_color": "hsl(201, 70%, 50%)",
       "store_dimensions": {
         "width": 2.44,
         "height": 3.3,
@@ -11133,7 +11133,7 @@
       "drawdown_current": -0.1619,
       "volume_percentile": 0.1908,
       "volatility_percentile": 0.2267,
-      "brand_color": "hsl(109, 70%, 50%)",
+      "brand_color": "hsl(216, 70%, 50%)",
       "store_dimensions": {
         "width": 1.49,
         "height": 2.12,
@@ -11181,7 +11181,7 @@
       "drawdown_current": -0.0989,
       "volume_percentile": 0.2218,
       "volatility_percentile": 0.1205,
-      "brand_color": "hsl(97, 70%, 50%)",
+      "brand_color": "hsl(307, 70%, 50%)",
       "store_dimensions": {
         "width": 2.31,
         "height": 3.14,
@@ -11229,7 +11229,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.1526,
       "volatility_percentile": 0.0032,
-      "brand_color": "hsl(136, 70%, 50%)",
+      "brand_color": "hsl(182, 70%, 50%)",
       "store_dimensions": {
         "width": 1.79,
         "height": 2.48,
@@ -11277,7 +11277,7 @@
       "drawdown_current": -0.1538,
       "volume_percentile": 0.0397,
       "volatility_percentile": 0.091,
-      "brand_color": "hsl(291, 70%, 50%)",
+      "brand_color": "hsl(173, 70%, 50%)",
       "store_dimensions": {
         "width": 1.41,
         "height": 2.01,
@@ -11325,7 +11325,7 @@
       "drawdown_current": -0.1092,
       "volume_percentile": 0.7484,
       "volatility_percentile": 0.0854,
-      "brand_color": "hsl(339, 70%, 50%)",
+      "brand_color": "hsl(265, 70%, 50%)",
       "store_dimensions": {
         "width": 1.31,
         "height": 1.89,
@@ -11421,7 +11421,7 @@
       "drawdown_current": -0.0114,
       "volume_percentile": 0.1129,
       "volatility_percentile": 0.2043,
-      "brand_color": "hsl(261, 70%, 50%)",
+      "brand_color": "hsl(56, 70%, 50%)",
       "store_dimensions": {
         "width": 1.45,
         "height": 2.07,
@@ -11469,7 +11469,7 @@
       "drawdown_current": -0.3352,
       "volume_percentile": 0.4603,
       "volatility_percentile": 0.178,
-      "brand_color": "hsl(198, 70%, 50%)",
+      "brand_color": "hsl(327, 70%, 50%)",
       "store_dimensions": {
         "width": 1.61,
         "height": 2.26,
@@ -11517,7 +11517,7 @@
       "drawdown_current": -0.1079,
       "volume_percentile": 0.0429,
       "volatility_percentile": 0.174,
-      "brand_color": "hsl(136, 70%, 50%)",
+      "brand_color": "hsl(104, 70%, 50%)",
       "store_dimensions": {
         "width": 2.35,
         "height": 3.19,
@@ -11565,7 +11565,7 @@
       "drawdown_current": -0.2456,
       "volume_percentile": 0.2516,
       "volatility_percentile": 0.5435,
-      "brand_color": "hsl(356, 70%, 50%)",
+      "brand_color": "hsl(304, 70%, 50%)",
       "store_dimensions": {
         "width": 1.17,
         "height": 1.72,
@@ -11661,7 +11661,7 @@
       "drawdown_current": -0.1711,
       "volume_percentile": 0.2989,
       "volatility_percentile": 0.0088,
-      "brand_color": "hsl(188, 70%, 50%)",
+      "brand_color": "hsl(75, 70%, 50%)",
       "store_dimensions": {
         "width": 2.02,
         "height": 2.77,
@@ -11709,7 +11709,7 @@
       "drawdown_current": -0.2315,
       "volume_percentile": 0.6089,
       "volatility_percentile": 0.0734,
-      "brand_color": "hsl(49, 70%, 50%)",
+      "brand_color": "hsl(98, 70%, 50%)",
       "store_dimensions": {
         "width": 2.1,
         "height": 2.87,
@@ -11757,7 +11757,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.2862,
       "volatility_percentile": 0.2482,
-      "brand_color": "hsl(83, 70%, 50%)",
+      "brand_color": "hsl(219, 70%, 50%)",
       "store_dimensions": {
         "width": 1.23,
         "height": 1.78,
@@ -11805,7 +11805,7 @@
       "drawdown_current": -0.372,
       "volume_percentile": 0.903,
       "volatility_percentile": 0.2594,
-      "brand_color": "hsl(167, 70%, 50%)",
+      "brand_color": "hsl(230, 70%, 50%)",
       "store_dimensions": {
         "width": 2.62,
         "height": 3.53,
@@ -11901,7 +11901,7 @@
       "drawdown_current": -0.0872,
       "volume_percentile": 0.2162,
       "volatility_percentile": 0.2394,
-      "brand_color": "hsl(23, 70%, 50%)",
+      "brand_color": "hsl(298, 70%, 50%)",
       "store_dimensions": {
         "width": 2.25,
         "height": 3.06,
@@ -11949,7 +11949,7 @@
       "drawdown_current": -0.0235,
       "volume_percentile": 0.3347,
       "volatility_percentile": 0.2793,
-      "brand_color": "hsl(353, 70%, 50%)",
+      "brand_color": "hsl(104, 70%, 50%)",
       "store_dimensions": {
         "width": 1.18,
         "height": 1.73,
@@ -11997,7 +11997,7 @@
       "drawdown_current": 0.0,
       "volume_percentile": 0.4587,
       "volatility_percentile": 0.2027,
-      "brand_color": "hsl(187, 70%, 50%)",
+      "brand_color": "hsl(9, 70%, 50%)",
       "store_dimensions": {
         "width": 1.16,
         "height": 1.7,
@@ -12045,7 +12045,7 @@
       "drawdown_current": -0.0313,
       "volume_percentile": 0.0489,
       "volatility_percentile": 0.0223,
-      "brand_color": "hsl(16, 70%, 50%)",
+      "brand_color": "hsl(359, 70%, 50%)",
       "store_dimensions": {
         "width": 1.5,
         "height": 2.12,
@@ -12093,7 +12093,7 @@
       "drawdown_current": -0.3457,
       "volume_percentile": 0.3545,
       "volatility_percentile": 0.332,
-      "brand_color": "hsl(182, 70%, 50%)",
+      "brand_color": "hsl(70, 70%, 50%)",
       "store_dimensions": {
         "width": 2.83,
         "height": 3.78,
@@ -12141,7 +12141,7 @@
       "drawdown_current": -0.8504,
       "volume_percentile": 0.9936,
       "volatility_percentile": 0.6872,
-      "brand_color": "hsl(135, 70%, 50%)",
+      "brand_color": "hsl(9, 70%, 50%)",
       "store_dimensions": {
         "width": 2.73,
         "height": 3.66,
@@ -12189,7 +12189,7 @@
       "drawdown_current": -0.2018,
       "volume_percentile": 0.6184,
       "volatility_percentile": 0.1309,
-      "brand_color": "hsl(348, 70%, 50%)",
+      "brand_color": "hsl(65, 70%, 50%)",
       "store_dimensions": {
         "width": 1.45,
         "height": 2.06,
@@ -12237,7 +12237,7 @@
       "drawdown_current": -0.1191,
       "volume_percentile": 0.0747,
       "volatility_percentile": 0.1979,
-      "brand_color": "hsl(131, 70%, 50%)",
+      "brand_color": "hsl(283, 70%, 50%)",
       "store_dimensions": {
         "width": 1.84,
         "height": 2.55,
@@ -12333,7 +12333,7 @@
       "drawdown_current": -0.0946,
       "volume_percentile": 0.1955,
       "volatility_percentile": 0.1293,
-      "brand_color": "hsl(174, 70%, 50%)",
+      "brand_color": "hsl(317, 70%, 50%)",
       "store_dimensions": {
         "width": 1.58,
         "height": 2.23,
@@ -12381,7 +12381,7 @@
       "drawdown_current": -0.0199,
       "volume_percentile": 0.1272,
       "volatility_percentile": 0.0016,
-      "brand_color": "hsl(180, 70%, 50%)",
+      "brand_color": "hsl(317, 70%, 50%)",
       "store_dimensions": {
         "width": 2.64,
         "height": 3.55,
@@ -12477,7 +12477,7 @@
       "drawdown_current": -0.248,
       "volume_percentile": 0.4865,
       "volatility_percentile": 0.0327,
-      "brand_color": "hsl(315, 70%, 50%)",
+      "brand_color": "hsl(35, 70%, 50%)",
       "store_dimensions": {
         "width": 2.05,
         "height": 2.82,
@@ -12573,7 +12573,7 @@
       "drawdown_current": -0.2382,
       "volume_percentile": 0.6836,
       "volatility_percentile": 0.1413,
-      "brand_color": "hsl(67, 70%, 50%)",
+      "brand_color": "hsl(236, 70%, 50%)",
       "store_dimensions": {
         "width": 1.27,
         "height": 1.83,
@@ -12621,7 +12621,7 @@
       "drawdown_current": -0.0843,
       "volume_percentile": 0.1296,
       "volatility_percentile": 0.0423,
-      "brand_color": "hsl(188, 70%, 50%)",
+      "brand_color": "hsl(334, 70%, 50%)",
       "store_dimensions": {
         "width": 1.59,
         "height": 2.24,
@@ -12669,7 +12669,7 @@
       "drawdown_current": -0.8738,
       "volume_percentile": 0.5675,
       "volatility_percentile": 0.0492,
-      "brand_color": "hsl(41, 70%, 50%)",
+      "brand_color": "hsl(66, 70%, 50%)",
       "store_dimensions": {
         "width": 2.39,
         "height": 3.24,
@@ -12717,7 +12717,7 @@
       "drawdown_current": -0.2097,
       "volume_percentile": 0.1025,
       "volatility_percentile": 0.6026,
-      "brand_color": "hsl(50, 70%, 50%)",
+      "brand_color": "hsl(300, 70%, 50%)",
       "store_dimensions": {
         "width": 1.7,
         "height": 2.38,

@@ -46,12 +46,12 @@ export default function GoldenCityPage() {
         </div>
       </Suspense>
 
-      {/* Time slider overlay — bottom center */}
+      {/* Time slider overlay — bottom center (flush to bottom) */}
       <Suspense fallback={null}>
         <div
           style={{
             position: 'absolute',
-            bottom: 24,
+            bottom: 0,
             left: '50%',
             transform: 'translateX(-50%)',
             zIndex: 10,
@@ -62,12 +62,12 @@ export default function GoldenCityPage() {
         </div>
       </Suspense>
 
-      {/* Sector filter overlay — top left */}
+      {/* Sector filter overlay — top left (collapsible dropdown) */}
       <Suspense fallback={null}>
         <div
           style={{
             position: 'absolute',
-            top: 16,
+            top: 12,
             left: 16,
             zIndex: 10,
             pointerEvents: 'auto',
@@ -77,12 +77,12 @@ export default function GoldenCityPage() {
         </div>
       </Suspense>
 
-      {/* Minimap overlay — bottom left */}
+      {/* Minimap overlay — bottom left, above time slider */}
       <Suspense fallback={null}>
         <div
           style={{
             position: 'absolute',
-            bottom: 24,
+            bottom: 72,
             left: 16,
             zIndex: 10,
             pointerEvents: 'auto',
@@ -92,13 +92,13 @@ export default function GoldenCityPage() {
         </div>
       </Suspense>
 
-      {/* Agent leaderboard overlay — top right */}
+      {/* Agent leaderboard overlay — left side, above minimap */}
       <Suspense fallback={null}>
         <div
           style={{
             position: 'absolute',
-            top: 16,
-            right: 16,
+            bottom: 260,
+            left: 16,
             zIndex: 10,
             pointerEvents: 'auto',
           }}

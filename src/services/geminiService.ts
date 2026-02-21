@@ -328,8 +328,8 @@ export function getFeaturedAgents(): FeaturedAgent[] {
 
 // Simplified: fetchAgentDecisions now uses hierarchical cycle results
 export async function fetchAgentDecisions(
-  stocks: StockData[],
-  storeIndices: Int16Array,
+  _stocks: StockData[],
+  _storeIndices: Int16Array,
 ): Promise<AgentDecision[]> {
   // The hierarchical cycle is handled by whaleArena calling runHierarchicalCycle
   // This function now just returns empty — decisions come from the whale system

@@ -11,7 +11,6 @@ import {
   initFeaturedAgents,
   fetchAgentDecisions,
   applyDecisions,
-  getFeaturedAgents,
   type FeaturedAgent,
 } from '../services/geminiService.ts';
 import {
@@ -26,7 +25,7 @@ const STATE_ANALYZING = 0;
 const STATE_RUSHING = 1;
 const STATE_DOOR_FIGHTING = 2;
 const STATE_INSIDE = 3;
-const STATE_EXITING = 4;
+// STATE_EXITING = 4 was replaced by returning to STATE_ANALYZING
 
 // --- Color constants (r, g, b in 0-1 range) ---
 const MALE_COLOR = { r: 0x2C / 255, g: 0x3E / 255, b: 0x50 / 255 };   // #2C3E50
@@ -74,6 +73,7 @@ interface SimulationData {
 
 export interface CrowdSimulationResult {
   positions: Float32Array;
+  velocities: Float32Array;
   colors: Float32Array;
   states: Uint8Array;
   count: number;
@@ -390,15 +390,23 @@ export function useCrowdSimulation(): CrowdSimulationResult {
 
         s.stateTimers[i] -= 1;
         if (s.stateTimers[i] <= 0) {
-          s.states[i] = STATE_EXITING;
+          // Transition to ANALYZING with a pause before rushing to next store
+          s.states[i] = STATE_ANALYZING;
+          s.stateTimers[i] = 20 + fastRand() * 30; // 20-50 frame pause
 
           // Teleport to current store's door so agent exits cleanly
           s.positions[i3]     = s.doorPositions[storeIdx * 2];
           s.positions[i3 + 2] = s.doorPositions[storeIdx * 2 + 1];
 
+          // Give a small kick velocity away from the door
+          s.velocities[i3] = (fastRand() - 0.5) * 4;
+          s.velocities[i3 + 2] = (fastRand() + 0.5) * 3; // bias forward (away from store)
+
           const stocksArr = stocks;
-          if (stocksArr.length > 0) {
-            const newStoreIdx = Math.floor(fastRand() * stocksArr.length);
+          if (stocksArr.length > 1) {
+            // Force a DIFFERENT store than current one
+            let newStoreIdx = Math.floor(fastRand() * (stocksArr.length - 1));
+            if (newStoreIdx >= storeIdx) newStoreIdx++;
             const newStore = stocksArr[newStoreIdx];
             s.targets[i3] = s.doorPositions[newStoreIdx * 2];
             s.targets[i3 + 1] = 0;
@@ -434,6 +442,11 @@ export function useCrowdSimulation(): CrowdSimulationResult {
 
       if (s.states[i] === STATE_ANALYZING) {
         s.stateTimers[i] -= 1;
+        // Apply velocity so agents drift away from the store they just exited
+        s.velocities[i3] *= 0.94;
+        s.velocities[i3 + 2] *= 0.94;
+        s.positions[i3] += s.velocities[i3] * clampedDt;
+        s.positions[i3 + 2] += s.velocities[i3 + 2] * clampedDt;
         if (s.stateTimers[i] <= 0) {
           s.states[i] = STATE_RUSHING;
         }
@@ -650,6 +663,7 @@ export function useCrowdSimulation(): CrowdSimulationResult {
 
   return {
     positions: sim.positions,
+    velocities: sim.velocities,
     colors: sim.colors,
     states: sim.states,
     count: sim.count,

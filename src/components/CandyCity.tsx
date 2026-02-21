@@ -68,8 +68,11 @@ function CameraController({ enabled }: { enabled: boolean }) {
     if (selectedStock) {
       const { x, z } = selectedStock.city_position;
       const h = selectedStock.store_dimensions.height * (selectedStock.is_platinum ? 1.5 : 1);
-      targetPos.current.set(x + 8, h + 12, z + 15);
-      targetLookAt.current.set(x, h / 2, z);
+      const maxDim = Math.max(selectedStock.store_dimensions.width, h, selectedStock.store_dimensions.depth);
+      const platScale = selectedStock.is_platinum ? 1.8 : 1.0;
+      const dist = maxDim * 6 * platScale;
+      targetPos.current.set(x + dist * 0.5, h + dist * 0.8, z + dist);
+      targetLookAt.current.set(x, h * 0.4, z);
       isAnimating.current = true;
     } else {
       targetPos.current.set(0, 150, 150);
@@ -81,7 +84,7 @@ function CameraController({ enabled }: { enabled: boolean }) {
   useFrame(() => {
     if (!enabled || !isAnimating.current) return;
 
-    const speed = 0.03;
+    const speed = 0.06;
     camera.position.lerp(targetPos.current, speed);
     if (controlsRef.current) {
       controlsRef.current.target.lerp(targetLookAt.current, speed);

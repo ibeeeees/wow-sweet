@@ -154,12 +154,13 @@ export interface AgentFilters {
 }
 
 // --- Camera ---
-export enum ZoomLevel {
-  MACRO = 0,
-  SECTOR = 1,
-  STORE = 2,
-  INTERIOR = 3,
-}
+export const ZoomLevel = {
+  MACRO: 0,
+  SECTOR: 1,
+  STORE: 2,
+  INTERIOR: 3,
+} as const;
+export type ZoomLevel = (typeof ZoomLevel)[keyof typeof ZoomLevel];
 
 // --- Store Interior ---
 export interface StoreInteriorData {
@@ -185,12 +186,55 @@ export interface AnimationConfig {
 }
 
 // --- Leaderboard Entry ---
+export interface TradeRecord {
+  ticker: string;
+  action: 'BUY' | 'CALL' | 'PUT' | 'SHORT';
+  profit: number;
+  entryDate: string;
+  reasoning: string;
+}
+
 export interface LeaderboardEntry {
   id: string;
   name: string;
   profit: number;
   rank: number;
+  trades: TradeRecord[];
+  currentAction?: string;
+  currentTicker?: string;
+  winRate?: number;
+  totalTrades?: number;
+}
+
+// --- Trade Journal ---
+export interface ParsedTrade {
+  ticker: string;
+  action: string;
+  date: string;
+  price?: number;
+  notes: string;
+  outcome?: 'win' | 'loss' | 'open';
+  reasonForEntry: string;
+  reasonForExit?: string;
+  profit?: number;
+}
+
+// --- Agent Network ---
+export interface AgentNode {
+  id: string;
+  name: string;
+  type: 'whale' | 'featured';
+  color: string;
+  portfolioValue: number;
+  positions: { ticker: string; action: string; weight: number }[];
+}
+
+export interface AgentEdge {
+  source: string;
+  target: string;
+  sharedTickers: string[];
+  impactWeight: number;
 }
 
 // --- Pages ---
-export type PageName = 'city' | 'network' | 'agents' | 'playground';
+export type PageName = 'city' | 'network' | 'agents' | 'playground' | 'agent-network' | 'journal';

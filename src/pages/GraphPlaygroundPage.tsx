@@ -7,7 +7,6 @@
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useStore } from '../store/useStore';
 import { SECTORS, generateStockData, getCorrelationEdges, loadPipelineData, PLATINUM_COLOR } from '../data/stockData';
-import type { StockData } from '../types';
 
 const PAGE_BG = '#1a1a2e';
 const ACCENT = '#FFD700';
@@ -214,26 +213,84 @@ const FallbackCanvasGraph: React.FC<{
         ctx.setLineDash([]);
       });
 
-      // Draw nodes
+      // --- Shock edge glow overlay ---
       const now = Date.now();
+      if (shock.active) {
+        ctx.save();
+        links.forEach((link) => {
+          const srcShock = shock.affectedNodes.get(link.source);
+          const tgtShock = shock.affectedNodes.get(link.target);
+          if (!srcShock && !tgtShock) return;
+          const sp2 = positions.get(link.source);
+          const tp2 = positions.get(link.target);
+          if (!sp2 || !tp2) return;
+
+          let maxT = 0;
+          if (srcShock) {
+            const el = now - srcShock.timestamp;
+            if (el >= 0 && el < 2000) maxT = Math.max(maxT, srcShock.intensity * (1 - el / 2000));
+          }
+          if (tgtShock) {
+            const el = now - tgtShock.timestamp;
+            if (el >= 0 && el < 2000) maxT = Math.max(maxT, tgtShock.intensity * (1 - el / 2000));
+          }
+          if (maxT <= 0) return;
+
+          ctx.beginPath();
+          ctx.moveTo(sp2.x, sp2.y);
+          ctx.lineTo(tp2.x, tp2.y);
+          ctx.strokeStyle = `rgba(255, 215, 0, ${maxT * 0.6})`;
+          ctx.lineWidth = 1 + maxT * 5;
+          ctx.shadowColor = '#FFD700';
+          ctx.shadowBlur = maxT * 14;
+          ctx.stroke();
+        });
+        ctx.restore();
+      }
+
+      // --- Draw nodes ---
       nodes.forEach((node) => {
         const p = positions.get(node.id)!;
-        const radius = 2 + node.goldenScore * 1.5;
+        let radius = 2 + node.goldenScore * 1.5;
+        let drawX = p.x;
+        let drawY = p.y;
 
-        // Determine color (shock overlay)
+        // Shock effects: color overlay, position shaking, size pulsing, glow ring
         let fillColor = node.color;
+        let shockT = 0;
         if (shock.active && shock.affectedNodes.has(node.id)) {
           const { intensity, timestamp } = shock.affectedNodes.get(node.id)!;
           const elapsed = now - timestamp;
-          if (elapsed >= 0 && elapsed < 1500) {
-            const fade = Math.max(0, 1 - elapsed / 1500);
-            const t = intensity * fade;
-            fillColor = `rgb(${Math.round(255 * t + 136 * (1 - t))},${Math.round(215 * t + 136 * (1 - t))},${Math.round(0 * t + 136 * (1 - t))})`;
+          if (elapsed >= 0 && elapsed < 2000) {
+            const fade = Math.max(0, 1 - elapsed / 2000);
+            shockT = intensity * fade;
+            fillColor = `rgb(${Math.round(255 * shockT + 136 * (1 - shockT))},${Math.round(215 * shockT + 136 * (1 - shockT))},${Math.round(0 * shockT + 136 * (1 - shockT))})`;
+
+            // Position shaking — random oscillation scaled by intensity
+            const shake = shockT * 10;
+            drawX += (Math.random() - 0.5) * shake * 2;
+            drawY += (Math.random() - 0.5) * shake * 2;
+
+            // Size pulsing — grow/shrink with shock intensity
+            const pulse = 1 + shockT * 2 * (0.5 + 0.5 * Math.sin(now * 0.012));
+            radius *= pulse;
           }
         }
 
+        // Shock glow ring behind the node
+        if (shockT > 0.01) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(drawX, drawY, radius + 5 + shockT * 10, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255, 215, 0, ${shockT * 0.2})`;
+          ctx.shadowColor = '#FFD700';
+          ctx.shadowBlur = shockT * 18;
+          ctx.fill();
+          ctx.restore();
+        }
+
         ctx.beginPath();
-        ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+        ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
         ctx.fillStyle = fillColor;
         ctx.fill();
 
@@ -252,9 +309,30 @@ const FallbackCanvasGraph: React.FC<{
           ctx.fillStyle = 'rgba(255,255,255,0.6)';
           ctx.font = '9px system-ui';
           ctx.textAlign = 'left';
-          ctx.fillText(node.id, p.x + radius + 2, p.y + 3);
+          ctx.fillText(node.id, drawX + radius + 2, drawY + 3);
         }
       });
+
+      // --- Expanding ripple rings from shock source ---
+      if (shock.active && shock.sourceNode) {
+        const sourcePos = positions.get(shock.sourceNode);
+        const sourceInfo = shock.affectedNodes.get(shock.sourceNode);
+        if (sourcePos && sourceInfo) {
+          const elapsed = now - sourceInfo.timestamp;
+          for (let ring = 0; ring < 3; ring++) {
+            const ringElapsed = elapsed - ring * 500;
+            if (ringElapsed < 0 || ringElapsed > 2500) continue;
+            const progress = ringElapsed / 2500;
+            const ringRadius = progress * Math.min(w, h) * 0.45;
+            const ringAlpha = (1 - progress) * 0.35;
+            ctx.beginPath();
+            ctx.arc(sourcePos.x, sourcePos.y, ringRadius, 0, Math.PI * 2);
+            ctx.strokeStyle = `rgba(255, 215, 0, ${ringAlpha})`;
+            ctx.lineWidth = 3 * (1 - progress);
+            ctx.stroke();
+          }
+        }
+      }
 
       frameRef.current = requestAnimationFrame(simulate);
     }
@@ -404,7 +482,7 @@ export default function GraphPlaygroundPage() {
         for (const neighbor of neighbors) {
           if (!visited.has(neighbor.target)) {
             visited.add(neighbor.target);
-            const nextIntensity = current.intensity * (1 - Math.abs(neighbor.weight)) * 0.7;
+            const nextIntensity = current.intensity * (1 - Math.abs(neighbor.weight) * 0.5) * 0.8;
             queue.push({
               id: neighbor.target,
               intensity: nextIntensity,
@@ -420,7 +498,7 @@ export default function GraphPlaygroundPage() {
       const maxDelay = Math.max(0, ...Array.from(affected.values()).map((v) => v.timestamp - now));
       setTimeout(() => {
         setShock({ active: false, sourceNode: null, affectedNodes: new Map() });
-      }, maxDelay + 2000);
+      }, maxDelay + 3000);
     },
     [adjacency],
   );
@@ -464,8 +542,8 @@ export default function GraphPlaygroundPage() {
         const { intensity, timestamp } = shock.affectedNodes.get(id)!;
         const elapsed = Date.now() - timestamp;
         if (elapsed < 0) return node.color;
-        if (elapsed < 1500) {
-          const fade = Math.max(0, 1 - elapsed / 1500);
+        if (elapsed < 2000) {
+          const fade = Math.max(0, 1 - elapsed / 2000);
           const t = intensity * fade;
           const baseColor = node.color || '#888888';
           const br = parseInt(baseColor.slice(1, 3), 16) || 136;

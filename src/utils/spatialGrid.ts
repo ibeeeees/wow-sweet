@@ -4,13 +4,11 @@
 // ============================================================
 
 export class SpatialGrid {
-  private cellSize: number;
   private invCellSize: number;
   private cells: Map<number, number[]>;
   private neighborBuffer: number[];
 
   constructor(cellSize = 4.0) {
-    this.cellSize = cellSize;
     this.invCellSize = 1.0 / cellSize;
     this.cells = new Map();
     this.neighborBuffer = [];

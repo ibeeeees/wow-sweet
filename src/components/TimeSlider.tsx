@@ -131,8 +131,37 @@ export const TimeSlider: React.FC = () => {
         ))}
       </div>
 
-      {/* Current date */}
-      <div style={dateDisplayStyle}>{formatDisplayDate(timeSlider.currentDate)}</div>
+      {/* Current date + date picker */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        <div style={dateDisplayStyle}>{formatDisplayDate(timeSlider.currentDate)}</div>
+        <input
+          type="date"
+          value={timeSlider.currentDate}
+          min="2019-01-02"
+          max="2027-12-31"
+          onChange={(e) => {
+            const val = e.target.value;
+            if (val) {
+              setCurrentDate(val);
+              const ts = dateStrToTs(val);
+              if (ts > TODAY_TS) setTimeMode('future');
+              else if (ts > new Date('2024-12-31').getTime()) setTimeMode('present');
+              else setTimeMode('historical');
+            }
+          }}
+          style={{
+            background: 'rgba(255,255,255,0.08)',
+            border: '1px solid rgba(255,105,180,0.3)',
+            borderRadius: 4,
+            color: '#FF69B4',
+            fontSize: 10,
+            padding: '2px 6px',
+            cursor: 'pointer',
+            fontFamily: 'monospace',
+            colorScheme: 'dark',
+          }}
+        />
+      </div>
 
       {/* Slider track */}
       <div style={sliderRowStyle}>
@@ -217,7 +246,7 @@ const containerStyle: React.CSSProperties = {
   bottom: 0,
   left: 0,
   width: '100%',
-  height: 80,
+  height: 64,
   background: 'rgba(26, 26, 46, 0.9)',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',

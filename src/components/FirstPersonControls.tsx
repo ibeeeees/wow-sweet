@@ -3,7 +3,7 @@
 // WASD movement at ground level, mouse look via pointer lock.
 // ============================================================
 
-import { useRef, useEffect, useCallback } from 'react';
+import { useRef, useEffect } from 'react';
 import { useThree, useFrame } from '@react-three/fiber';
 import * as THREE from 'three';
 

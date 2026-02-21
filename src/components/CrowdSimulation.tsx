@@ -16,7 +16,7 @@ const STATE_INSIDE = 3;
 const STATE_DOOR_FIGHTING = 2;
 
 export function CrowdSimulation() {
-  const { positions, colors, states, count, featuredAgents, storeAgentCounts, storeDoorCounts, storeLaneCounts, update } = useCrowdSimulation();
+  const { positions, velocities, colors, states, count, featuredAgents, storeAgentCounts, storeDoorCounts, storeLaneCounts, update } = useCrowdSimulation();
   const setStoreCrowdData = useStore((s) => s.setStoreCrowdData);
   const crowdFrameRef = useRef(0);
   const [bubbles, setBubbles] = useState<Array<{
@@ -128,42 +128,55 @@ export function CrowdSimulation() {
       const baseY = 0.22;
       const y = baseY + runBob + fightBob;
 
-      // Face direction of movement (approx using velocity from positions)
-      const facingAngle = Math.atan2(
-        positions[i3] - (positions[i3] + 0.01),
-        positions[i3 + 2] - (positions[i3 + 2] + 0.01)
-      );
+      // Face direction of movement using actual velocity data
+      const vx = velocities[i3];
+      const vz = velocities[i3 + 2];
+      const speed = Math.sqrt(vx * vx + vz * vz);
+      const facingAngle = speed > 0.1 ? Math.atan2(vx, vz) : 0;
+
+      // Forward lean proportional to speed
+      const lean = isFighting ? 0.2 : Math.min(0.15, speed * 0.02);
+
+      // Offsets rotated by facing angle for briefcase and legs
+      const cosF = Math.cos(facingAngle);
+      const sinF = Math.sin(facingAngle);
 
       // Body (torso)
       dummy.position.set(px, y, pz);
       dummy.scale.set(1, 1, 1);
-      dummy.rotation.set(isFighting ? 0.2 : 0.1, 0, 0); // lean forward
+      dummy.rotation.set(lean, facingAngle, 0);
       dummy.updateMatrix();
       bodyMesh.setMatrixAt(i, dummy.matrix);
 
       // Head (on top of body)
       dummy.position.set(px, y + 0.26, pz);
-      dummy.rotation.set(0, 0, 0);
+      dummy.rotation.set(0, facingAngle, 0);
       dummy.updateMatrix();
       headMesh.setMatrixAt(i, dummy.matrix);
 
       // Briefcase (at right hand, swings while running)
       const briefSwing = Math.sin(phase + Math.PI) * 0.08;
-      dummy.position.set(px + 0.15, y - 0.1 + briefSwing, pz);
-      dummy.rotation.set(0, 0, isFighting ? 0.3 : 0);
+      const bx = px + cosF * 0.0 + sinF * 0.15;
+      const bz = pz - sinF * 0.0 + cosF * 0.15;
+      dummy.position.set(bx, y - 0.1 + briefSwing, bz);
+      dummy.rotation.set(0, facingAngle, isFighting ? 0.3 : 0);
       dummy.updateMatrix();
       briefMesh.setMatrixAt(i, dummy.matrix);
 
-      // Left leg (forward swing)
-      dummy.position.set(px - 0.04, y - 0.18, pz);
-      dummy.rotation.set(legSwing, 0, 0);
+      // Left leg (forward swing, offset rotated)
+      const llx = px + sinF * (-0.04);
+      const llz = pz + cosF * (-0.04);
+      dummy.position.set(llx, y - 0.18, llz);
+      dummy.rotation.set(legSwing, facingAngle, 0);
       dummy.scale.set(1, 1, 1);
       dummy.updateMatrix();
       leftLeg.setMatrixAt(i, dummy.matrix);
 
-      // Right leg (opposite swing)
-      dummy.position.set(px + 0.04, y - 0.18, pz);
-      dummy.rotation.set(-legSwing, 0, 0);
+      // Right leg (opposite swing, offset rotated)
+      const rlx = px + sinF * 0.04;
+      const rlz = pz + cosF * 0.04;
+      dummy.position.set(rlx, y - 0.18, rlz);
+      dummy.rotation.set(-legSwing, facingAngle, 0);
       dummy.updateMatrix();
       rightLeg.setMatrixAt(i, dummy.matrix);
 
