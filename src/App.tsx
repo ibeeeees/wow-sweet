@@ -1,7 +1,7 @@
 import { useEffect, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { useStore } from './store/useStore';
-import { generateStockData, getCorrelationEdges } from './data/stockData';
+import { generateStockData, getCorrelationEdges, loadPipelineData, modulateStocksByTime } from './data/stockData';
 import type { PageName } from './types';
 
 const GoldenCityPage = lazy(() => import('./pages/GoldenCityPage'));
@@ -49,7 +49,7 @@ function NavBar() {
         fontWeight: 700, fontSize: 16, color: '#FFD700',
         marginRight: 24, letterSpacing: '0.5px',
       }}>
-        {'\u{1F36C}'} SweetReturns
+        {'\u{1F36B}'} Wolf of Wall Sweet
       </div>
       {NAV_ITEMS.map((item) => (
         <NavLink
@@ -83,22 +83,49 @@ function NavBar() {
 
 export default function App() {
   const setStocks = useStore((s) => s.setStocks);
+  const setBaseStocks = useStore((s) => s.setBaseStocks);
+  const setModulatedBiases = useStore((s) => s.setModulatedBiases);
   const setCorrelationEdges = useStore((s) => s.setCorrelationEdges);
   const setAgentLeaderboard = useStore((s) => s.setAgentLeaderboard);
+  const baseStocks = useStore((s) => s.baseStocks);
+  const timeSlider = useStore((s) => s.timeSlider);
 
   useEffect(() => {
-    const stocks = generateStockData();
-    setStocks(stocks);
-    const edges = getCorrelationEdges(stocks, 0.5);
-    setCorrelationEdges(edges);
-    const leaders = Array.from({ length: 100 }, (_, i) => ({
-      id: `agent_${Math.floor(Math.random() * 99999)}`,
-      name: `Agent_${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
-      profit: Math.floor(50000 - i * 400 + Math.random() * 200),
-      rank: i + 1,
-    }));
-    setAgentLeaderboard(leaders);
-  }, [setStocks, setCorrelationEdges, setAgentLeaderboard]);
+    async function init() {
+      let stocks;
+      let edges;
+      try {
+        // Load real pipeline data
+        const pipeline = await loadPipelineData();
+        stocks = pipeline.stocks;
+        edges = pipeline.edges;
+        console.log(`[SweetReturns] Loaded ${stocks.length} stocks from pipeline data`);
+      } catch {
+        // Fallback to synthetic data
+        console.warn('[SweetReturns] Pipeline data unavailable, using synthetic data');
+        stocks = generateStockData();
+        edges = getCorrelationEdges(stocks, 0.5);
+      }
+      setStocks(stocks);
+      setBaseStocks(stocks);
+      setCorrelationEdges(edges);
+      const leaders = Array.from({ length: 100 }, (_, i) => ({
+        id: `agent_${Math.floor(Math.random() * 99999)}`,
+        name: `Agent_${String(Math.floor(Math.random() * 9999)).padStart(4, '0')}`,
+        profit: Math.floor(50000 - i * 400 + Math.random() * 200),
+        rank: i + 1,
+      }));
+      setAgentLeaderboard(leaders);
+    }
+    init();
+  }, [setStocks, setBaseStocks, setCorrelationEdges, setAgentLeaderboard]);
+
+  // Time modulation: update biases when date/mode changes (without re-initializing simulation)
+  useEffect(() => {
+    if (baseStocks.length === 0) return;
+    const modulated = modulateStocksByTime(baseStocks, timeSlider.currentDate, timeSlider.mode);
+    setModulatedBiases(modulated.map((s) => s.direction_bias));
+  }, [baseStocks, timeSlider.currentDate, timeSlider.mode, setModulatedBiases]);
 
   return (
     <BrowserRouter>

@@ -1,77 +1,264 @@
 // ============================================================
-// SweetReturns — Crowd Rendering with InstancedMesh
-// Renders thousands of agents using Three.js instanced rendering
+// SweetReturns — Crowd Rendering: Business-person agents
+// Body (capsule) + Head (sphere) + Briefcase (box) + Legs (2 capsules)
+// 5 InstancedMeshes = 5 draw calls total for all 10,000 agents
 // ============================================================
 
-import { useRef, useMemo } from 'react';
+import { useRef, useMemo, useState } from 'react';
 import { useFrame } from '@react-three/fiber';
+import { Html } from '@react-three/drei';
 import * as THREE from 'three';
 import { useCrowdSimulation } from '../hooks/useCrowdSimulation.ts';
+import { useStore } from '../store/useStore.ts';
+
+// Agent state constants (must match useCrowdSimulation.ts)
+const STATE_INSIDE = 3;
+const STATE_DOOR_FIGHTING = 2;
 
 export function CrowdSimulation() {
-  const { positions, colors, count, update } = useCrowdSimulation();
-  const meshRef = useRef<THREE.InstancedMesh>(null);
+  const { positions, colors, states, count, featuredAgents, storeAgentCounts, storeDoorCounts, storeLaneCounts, update } = useCrowdSimulation();
+  const setStoreCrowdData = useStore((s) => s.setStoreCrowdData);
+  const crowdFrameRef = useRef(0);
+  const [bubbles, setBubbles] = useState<Array<{
+    x: number; y: number; z: number;
+    name: string; action: string; reasoning: string; ticker: string;
+  }>>([]);
+
+  const bodyRef = useRef<THREE.InstancedMesh>(null);
+  const headRef = useRef<THREE.InstancedMesh>(null);
+  const briefcaseRef = useRef<THREE.InstancedMesh>(null);
+  const leftLegRef = useRef<THREE.InstancedMesh>(null);
+  const rightLegRef = useRef<THREE.InstancedMesh>(null);
+
   const dummy = useMemo(() => new THREE.Object3D(), []);
 
-  // Create geometry once
-  const geometry = useMemo(() => {
-    return new THREE.SphereGeometry(0.15, 8, 6);
-  }, []);
+  // Torso: wider capsule for suit jacket look
+  const bodyGeo = useMemo(() => new THREE.CapsuleGeometry(0.12, 0.18, 4, 8), []);
+  // Head
+  const headGeo = useMemo(() => new THREE.SphereGeometry(0.08, 6, 6), []);
+  // Briefcase: small flat box
+  const briefcaseGeo = useMemo(() => new THREE.BoxGeometry(0.1, 0.07, 0.04), []);
+  // Legs: thin capsules
+  const legGeo = useMemo(() => new THREE.CapsuleGeometry(0.035, 0.14, 3, 6), []);
 
-  // Create material once
-  const material = useMemo(() => {
-    return new THREE.MeshLambertMaterial();
-  }, []);
+  // Materials
+  const bodyMat = useMemo(() => new THREE.MeshLambertMaterial(), []);
+  const headMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#F5DEB3' }), []);
+  const briefcaseMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#4A3728' }), []);
+  const legMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#1a1a2e' }), []);
 
   useFrame((_state, delta) => {
-    if (!meshRef.current || count === 0) return;
+    if (!bodyRef.current || !headRef.current || !briefcaseRef.current
+        || !leftLegRef.current || !rightLegRef.current || count === 0) return;
 
-    // Run physics update
+    // Run physics
     update(delta);
 
-    const mesh = meshRef.current;
+    const bodyMesh = bodyRef.current;
+    const headMesh = headRef.current;
+    const briefMesh = briefcaseRef.current;
+    const leftLeg = leftLegRef.current;
+    const rightLeg = rightLegRef.current;
+    const time = _state.clock.elapsedTime;
 
-    // Update instance matrices from positions
-    for (let i = 0; i < count; i++) {
-      const i3 = i * 3;
-      dummy.position.set(
-        positions[i3],
-        positions[i3 + 1] + 0.15, // offset Y so agents sit on ground
-        positions[i3 + 2],
-      );
-      dummy.updateMatrix();
-      mesh.setMatrixAt(i, dummy.matrix);
-    }
-
-    // Update instance colors from colors array
-    if (!mesh.instanceColor) {
-      mesh.instanceColor = new THREE.InstancedBufferAttribute(
+    // Ensure instanceColor on body
+    if (!bodyMesh.instanceColor) {
+      bodyMesh.instanceColor = new THREE.InstancedBufferAttribute(
         new Float32Array(count * 3), 3,
       );
     }
 
-    const colorAttr = mesh.instanceColor;
-    const colorArray = colorAttr.array as Float32Array;
+    const bodyColorArray = bodyMesh.instanceColor.array as Float32Array;
+
     for (let i = 0; i < count; i++) {
+      const i3 = i * 3;
       const i4 = i * 4;
-      const i3c = i * 3;
-      // colors is RGBA (4 per agent), instanceColor needs RGB (3 per agent)
-      colorArray[i3c] = colors[i4];
-      colorArray[i3c + 1] = colors[i4 + 1];
-      colorArray[i3c + 2] = colors[i4 + 2];
+      const px = positions[i3];
+      const pz = positions[i3 + 2];
+      const state = states[i];
+
+      // Agents inside stores — visible, standing idle at their trade lane
+      if (state === STATE_INSIDE) {
+        const idlePhase = time * 2 + i * 1.3;
+        const idleSway = Math.sin(idlePhase) * 0.008;
+        const baseY = 0.22;
+
+        // Body (standing upright, no forward lean)
+        dummy.position.set(px + idleSway, baseY, pz);
+        dummy.scale.set(1, 1, 1);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        bodyMesh.setMatrixAt(i, dummy.matrix);
+
+        // Head
+        dummy.position.set(px + idleSway, baseY + 0.26, pz);
+        dummy.updateMatrix();
+        headMesh.setMatrixAt(i, dummy.matrix);
+
+        // Briefcase (at side, still)
+        dummy.position.set(px + 0.15, baseY - 0.12, pz);
+        dummy.updateMatrix();
+        briefMesh.setMatrixAt(i, dummy.matrix);
+
+        // Legs (standing still)
+        dummy.position.set(px - 0.04, baseY - 0.18, pz);
+        dummy.rotation.set(0, 0, 0);
+        dummy.updateMatrix();
+        leftLeg.setMatrixAt(i, dummy.matrix);
+
+        dummy.position.set(px + 0.04, baseY - 0.18, pz);
+        dummy.updateMatrix();
+        rightLeg.setMatrixAt(i, dummy.matrix);
+
+        // Body color
+        bodyColorArray[i3] = colors[i4];
+        bodyColorArray[i3 + 1] = colors[i4 + 1];
+        bodyColorArray[i3 + 2] = colors[i4 + 2];
+        continue;
+      }
+
+      // Animation phase per agent
+      const phase = time * 8 + i * 1.7;
+      const runBob = Math.abs(Math.sin(phase)) * 0.04;
+      const legSwing = Math.sin(phase) * 0.4; // leg swing angle
+      const isFighting = state === STATE_DOOR_FIGHTING;
+
+      // Fighting agents jostle more
+      const fightBob = isFighting ? Math.sin(time * 12 + i * 2.3) * 0.03 : 0;
+      const baseY = 0.22;
+      const y = baseY + runBob + fightBob;
+
+      // Face direction of movement (approx using velocity from positions)
+      const facingAngle = Math.atan2(
+        positions[i3] - (positions[i3] + 0.01),
+        positions[i3 + 2] - (positions[i3 + 2] + 0.01)
+      );
+
+      // Body (torso)
+      dummy.position.set(px, y, pz);
+      dummy.scale.set(1, 1, 1);
+      dummy.rotation.set(isFighting ? 0.2 : 0.1, 0, 0); // lean forward
+      dummy.updateMatrix();
+      bodyMesh.setMatrixAt(i, dummy.matrix);
+
+      // Head (on top of body)
+      dummy.position.set(px, y + 0.26, pz);
+      dummy.rotation.set(0, 0, 0);
+      dummy.updateMatrix();
+      headMesh.setMatrixAt(i, dummy.matrix);
+
+      // Briefcase (at right hand, swings while running)
+      const briefSwing = Math.sin(phase + Math.PI) * 0.08;
+      dummy.position.set(px + 0.15, y - 0.1 + briefSwing, pz);
+      dummy.rotation.set(0, 0, isFighting ? 0.3 : 0);
+      dummy.updateMatrix();
+      briefMesh.setMatrixAt(i, dummy.matrix);
+
+      // Left leg (forward swing)
+      dummy.position.set(px - 0.04, y - 0.18, pz);
+      dummy.rotation.set(legSwing, 0, 0);
+      dummy.scale.set(1, 1, 1);
+      dummy.updateMatrix();
+      leftLeg.setMatrixAt(i, dummy.matrix);
+
+      // Right leg (opposite swing)
+      dummy.position.set(px + 0.04, y - 0.18, pz);
+      dummy.rotation.set(-legSwing, 0, 0);
+      dummy.updateMatrix();
+      rightLeg.setMatrixAt(i, dummy.matrix);
+
+      // Body color from simulation (gender/candy carry)
+      bodyColorArray[i3] = colors[i4];
+      bodyColorArray[i3 + 1] = colors[i4 + 1];
+      bodyColorArray[i3 + 2] = colors[i4 + 2];
     }
 
-    mesh.instanceMatrix.needsUpdate = true;
-    colorAttr.needsUpdate = true;
+    // Highlight featured (Gemini-powered) agents with golden body color
+    for (const agent of featuredAgents) {
+      const idx = agent.index;
+      if (idx < count) {
+        // Golden tint for AI agents
+        bodyColorArray[idx * 3] = 1.0;       // R
+        bodyColorArray[idx * 3 + 1] = 0.84;  // G (gold)
+        bodyColorArray[idx * 3 + 2] = 0.0;   // B
+      }
+    }
+
+    bodyMesh.instanceMatrix.needsUpdate = true;
+    bodyMesh.instanceColor.needsUpdate = true;
+    headMesh.instanceMatrix.needsUpdate = true;
+    briefMesh.instanceMatrix.needsUpdate = true;
+    leftLeg.instanceMatrix.needsUpdate = true;
+    rightLeg.instanceMatrix.needsUpdate = true;
+
+    // Push per-store crowd data to Zustand every 60 frames (~1s)
+    crowdFrameRef.current++;
+    if (crowdFrameRef.current % 60 === 0) {
+      setStoreCrowdData(storeAgentCounts, storeDoorCounts, storeLaneCounts);
+    }
+
+    // Update thought bubbles every 30 frames
+    if (Math.floor(time * 60) % 30 === 0) {
+      const newBubbles = featuredAgents
+        .filter((a) => a.decision && Date.now() - a.lastUpdated < 15000 && a.index < count)
+        .slice(0, 5) // Show max 5 bubbles at a time
+        .map((a) => ({
+          x: positions[a.index * 3],
+          y: 1.2,
+          z: positions[a.index * 3 + 2],
+          name: a.name,
+          action: a.decision!.action,
+          reasoning: a.decision!.reasoning,
+          ticker: a.decision!.targetTicker,
+        }));
+      setBubbles(newBubbles);
+    }
   });
 
   if (count === 0) return null;
 
+  const actionColors: Record<string, string> = {
+    BUY: '#00FF7F', CALL: '#00BFFF', PUT: '#FFD700', SHORT: '#FF4500',
+  };
+
   return (
-    <instancedMesh
-      ref={meshRef}
-      args={[geometry, material, count]}
-      frustumCulled={false}
-    />
+    <group>
+      {/* Agent torso (suit jacket) */}
+      <instancedMesh ref={bodyRef} args={[bodyGeo, bodyMat, count]} frustumCulled={false} />
+      {/* Agent head (skin tone) */}
+      <instancedMesh ref={headRef} args={[headGeo, headMat, count]} frustumCulled={false} />
+      {/* Briefcase */}
+      <instancedMesh ref={briefcaseRef} args={[briefcaseGeo, briefcaseMat, count]} frustumCulled={false} />
+      {/* Left leg */}
+      <instancedMesh ref={leftLegRef} args={[legGeo, legMat, count]} frustumCulled={false} />
+      {/* Right leg */}
+      <instancedMesh ref={rightLegRef} args={[legGeo, legMat, count]} frustumCulled={false} />
+
+      {/* Gemini AI thought bubbles */}
+      {bubbles.map((b, i) => (
+        <Html key={i} position={[b.x, b.y, b.z]} center
+          style={{ pointerEvents: 'none', userSelect: 'none' }}>
+          <div style={{
+            background: 'rgba(10, 8, 20, 0.92)',
+            border: `1px solid ${actionColors[b.action] || '#FFD700'}`,
+            borderRadius: 8,
+            padding: '6px 10px',
+            maxWidth: 180,
+            fontFamily: 'monospace',
+            fontSize: 10,
+            lineHeight: 1.3,
+            color: '#fff',
+            boxShadow: `0 0 12px ${actionColors[b.action] || '#FFD700'}44`,
+          }}>
+            <div style={{ fontWeight: 700, color: '#FFD700', marginBottom: 2 }}>
+              {b.name} <span style={{ color: actionColors[b.action], fontSize: 9 }}>{b.action}</span>
+            </div>
+            <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9 }}>
+              {b.ticker}: {b.reasoning}
+            </div>
+          </div>
+        </Html>
+      ))}
+    </group>
   );
 }

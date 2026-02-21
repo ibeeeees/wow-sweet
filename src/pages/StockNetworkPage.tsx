@@ -4,7 +4,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { SECTORS, generateStockData, getCorrelationEdges } from '../data/stockData';
+import { SECTORS, generateStockData, getCorrelationEdges, loadPipelineData } from '../data/stockData';
 import type { StockData, GraphEdge } from '../types';
 
 // Dynamic import holder for ForceGraph3D; loaded inside component useEffect
@@ -91,7 +91,7 @@ const D3FallbackGraph: React.FC<{
         height={svgHeight}
         style={{ background: '#0a0a1e', display: 'block', margin: '0 auto' }}
       >
-        {/* Edges */}
+        {/* Edges — interlocked candy cane pairs */}
         {edges.map((edge, idx) => {
           const s = positions.get(typeof edge.source === 'string' ? edge.source : '');
           const t = positions.get(typeof edge.target === 'string' ? edge.target : '');
@@ -99,17 +99,46 @@ const D3FallbackGraph: React.FC<{
           const isHighlighted =
             highlightedNode &&
             (edge.source === highlightedNode || edge.target === highlightedNode);
+
+          // Direction & perpendicular
+          const dx = t.x - s.x;
+          const dy = t.y - s.y;
+          const len = Math.sqrt(dx * dx + dy * dy) || 1;
+          const nx = -dy / len;  // perpendicular
+          const ny = dx / len;
+          const hookR = Math.min(len * 0.15, 10);
+
+          // Hook origins near midpoint
+          const mx = (s.x + t.x) / 2;
+          const my = (s.y + t.y) / 2;
+          const hax = mx - (dx / len) * hookR * 0.35;
+          const hay = my - (dy / len) * hookR * 0.35;
+          const hbx = mx + (dx / len) * hookR * 0.35;
+          const hby = my + (dy / len) * hookR * 0.35;
+
+          // Cane A: source → hookA, J-hook curls in +perp direction
+          const hookEndAx = hax + (dx / len) * hookR * 0.7 + nx * hookR * 0.7;
+          const hookEndAy = hay + (dy / len) * hookR * 0.7 + ny * hookR * 0.7;
+          const pathA = `M ${s.x} ${s.y} L ${hax} ${hay} Q ${hax + nx * hookR} ${hay + ny * hookR} ${hookEndAx} ${hookEndAy}`;
+
+          // Cane B: target → hookB, J-hook curls in -perp direction (interlocked)
+          const hookEndBx = hbx - (dx / len) * hookR * 0.7 - nx * hookR * 0.7;
+          const hookEndBy = hby - (dy / len) * hookR * 0.7 - ny * hookR * 0.7;
+          const pathB = `M ${t.x} ${t.y} L ${hbx} ${hby} Q ${hbx - nx * hookR} ${hby - ny * hookR} ${hookEndBx} ${hookEndBy}`;
+
+          const baseOpacity = isHighlighted ? 0.9 : 0.15;
+          const width = isHighlighted ? 1.8 : 0.6;
+          const stripeColor = isHighlighted ? ACCENT : '#cc3333';
+
           return (
-            <line
-              key={idx}
-              x1={s.x}
-              y1={s.y}
-              x2={t.x}
-              y2={t.y}
-              stroke={isHighlighted ? ACCENT : '#333355'}
-              strokeWidth={isHighlighted ? 1.5 : 0.3}
-              strokeOpacity={isHighlighted ? 0.9 : 0.15}
-            />
+            <g key={idx}>
+              {/* White base layer */}
+              <path d={pathA} stroke="#ffffff" strokeWidth={width + 0.4} fill="none" strokeOpacity={baseOpacity} strokeLinecap="round" />
+              <path d={pathB} stroke="#ffffff" strokeWidth={width + 0.4} fill="none" strokeOpacity={baseOpacity} strokeLinecap="round" />
+              {/* Red/gold stripe layer (dashed for candy cane effect) */}
+              <path d={pathA} stroke={stripeColor} strokeWidth={width} fill="none" strokeDasharray="3,3" strokeOpacity={baseOpacity} strokeLinecap="round" />
+              <path d={pathB} stroke={stripeColor} strokeWidth={width} fill="none" strokeDasharray="3,3" strokeOpacity={baseOpacity * 0.9} strokeLinecap="round" />
+            </g>
           );
         })}
         {/* Nodes */}
@@ -167,10 +196,14 @@ export default function StockNetworkPage() {
   // Initialize stocks if empty
   useEffect(() => {
     if (stocks.length === 0) {
-      const generated = generateStockData();
-      setStocks(generated);
+      loadPipelineData()
+        .then(({ stocks: s, edges }) => {
+          setStocks(s);
+          setCorrelationEdges(edges);
+        })
+        .catch(() => setStocks(generateStockData()));
     }
-  }, [stocks.length, setStocks]);
+  }, [stocks.length, setStocks, setCorrelationEdges]);
 
   // Recompute edges when threshold changes
   useEffect(() => {

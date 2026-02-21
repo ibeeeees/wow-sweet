@@ -280,9 +280,6 @@ const COMPANIES: Record<string, Array<[string, string, string]>> = {
   ],
 };
 
-const SECTOR_SIZE = 50;
-const STORE_SPACING = 2.5;
-
 function assignCandyIcon(ticker: string, sector: string): string {
   const pool = SECTOR_CANDY_ICONS[sector] || ['hard_candy'];
   return pool[hashStr(ticker) % pool.length];
@@ -303,78 +300,172 @@ function computeDirectionBias(goldenScore: number, rand: () => number): Directio
   };
 }
 
+// --- Poisson Disk Sampling for random store placement ---
+function poissonDiskSample(
+  count: number,
+  width: number,
+  height: number,
+  minDist: number,
+  rand: () => number,
+): Array<{ x: number; z: number }> {
+  const points: Array<{ x: number; z: number }> = [];
+  const cellSize = minDist / Math.SQRT2;
+  const gridW = Math.ceil(width / cellSize);
+  const gridH = Math.ceil(height / cellSize);
+  const grid: (number | null)[] = new Array(gridW * gridH).fill(null);
+
+  const offsetX = -width / 2;
+  const offsetZ = -height / 2;
+
+  function gridIdx(x: number, z: number): number {
+    const gx = Math.floor((x - offsetX) / cellSize);
+    const gz = Math.floor((z - offsetZ) / cellSize);
+    return gz * gridW + gx;
+  }
+
+  function isValid(x: number, z: number): boolean {
+    if (x < offsetX || x >= offsetX + width || z < offsetZ || z >= offsetZ + height) return false;
+    const gx = Math.floor((x - offsetX) / cellSize);
+    const gz = Math.floor((z - offsetZ) / cellSize);
+    for (let dz = -2; dz <= 2; dz++) {
+      for (let dx = -2; dx <= 2; dx++) {
+        const nx = gx + dx;
+        const nz = gz + dz;
+        if (nx < 0 || nx >= gridW || nz < 0 || nz >= gridH) continue;
+        const idx = nz * gridW + nx;
+        if (grid[idx] !== null) {
+          const p = points[grid[idx]!];
+          const ddx = p.x - x;
+          const ddz = p.z - z;
+          if (ddx * ddx + ddz * ddz < minDist * minDist) return false;
+        }
+      }
+    }
+    return true;
+  }
+
+  // Seed first point
+  const firstX = offsetX + rand() * width;
+  const firstZ = offsetZ + rand() * height;
+  points.push({ x: firstX, z: firstZ });
+  grid[gridIdx(firstX, firstZ)] = 0;
+  const active = [0];
+
+  while (active.length > 0 && points.length < count) {
+    const aIdx = Math.floor(rand() * active.length);
+    const parent = points[active[aIdx]];
+    let found = false;
+
+    for (let attempt = 0; attempt < 30; attempt++) {
+      const angle = rand() * Math.PI * 2;
+      const dist = minDist + rand() * minDist;
+      const nx = parent.x + Math.cos(angle) * dist;
+      const nz = parent.z + Math.sin(angle) * dist;
+
+      if (isValid(nx, nz)) {
+        const idx = points.length;
+        points.push({ x: nx, z: nz });
+        grid[gridIdx(nx, nz)] = idx;
+        active.push(idx);
+        found = true;
+        break;
+      }
+    }
+
+    if (!found) {
+      active.splice(aIdx, 1);
+    }
+  }
+
+  // If we don't have enough points, fill with random valid positions
+  let fallbackAttempts = 0;
+  while (points.length < count && fallbackAttempts < count * 10) {
+    const x = offsetX + rand() * width;
+    const z = offsetZ + rand() * height;
+    if (isValid(x, z)) {
+      grid[gridIdx(x, z)] = points.length;
+      points.push({ x, z });
+    }
+    fallbackAttempts++;
+  }
+
+  return points.slice(0, count);
+}
+
 export function generateStockData(): StockData[] {
   const rand = seededRandom(42);
   const stocks: StockData[] = [];
-  let globalRank = 0;
 
+  // Collect all companies flat
+  const allCompanies: Array<{ ticker: string; company: string; brandColor: string; sector: string }> = [];
   for (const sector of SECTORS) {
     const companies = COMPANIES[sector.name] || [];
-    const sectorOriginX = sector.position[0] * SECTOR_SIZE;
-    const sectorOriginZ = sector.position[1] * SECTOR_SIZE;
-    const cols = Math.ceil(Math.sqrt(companies.length));
-
-    for (let i = 0; i < companies.length; i++) {
-      const [ticker, company, brandColor] = companies[i];
-      globalRank++;
-
-      // Golden score: weighted toward 0-2, rare 3+
-      const rawScore = rand();
-      let goldenScore: number;
-      if (rawScore < 0.40) goldenScore = 0;
-      else if (rawScore < 0.65) goldenScore = 1;
-      else if (rawScore < 0.82) goldenScore = 2;
-      else if (rawScore < 0.92) goldenScore = 3;
-      else if (rawScore < 0.97) goldenScore = 4;
-      else goldenScore = 5;
-
-      const isPlatinum = goldenScore >= 4 && rand() < 0.3;
-      const mcapPercentile = 1 - (globalRank / 500);
-
-      const row = Math.floor(i / cols);
-      const col = i % cols;
-
-      stocks.push({
-        ticker,
-        company,
-        sector: sector.name,
-        market_cap_rank: globalRank,
-        golden_score: goldenScore,
-        ticket_levels: {
-          dip_ticket: goldenScore >= 1,
-          shock_ticket: goldenScore >= 2,
-          asymmetry_ticket: goldenScore >= 3,
-          dislocation_ticket: goldenScore >= 4,
-          convexity_ticket: goldenScore >= 5,
-        },
-        is_platinum: isPlatinum,
-        rarity_percentile: 0.5 + rand() * 0.5,
-        direction_bias: computeDirectionBias(goldenScore, rand),
-        forward_return_distribution: {
-          p5: -0.15 + rand() * 0.1,
-          p25: -0.05 + rand() * 0.05,
-          median: -0.02 + rand() * 0.08,
-          p75: 0.03 + rand() * 0.1,
-          p95: 0.10 + rand() * 0.25,
-          skew: -0.5 + rand() * 2.0,
-        },
-        drawdown_current: -(rand() * 0.3),
-        volume_percentile: 0.2 + rand() * 0.8,
-        volatility_percentile: 0.1 + rand() * 0.9,
-        brand_color: brandColor,
-        candy_type: assignCandyIcon(ticker, sector.name),
-        city_position: {
-          x: sectorOriginX + col * STORE_SPACING,
-          y: 0,
-          z: sectorOriginZ + row * STORE_SPACING,
-        },
-        store_dimensions: {
-          width: 1.0 + mcapPercentile * 2.0,
-          height: 1.5 + mcapPercentile * 2.5,
-          depth: 1.0 + mcapPercentile * 1.0,
-        },
-      });
+    for (const [ticker, company, brandColor] of companies) {
+      allCompanies.push({ ticker, company, brandColor, sector: sector.name });
     }
+  }
+
+  // Generate random positions using Poisson disk sampling
+  const positions = poissonDiskSample(allCompanies.length, 300, 300, 4.5, rand);
+
+  for (let globalRank = 0; globalRank < allCompanies.length; globalRank++) {
+    const { ticker, company, brandColor, sector } = allCompanies[globalRank];
+
+    // Golden score: weighted toward 0-2, rare 3+
+    const rawScore = rand();
+    let goldenScore: number;
+    if (rawScore < 0.40) goldenScore = 0;
+    else if (rawScore < 0.65) goldenScore = 1;
+    else if (rawScore < 0.82) goldenScore = 2;
+    else if (rawScore < 0.92) goldenScore = 3;
+    else if (rawScore < 0.97) goldenScore = 4;
+    else goldenScore = 5;
+
+    const isPlatinum = goldenScore >= 4 && rand() < 0.3;
+    const mcapPercentile = 1 - ((globalRank + 1) / allCompanies.length);
+
+    const pos = positions[globalRank] || { x: rand() * 200 - 100, z: rand() * 200 - 100 };
+
+    stocks.push({
+      ticker,
+      company,
+      sector,
+      market_cap_rank: globalRank + 1,
+      golden_score: goldenScore,
+      ticket_levels: {
+        dip_ticket: goldenScore >= 1,
+        shock_ticket: goldenScore >= 2,
+        asymmetry_ticket: goldenScore >= 3,
+        dislocation_ticket: goldenScore >= 4,
+        convexity_ticket: goldenScore >= 5,
+      },
+      is_platinum: isPlatinum,
+      rarity_percentile: 0.5 + rand() * 0.5,
+      direction_bias: computeDirectionBias(goldenScore, rand),
+      forward_return_distribution: {
+        p5: -0.15 + rand() * 0.1,
+        p25: -0.05 + rand() * 0.05,
+        median: -0.02 + rand() * 0.08,
+        p75: 0.03 + rand() * 0.1,
+        p95: 0.10 + rand() * 0.25,
+        skew: -0.5 + rand() * 2.0,
+      },
+      drawdown_current: -(rand() * 0.3),
+      volume_percentile: 0.2 + rand() * 0.8,
+      volatility_percentile: 0.1 + rand() * 0.9,
+      brand_color: brandColor,
+      candy_type: assignCandyIcon(ticker, sector),
+      city_position: {
+        x: pos.x,
+        y: 0,
+        z: pos.z,
+      },
+      store_dimensions: {
+        width: 1.0 + mcapPercentile * 2.0,
+        height: 1.5 + mcapPercentile * 2.5,
+        depth: 1.0 + mcapPercentile * 1.0,
+      },
+    });
   }
 
   return stocks;
@@ -387,12 +478,41 @@ export function getCorrelationEdges(
   const rand = seededRandom(123);
   const edges: GraphEdge[] = [];
 
+  // Precompute normalized feature vectors for distance-based correlation
+  const features = stocks.map((s) => ({
+    gs: s.golden_score / 5,
+    dd: (s.drawdown_current + 0.3) / 0.3,
+    vol: s.volume_percentile,
+    vola: s.volatility_percentile,
+    fwdMed: (s.forward_return_distribution.median + 0.1) / 0.35,
+    fwdSkew: (s.forward_return_distribution.skew + 0.5) / 2.5,
+  }));
+
   for (let i = 0; i < stocks.length; i++) {
     for (let j = i + 1; j < stocks.length; j++) {
-      // Same sector = higher correlation
-      const sameSector = stocks[i].sector === stocks[j].sector;
-      const baseCorr = sameSector ? 0.3 + rand() * 0.6 : -0.2 + rand() * 0.7;
-      const corr = Math.max(-1, Math.min(1, baseCorr));
+      const fi = features[i];
+      const fj = features[j];
+
+      // Euclidean distance across features (lower = more similar)
+      const dist = Math.sqrt(
+        (fi.gs - fj.gs) ** 2 +
+        (fi.dd - fj.dd) ** 2 +
+        (fi.vol - fj.vol) ** 2 +
+        (fi.vola - fj.vola) ** 2 +
+        (fi.fwdMed - fj.fwdMed) ** 2 +
+        (fi.fwdSkew - fj.fwdSkew) ** 2,
+      );
+
+      // Convert distance to similarity (max dist ~= sqrt(6) ~= 2.45)
+      const similarity = 1.0 - (dist / 2.45);
+
+      // Same-sector bonus: small additive, not dominant
+      const sectorBonus = stocks[i].sector === stocks[j].sector ? 0.1 : 0.0;
+
+      // Small random noise for visual variety
+      const noise = (rand() - 0.5) * 0.15;
+
+      const corr = Math.max(-1, Math.min(1, similarity + sectorBonus + noise));
 
       if (Math.abs(corr) > threshold) {
         edges.push({
@@ -402,10 +522,157 @@ export function getCorrelationEdges(
         });
       }
 
-      // Limit edges for performance
-      if (edges.length > 2000) return edges;
+      if (edges.length > 3000) return edges;
     }
   }
 
   return edges;
+}
+
+// --- Company name lookup from COMPANIES data ---
+const COMPANY_NAME_MAP: Record<string, string> = {};
+for (const sectorName of Object.keys(COMPANIES)) {
+  for (const [ticker, name] of COMPANIES[sectorName]) {
+    COMPANY_NAME_MAP[ticker] = name;
+  }
+}
+
+// --- Load real pipeline data from frontend_payload.json ---
+interface PipelinePayload {
+  stocks: Array<{
+    ticker: string;
+    company: string;
+    sector: string;
+    market_cap_rank: number;
+    golden_score: number;
+    ticket_levels: StockData['ticket_levels'];
+    is_platinum: boolean;
+    rarity_percentile: number;
+    direction_bias: StockData['direction_bias'];
+    forward_return_distribution: StockData['forward_return_distribution'];
+    drawdown_current: number;
+    volume_percentile: number;
+    volatility_percentile: number;
+    brand_color: string;
+    store_dimensions: StockData['store_dimensions'];
+    agent_density?: number;
+    speed_multiplier?: number;
+    technicals?: StockData['technicals'];
+  }>;
+  correlation_edges: GraphEdge[];
+}
+
+export async function loadPipelineData(): Promise<{
+  stocks: StockData[];
+  edges: GraphEdge[];
+}> {
+  const res = await fetch('/frontend_payload.json');
+  if (!res.ok) throw new Error(`Failed to load pipeline data: ${res.status}`);
+  const payload: PipelinePayload = await res.json();
+
+  const rand = seededRandom(42);
+  const positions = poissonDiskSample(payload.stocks.length, 300, 300, 4.5, rand);
+
+  const stocks: StockData[] = payload.stocks.map((raw, i) => {
+    const pos = positions[i] || { x: rand() * 200 - 100, z: rand() * 200 - 100 };
+    const companyName = COMPANY_NAME_MAP[raw.ticker] || raw.company;
+
+    return {
+      ...raw,
+      company: companyName,
+      candy_type: assignCandyIcon(raw.ticker, raw.sector),
+      city_position: { x: pos.x, y: 0, z: pos.z },
+    };
+  });
+
+  return {
+    stocks,
+    edges: payload.correlation_edges || [],
+  };
+}
+
+// --- Time-based stock modulation ---
+export function modulateStocksByTime(
+  baseStocks: StockData[],
+  currentDate: string,
+  mode: 'historical' | 'present' | 'future',
+): StockData[] {
+  if (mode === 'present') return baseStocks;
+
+  const today = new Date('2026-02-21').getTime();
+  const dateTs = new Date(currentDate).getTime();
+  const dayOffset = Math.round((dateTs - today) / 86_400_000);
+
+  return baseStocks.map((stock) => {
+    const seed = hashStr(stock.ticker) + Math.abs(dayOffset) * 7919;
+    const rand = seededRandom(seed);
+
+    if (mode === 'historical') {
+      // Seeded random walk: modulate golden_score, direction_bias, drawdown
+      const walkMag = Math.min(Math.abs(dayOffset) / 365, 1.0) * 0.3;
+      const gsNoise = (rand() - 0.5) * walkMag * 2;
+      const newGs = Math.max(0, Math.min(5, Math.round(stock.golden_score + gsNoise)));
+
+      const ddShift = (rand() - 0.5) * walkMag * 0.15;
+      const newDrawdown = Math.max(-0.5, Math.min(0, stock.drawdown_current + ddShift));
+
+      const newBias = computeDirectionBias(newGs, rand);
+
+      return {
+        ...stock,
+        golden_score: newGs,
+        drawdown_current: newDrawdown,
+        direction_bias: newBias,
+        ticket_levels: {
+          dip_ticket: newGs >= 1,
+          shock_ticket: newGs >= 2,
+          asymmetry_ticket: newGs >= 3,
+          dislocation_ticket: newGs >= 4,
+          convexity_ticket: newGs >= 5,
+        },
+      };
+    }
+
+    // mode === 'future': project using forward_return_distribution
+    const fwd = stock.forward_return_distribution;
+    const daysForward = Math.max(1, dayOffset);
+    const progressFactor = Math.min(daysForward / 365, 1.0);
+
+    // Project direction_bias based on forward returns
+    const projectedBullish = 0.5 + fwd.median * progressFactor * 3;
+    const bullClamp = Math.max(0.1, Math.min(0.9, projectedBullish));
+
+    const buy = bullClamp * 0.55 + (rand() - 0.5) * 0.05;
+    const call = bullClamp * 0.45 + (rand() - 0.5) * 0.05;
+    const put = (1 - bullClamp) * 0.5 + (rand() - 0.5) * 0.05;
+    const shortVal = (1 - bullClamp) * 0.5 + (rand() - 0.5) * 0.05;
+    const total = buy + call + put + shortVal;
+    const newBias: DirectionBias = {
+      buy: Math.max(0.05, buy / total),
+      call: Math.max(0.05, call / total),
+      put: Math.max(0.05, put / total),
+      short: Math.max(0.05, shortVal / total),
+    };
+
+    // Evolve golden_score based on skew and return magnitude
+    const gsShift = fwd.skew * progressFactor * 0.5 + fwd.median * progressFactor * 2;
+    const newGs = Math.max(0, Math.min(5, Math.round(stock.golden_score + gsShift)));
+
+    // Project drawdown recovery/deepening
+    const newDrawdown = Math.max(-0.5, Math.min(0, stock.drawdown_current + fwd.median * progressFactor));
+
+    return {
+      ...stock,
+      golden_score: newGs,
+      drawdown_current: newDrawdown,
+      direction_bias: newBias,
+      ticket_levels: {
+        dip_ticket: newGs >= 1,
+        shock_ticket: newGs >= 2,
+        asymmetry_ticket: newGs >= 3,
+        dislocation_ticket: newGs >= 4,
+        convexity_ticket: newGs >= 5,
+      },
+    };
+  });
 }

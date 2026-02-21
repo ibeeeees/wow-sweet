@@ -6,7 +6,7 @@
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { SECTORS, generateStockData, getCorrelationEdges, PLATINUM_COLOR } from '../data/stockData';
+import { SECTORS, generateStockData, getCorrelationEdges, loadPipelineData, PLATINUM_COLOR } from '../data/stockData';
 import type { StockData } from '../types';
 
 const PAGE_BG = '#1a1a2e';
@@ -132,17 +132,86 @@ const FallbackCanvasGraph: React.FC<{
         tp.vy -= (dy / dist) * force;
       });
 
-      // Draw links
+      // Draw links as interlocked candy cane pairs
       links.forEach((link) => {
         const sp = positions.get(link.source);
         const tp = positions.get(link.target);
         if (!sp || !tp) return;
+
+        const dx = tp.x - sp.x;
+        const dy = tp.y - sp.y;
+        const len = Math.sqrt(dx * dx + dy * dy) || 1;
+        const nx = -dy / len;  // perpendicular
+        const ny = dx / len;
+        const hookR = Math.min(len * 0.15, 12);
+        const lw = Math.max(0.5, Math.abs(link.weight) * 2);
+
+        // Midpoint and hook origins
+        const mx = (sp.x + tp.x) / 2;
+        const my = (sp.y + tp.y) / 2;
+        const hax = mx - (dx / len) * hookR * 0.35;
+        const hay = my - (dy / len) * hookR * 0.35;
+        const hbx = mx + (dx / len) * hookR * 0.35;
+        const hby = my + (dy / len) * hookR * 0.35;
+
+        const baseAlpha = link.weight > 0 ? 0.2 : 0.15;
+
+        // --- Cane A: source → hookA with J-hook in +perp direction ---
+        // White base
         ctx.beginPath();
         ctx.moveTo(sp.x, sp.y);
-        ctx.lineTo(tp.x, tp.y);
-        ctx.strokeStyle = link.weight > 0 ? 'rgba(34,68,102,0.15)' : 'rgba(68,34,34,0.15)';
-        ctx.lineWidth = Math.abs(link.weight) * 2;
+        ctx.lineTo(hax, hay);
+        ctx.quadraticCurveTo(
+          hax + nx * hookR, hay + ny * hookR,
+          hax + (dx / len) * hookR * 0.7 + nx * hookR * 0.7,
+          hay + (dy / len) * hookR * 0.7 + ny * hookR * 0.7,
+        );
+        ctx.strokeStyle = `rgba(255,255,255,${baseAlpha})`;
+        ctx.lineWidth = lw + 0.5;
+        ctx.lineCap = 'round';
         ctx.stroke();
+        // Red stripe overlay
+        ctx.beginPath();
+        ctx.moveTo(sp.x, sp.y);
+        ctx.lineTo(hax, hay);
+        ctx.quadraticCurveTo(
+          hax + nx * hookR, hay + ny * hookR,
+          hax + (dx / len) * hookR * 0.7 + nx * hookR * 0.7,
+          hay + (dy / len) * hookR * 0.7 + ny * hookR * 0.7,
+        );
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = link.weight > 0 ? `rgba(204,51,51,${baseAlpha + 0.1})` : `rgba(34,170,68,${baseAlpha + 0.1})`;
+        ctx.lineWidth = lw;
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // --- Cane B: target → hookB with J-hook in -perp direction ---
+        ctx.beginPath();
+        ctx.moveTo(tp.x, tp.y);
+        ctx.lineTo(hbx, hby);
+        ctx.quadraticCurveTo(
+          hbx - nx * hookR, hby - ny * hookR,
+          hbx - (dx / len) * hookR * 0.7 - nx * hookR * 0.7,
+          hby - (dy / len) * hookR * 0.7 - ny * hookR * 0.7,
+        );
+        ctx.strokeStyle = `rgba(255,255,255,${baseAlpha})`;
+        ctx.lineWidth = lw + 0.5;
+        ctx.lineCap = 'round';
+        ctx.stroke();
+        // Red stripe overlay
+        ctx.beginPath();
+        ctx.moveTo(tp.x, tp.y);
+        ctx.lineTo(hbx, hby);
+        ctx.quadraticCurveTo(
+          hbx - nx * hookR, hby - ny * hookR,
+          hbx - (dx / len) * hookR * 0.7 - nx * hookR * 0.7,
+          hby - (dy / len) * hookR * 0.7 - ny * hookR * 0.7,
+        );
+        ctx.setLineDash([3, 3]);
+        ctx.strokeStyle = link.weight > 0 ? `rgba(204,51,51,${baseAlpha + 0.1})` : `rgba(34,170,68,${baseAlpha + 0.1})`;
+        ctx.lineWidth = lw;
+        ctx.stroke();
+        ctx.setLineDash([]);
       });
 
       // Draw nodes
@@ -252,9 +321,14 @@ export default function GraphPlaygroundPage() {
   // Initialize stocks if empty
   useEffect(() => {
     if (stocks.length === 0) {
-      setStocks(generateStockData());
+      loadPipelineData()
+        .then(({ stocks: s, edges }) => {
+          setStocks(s);
+          setCorrelationEdges(edges);
+        })
+        .catch(() => setStocks(generateStockData()));
     }
-  }, [stocks.length, setStocks]);
+  }, [stocks.length, setStocks, setCorrelationEdges]);
 
   // Compute edges when threshold or stocks change
   useEffect(() => {

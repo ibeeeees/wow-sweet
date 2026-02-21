@@ -1,11 +1,13 @@
 // ============================================================
-// SweetReturns — AgentReactionsPage: Agent heatmap, leaderboard,
-//   store pressure map, and decision stream
+// SweetReturns — AgentReactionsPage: Real simulation data
+//   Whale leaderboard, agent heatmap, store pressure, decision stream
 // ============================================================
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { generateStockData, SECTORS } from '../data/stockData';
+import { generateStockData, loadPipelineData, SECTORS } from '../data/stockData';
+import { getWhales, type WhaleFund } from '../services/whaleArena';
+import { getFeaturedAgents, getLatestChain, type FeaturedAgent, type ReasoningChain } from '../services/geminiService';
 import type { StockData } from '../types';
 
 const PAGE_BG = '#1a1a2e';
@@ -13,113 +15,6 @@ const PANEL_BG = '#0f0f23';
 const ACCENT = '#FFD700';
 const TEXT_COLOR = '#e0e0e0';
 const BORDER_COLOR = '#2a2a4a';
-
-// ---- Deterministic seeded random (for mock data) ----
-function seededRandom(seed: number): () => number {
-  let s = seed;
-  return () => {
-    s = (s * 16807 + 0) % 2147483647;
-    return (s - 1) / 2147483646;
-  };
-}
-
-// ---- Mock agent data generator ----
-interface MockAgent {
-  id: string;
-  name: string;
-  profit: number;
-  tradesCompleted: number;
-  targetTicker: string;
-  lane: string;
-  confidence: number;
-}
-
-function generateMockAgents(stocks: StockData[], count: number): MockAgent[] {
-  const rand = seededRandom(777);
-  const names = [
-    'AlphaBot', 'BetaTrader', 'GammaSurge', 'DeltaEdge', 'EpsilonAI',
-    'ZetaHunter', 'EtaPulse', 'ThetaWave', 'IotaSnap', 'KappaFlux',
-    'LambdaCore', 'MuDrift', 'NuStrike', 'XiProbe', 'OmicronScan',
-    'PiCalc', 'RhoForce', 'SigmaNet', 'TauBeam', 'UpsilonArc',
-    'PhiSense', 'ChiPulse', 'PsiDepth', 'OmegaMax', 'VegaPrime',
-    'NovaSwift', 'QuantaRush', 'NeonBlitz', 'CyberKnight', 'PixelStorm',
-  ];
-  const lanes = ['BUY', 'SHORT', 'CALL', 'PUT'];
-  const agents: MockAgent[] = [];
-
-  for (let i = 0; i < count; i++) {
-    const stock = stocks[Math.floor(rand() * stocks.length)];
-    agents.push({
-      id: `agent-${i}`,
-      name: `${names[i % names.length]}${i >= names.length ? `-${Math.floor(i / names.length)}` : ''}`,
-      profit: Math.round((-5000 + rand() * 25000) * 100) / 100,
-      tradesCompleted: Math.floor(rand() * 200),
-      targetTicker: stock.ticker,
-      lane: lanes[Math.floor(rand() * lanes.length)],
-      confidence: Math.round(rand() * 100) / 100,
-    });
-  }
-
-  return agents.sort((a, b) => b.profit - a.profit);
-}
-
-// ---- Mock decision stream entries ----
-interface DecisionEntry {
-  id: number;
-  timestamp: string;
-  agent: string;
-  ticker: string;
-  action: string;
-  reasoning: string;
-}
-
-function generateDecisionStream(agents: MockAgent[], count: number): DecisionEntry[] {
-  const rand = seededRandom(999);
-  const actions = ['BUY', 'SHORT', 'CALL', 'PUT', 'EXIT', 'HOLD'];
-  const reasons = [
-    'Golden score spike detected',
-    'Sector rotation signal triggered',
-    'Volatility crush opportunity',
-    'Convexity ticket activated',
-    'Dislocation ticket — rare entry',
-    'Momentum divergence noted',
-    'Earnings asymmetry play',
-    'Mean reversion setup detected',
-    'Volume anomaly at support',
-    'Correlation breakdown identified',
-    'Shock ticket — drawdown exceeds threshold',
-    'Platinum store entry — high conviction',
-  ];
-  const entries: DecisionEntry[] = [];
-  const baseTime = Date.now();
-
-  for (let i = 0; i < count; i++) {
-    const agent = agents[Math.floor(rand() * agents.length)];
-    entries.push({
-      id: i,
-      timestamp: new Date(baseTime - i * 2300).toLocaleTimeString(),
-      agent: agent.name,
-      ticker: agent.targetTicker,
-      action: actions[Math.floor(rand() * actions.length)],
-      reasoning: reasons[Math.floor(rand() * reasons.length)],
-    });
-  }
-
-  return entries;
-}
-
-// ---- Compute store pressure (agents per stock) ----
-function computeStorePressure(
-  stocks: StockData[],
-  agents: MockAgent[],
-): Map<string, number> {
-  const pressureMap = new Map<string, number>();
-  for (const s of stocks) pressureMap.set(s.ticker, 0);
-  for (const a of agents) {
-    pressureMap.set(a.targetTicker, (pressureMap.get(a.targetTicker) ?? 0) + 1);
-  }
-  return pressureMap;
-}
 
 // ---- Color scale: intensity from count ----
 function pressureColor(count: number, maxCount: number): string {
@@ -132,10 +27,17 @@ function pressureColor(count: number, maxCount: number): string {
 }
 
 // ============================================================
-// Leaderboard (left column)
+// Whale + Agent Leaderboard (left column)
 // ============================================================
-const Leaderboard: React.FC<{ agents: MockAgent[] }> = ({ agents }) => {
-  const top20 = agents.slice(0, 20);
+const Leaderboard: React.FC<{
+  whales: WhaleFund[];
+  featuredAgents: FeaturedAgent[];
+}> = ({ whales, featuredAgents }) => {
+  const sorted = [...whales].sort((a, b) => b.totalProfit - a.totalProfit);
+  const activeAgents = featuredAgents.filter(
+    (a) => a.decision && Date.now() - a.lastUpdated < 30000,
+  );
+
   return (
     <div
       style={{
@@ -147,6 +49,7 @@ const Leaderboard: React.FC<{ agents: MockAgent[] }> = ({ agents }) => {
         border: `1px solid ${BORDER_COLOR}`,
       }}
     >
+      {/* Whale Rankings */}
       <h3
         style={{
           color: ACCENT,
@@ -156,56 +59,158 @@ const Leaderboard: React.FC<{ agents: MockAgent[] }> = ({ agents }) => {
           textTransform: 'uppercase',
         }}
       >
-        Top 20 Agents
+        Whale Arena
       </h3>
-      {top20.map((agent, idx) => (
+      {sorted.map((whale, rank) => (
         <div
-          key={agent.id}
+          key={whale.id}
           style={{
             display: 'flex',
-            justifyContent: 'space-between',
             alignItems: 'center',
+            gap: 8,
             padding: '6px 4px',
             borderBottom: `1px solid ${BORDER_COLOR}`,
             fontSize: 12,
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span
-              style={{
-                color: idx < 3 ? ACCENT : '#666',
-                fontWeight: idx < 3 ? 700 : 400,
-                minWidth: 20,
-                textAlign: 'right',
-              }}
-            >
-              {idx + 1}
-            </span>
-            <span style={{ color: TEXT_COLOR }}>{agent.name}</span>
-          </div>
           <span
             style={{
-              color: agent.profit >= 0 ? '#00ff7f' : '#ff4444',
-              fontFamily: 'monospace',
-              fontSize: 11,
+              color: rank === 0 ? ACCENT : rank === 1 ? '#C0C0C0' : '#666',
+              fontWeight: rank < 2 ? 700 : 400,
+              minWidth: 20,
+              textAlign: 'right',
+              fontSize: 12,
             }}
           >
-            {agent.profit >= 0 ? '+' : ''}
-            ${agent.profit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            #{rank + 1}
           </span>
+          <div
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: '50%',
+              background: whale.color,
+              boxShadow: `0 0 6px ${whale.color}66`,
+              flexShrink: 0,
+            }}
+          />
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 600,
+                color: whale.color,
+                overflow: 'hidden',
+                textOverflow: 'ellipsis',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              {whale.icon} {whale.name}
+            </div>
+            <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.4)' }}>
+              {whale.strategy} | {whale.allocations.length} pos | {whale.tradeCount} trades
+            </div>
+          </div>
+          <div style={{ textAlign: 'right', flexShrink: 0 }}>
+            <div
+              style={{
+                fontSize: 11,
+                fontWeight: 700,
+                fontFamily: 'monospace',
+                color: whale.totalProfit >= 0 ? '#00FF7F' : '#FF4500',
+              }}
+            >
+              {whale.totalProfit >= 0 ? '+' : ''}
+              {whale.totalProfit.toFixed(0)}
+            </div>
+          </div>
         </div>
       ))}
+
+      {/* Wonka reasoning */}
+      {sorted[0]?.reasoning && (
+        <div
+          style={{
+            marginTop: 8,
+            padding: '6px 8px',
+            background: 'rgba(255, 215, 0, 0.06)',
+            borderRadius: 6,
+            border: '1px solid rgba(255, 215, 0, 0.1)',
+          }}
+        >
+          <div style={{ fontSize: 9, color: '#FFD700', fontWeight: 600, marginBottom: 2 }}>
+            AI REASONING
+          </div>
+          <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', lineHeight: 1.3 }}>
+            {sorted[0].reasoning}
+          </div>
+        </div>
+      )}
+
+      {/* Featured AI Agents */}
+      {activeAgents.length > 0 && (
+        <>
+          <h3
+            style={{
+              color: '#00BFFF',
+              fontSize: 11,
+              margin: '14px 0 8px',
+              letterSpacing: 1,
+              textTransform: 'uppercase',
+            }}
+          >
+            Featured AI Agents
+          </h3>
+          {activeAgents.slice(0, 10).map((agent) => (
+            <div
+              key={agent.index}
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '4px 4px',
+                borderBottom: `1px solid ${BORDER_COLOR}`,
+                fontSize: 11,
+              }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ color: ACCENT, fontSize: 10 }}>
+                  {agent.name}
+                </span>
+              </div>
+              <div style={{ textAlign: 'right' }}>
+                <span
+                  style={{
+                    color:
+                      agent.decision?.action === 'BUY' || agent.decision?.action === 'CALL'
+                        ? '#00FF7F'
+                        : '#FF4500',
+                    fontWeight: 600,
+                    fontSize: 10,
+                  }}
+                >
+                  {agent.decision?.action}
+                </span>
+                <span style={{ color: '#888', fontSize: 9, marginLeft: 4 }}>
+                  {agent.decision?.targetTicker}
+                </span>
+              </div>
+            </div>
+          ))}
+        </>
+      )}
     </div>
   );
 };
 
 // ============================================================
-// Agent Heatmap (center, canvas-based)
+// Agent Heatmap (center, canvas-based) — real store counts
 // ============================================================
 const AgentHeatmap: React.FC<{
   stocks: StockData[];
-  agents: MockAgent[];
-}> = ({ stocks, agents }) => {
+  storeAgentCounts: Int16Array;
+  storeDoorCounts: Int16Array;
+}> = ({ stocks, storeAgentCounts, storeDoorCounts }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -215,13 +220,19 @@ const AgentHeatmap: React.FC<{
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    const pressureMap = computeStorePressure(stocks, agents);
-    const maxCount = Math.max(1, ...pressureMap.values());
-
     const cols = Math.ceil(Math.sqrt(stocks.length));
     const rows = Math.ceil(stocks.length / cols);
     const cellW = canvas.width / cols;
     const cellH = canvas.height / rows;
+
+    // Find max for normalization
+    let maxCount = 1;
+    for (let i = 0; i < stocks.length; i++) {
+      const total =
+        (i < storeAgentCounts.length ? storeAgentCounts[i] : 0) +
+        (i < storeDoorCounts.length ? storeDoorCounts[i] : 0);
+      if (total > maxCount) maxCount = total;
+    }
 
     ctx.fillStyle = '#0a0a1e';
     ctx.fillRect(0, 0, canvas.width, canvas.height);
@@ -229,18 +240,16 @@ const AgentHeatmap: React.FC<{
     stocks.forEach((stock, i) => {
       const col = i % cols;
       const row = Math.floor(i / cols);
-      const count = pressureMap.get(stock.ticker) ?? 0;
+      const inside = i < storeAgentCounts.length ? storeAgentCounts[i] : 0;
+      const door = i < storeDoorCounts.length ? storeDoorCounts[i] : 0;
+      const count = inside + door;
       const t = Math.min(count / maxCount, 1);
 
-      // Base sector color blended with heat intensity
       const sc = SECTORS.find((s) => s.name === stock.sector)?.color ?? '#444';
-
-      // Parse sector color
       const r = parseInt(sc.slice(1, 3), 16) || 80;
       const g = parseInt(sc.slice(3, 5), 16) || 80;
       const b = parseInt(sc.slice(5, 7), 16) || 80;
 
-      // Heat blend: sector color at low counts, hot orange/white at high counts
       const hr = Math.round(r + (255 - r) * t);
       const hg = Math.round(g * (1 - t * 0.5) + 100 * t);
       const hb = Math.round(b * (1 - t * 0.7));
@@ -248,7 +257,6 @@ const AgentHeatmap: React.FC<{
       ctx.fillStyle = `rgb(${hr},${hg},${hb})`;
       ctx.fillRect(col * cellW + 0.5, row * cellH + 0.5, cellW - 1, cellH - 1);
 
-      // Label for larger cells
       if (cellW > 16 && cellH > 10) {
         ctx.fillStyle = t > 0.5 ? '#000' : '#aaa';
         ctx.font = `${Math.min(cellW * 0.35, 9)}px monospace`;
@@ -257,7 +265,7 @@ const AgentHeatmap: React.FC<{
         ctx.fillText(stock.ticker, col * cellW + cellW / 2, row * cellH + cellH / 2);
       }
     });
-  }, [stocks, agents]);
+  }, [stocks, storeAgentCounts, storeDoorCounts]);
 
   return (
     <div
@@ -280,7 +288,7 @@ const AgentHeatmap: React.FC<{
           textTransform: 'uppercase',
         }}
       >
-        Agent Heatmap
+        Agent Heatmap (Live)
       </h3>
       <canvas
         ref={canvasRef}
@@ -293,27 +301,52 @@ const AgentHeatmap: React.FC<{
 };
 
 // ============================================================
-// Store Pressure Map (right column)
+// Store Pressure Map (right column) — real counts
 // ============================================================
 const StorePressureMap: React.FC<{
   stocks: StockData[];
-  agents: MockAgent[];
-}> = ({ stocks, agents }) => {
-  const [selectedTicker, setSelectedTicker] = useState<string | null>(null);
+  storeAgentCounts: Int16Array;
+  storeDoorCounts: Int16Array;
+  storeLaneCounts: Int16Array;
+}> = ({ stocks, storeAgentCounts, storeDoorCounts, storeLaneCounts }) => {
+  const [selectedIdx, setSelectedIdx] = useState<number | null>(null);
 
-  const pressureMap = useMemo(() => computeStorePressure(stocks, agents), [stocks, agents]);
-  const maxCount = useMemo(() => Math.max(1, ...pressureMap.values()), [pressureMap]);
+  const maxCount = useMemo(() => {
+    let max = 1;
+    for (let i = 0; i < stocks.length; i++) {
+      const total =
+        (i < storeAgentCounts.length ? storeAgentCounts[i] : 0) +
+        (i < storeDoorCounts.length ? storeDoorCounts[i] : 0);
+      if (total > max) max = total;
+    }
+    return max;
+  }, [stocks, storeAgentCounts, storeDoorCounts]);
 
-  // Agent breakdown for selected cell
   const breakdown = useMemo(() => {
-    if (!selectedTicker) return null;
-    const targeting = agents.filter((a) => a.targetTicker === selectedTicker);
-    const laneBreakdown: Record<string, number> = { BUY: 0, SHORT: 0, CALL: 0, PUT: 0 };
-    targeting.forEach((a) => {
-      if (laneBreakdown[a.lane] !== undefined) laneBreakdown[a.lane]++;
-    });
-    return { ticker: selectedTicker, total: targeting.length, lanes: laneBreakdown };
-  }, [selectedTicker, agents]);
+    if (selectedIdx === null || selectedIdx >= stocks.length) return null;
+    const inside = selectedIdx < storeAgentCounts.length ? storeAgentCounts[selectedIdx] : 0;
+    const door = selectedIdx < storeDoorCounts.length ? storeDoorCounts[selectedIdx] : 0;
+    const hasLanes = storeLaneCounts.length > selectedIdx * 4 + 3;
+    return {
+      ticker: stocks[selectedIdx].ticker,
+      inside,
+      door,
+      total: inside + door,
+      lanes: {
+        BUY: hasLanes ? storeLaneCounts[selectedIdx * 4] : 0,
+        CALL: hasLanes ? storeLaneCounts[selectedIdx * 4 + 1] : 0,
+        PUT: hasLanes ? storeLaneCounts[selectedIdx * 4 + 2] : 0,
+        SHORT: hasLanes ? storeLaneCounts[selectedIdx * 4 + 3] : 0,
+      },
+    };
+  }, [selectedIdx, stocks, storeAgentCounts, storeDoorCounts, storeLaneCounts]);
+
+  const laneColors: Record<string, string> = {
+    BUY: '#00ff7f',
+    CALL: '#00bfff',
+    PUT: '#ff8c00',
+    SHORT: '#ff4444',
+  };
 
   return (
     <div
@@ -337,10 +370,9 @@ const StorePressureMap: React.FC<{
           textTransform: 'uppercase',
         }}
       >
-        Store Pressure
+        Store Pressure (Live)
       </h3>
 
-      {/* Breakdown info */}
       {breakdown && (
         <div
           style={{
@@ -355,8 +387,20 @@ const StorePressureMap: React.FC<{
           <div style={{ color: ACCENT, fontWeight: 700, marginBottom: 4 }}>
             {breakdown.ticker} — {breakdown.total} agents
           </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: '#FF69B4', fontSize: 11 }}>
+            <span>Door fighting</span>
+            <span style={{ fontFamily: 'monospace' }}>{breakdown.door}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', color: '#00FF7F', fontSize: 11 }}>
+            <span>Inside</span>
+            <span style={{ fontFamily: 'monospace' }}>{breakdown.inside}</span>
+          </div>
+          <div style={{ height: 1, background: BORDER_COLOR, margin: '4px 0' }} />
           {Object.entries(breakdown.lanes).map(([lane, count]) => (
-            <div key={lane} style={{ display: 'flex', justifyContent: 'space-between', color: '#bbb' }}>
+            <div
+              key={lane}
+              style={{ display: 'flex', justifyContent: 'space-between', color: laneColors[lane] || '#bbb', fontSize: 10 }}
+            >
               <span>{lane}</span>
               <span style={{ fontFamily: 'monospace' }}>{count}</span>
             </div>
@@ -364,7 +408,6 @@ const StorePressureMap: React.FC<{
         </div>
       )}
 
-      {/* Pressure grid */}
       <div
         style={{
           display: 'grid',
@@ -374,13 +417,15 @@ const StorePressureMap: React.FC<{
           overflowY: 'auto',
         }}
       >
-        {stocks.map((stock) => {
-          const count = pressureMap.get(stock.ticker) ?? 0;
-          const isSelected = selectedTicker === stock.ticker;
+        {stocks.map((stock, i) => {
+          const inside = i < storeAgentCounts.length ? storeAgentCounts[i] : 0;
+          const door = i < storeDoorCounts.length ? storeDoorCounts[i] : 0;
+          const count = inside + door;
+          const isSelected = selectedIdx === i;
           return (
             <div
               key={stock.ticker}
-              onClick={() => setSelectedTicker(isSelected ? null : stock.ticker)}
+              onClick={() => setSelectedIdx(isSelected ? null : i)}
               style={{
                 background: pressureColor(count, maxCount),
                 borderRadius: 3,
@@ -394,9 +439,17 @@ const StorePressureMap: React.FC<{
                 transition: 'border-color 0.15s',
                 lineHeight: 1.3,
               }}
-              title={`${stock.ticker}: ${count} agents`}
+              title={`${stock.ticker}: ${count} agents (${inside} inside, ${door} door)`}
             >
-              <div style={{ fontWeight: 600, fontSize: 7, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div
+                style={{
+                  fontWeight: 600,
+                  fontSize: 7,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
                 {stock.ticker}
               </div>
               <div style={{ fontSize: 9, color: ACCENT }}>{count}</div>
@@ -409,10 +462,81 @@ const StorePressureMap: React.FC<{
 };
 
 // ============================================================
-// Decision Stream (bottom bar)
+// Decision Stream (bottom bar) — real Gemini reasoning chain
 // ============================================================
-const DecisionStream: React.FC<{ entries: DecisionEntry[] }> = ({ entries }) => {
-  const containerRef = useRef<HTMLDivElement>(null);
+interface StreamEntry {
+  id: string;
+  timestamp: string;
+  source: string;
+  ticker: string;
+  action: string;
+  detail: string;
+  color: string;
+}
+
+const DecisionStream: React.FC<{
+  whales: WhaleFund[];
+  chain: ReasoningChain | null;
+  featuredAgents: FeaturedAgent[];
+}> = ({ whales, chain, featuredAgents }) => {
+  const entries = useMemo(() => {
+    const result: StreamEntry[] = [];
+    const now = new Date();
+
+    // Whale allocation entries
+    for (const whale of whales) {
+      if (whale.allocations.length === 0) continue;
+      for (const alloc of whale.allocations.slice(0, 3)) {
+        result.push({
+          id: `${whale.id}-${alloc.ticker}`,
+          timestamp: new Date(whale.lastUpdated || now.getTime()).toLocaleTimeString(),
+          source: `${whale.icon} ${whale.name}`,
+          ticker: alloc.ticker,
+          action: alloc.action,
+          detail: `Weight: ${(alloc.weight * 100).toFixed(0)}%`,
+          color: whale.color,
+        });
+      }
+    }
+
+    // Featured agent decisions
+    for (const agent of featuredAgents) {
+      if (!agent.decision || Date.now() - agent.lastUpdated > 30000) continue;
+      result.push({
+        id: `agent-${agent.index}`,
+        timestamp: new Date(agent.lastUpdated).toLocaleTimeString(),
+        source: agent.name,
+        ticker: agent.decision.targetTicker,
+        action: agent.decision.action,
+        detail: agent.decision.reasoning,
+        color: '#FFD700',
+      });
+    }
+
+    // Sector reports from reasoning chain
+    if (chain) {
+      for (const report of chain.sectorReports) {
+        for (const pick of report.topPicks.slice(0, 1)) {
+          result.push({
+            id: `sector-${report.sector}-${pick.ticker}`,
+            timestamp: new Date(chain.timestamp).toLocaleTimeString(),
+            source: `${report.sector} Analyst`,
+            ticker: pick.ticker,
+            action: pick.action,
+            detail: pick.reason,
+            color:
+              report.sectorSentiment === 'bullish'
+                ? '#00FF7F'
+                : report.sectorSentiment === 'bearish'
+                  ? '#FF4500'
+                  : '#808080',
+          });
+        }
+      }
+    }
+
+    return result;
+  }, [whales, chain, featuredAgents]);
 
   const actionColor = (action: string): string => {
     switch (action) {
@@ -420,15 +544,12 @@ const DecisionStream: React.FC<{ entries: DecisionEntry[] }> = ({ entries }) => 
       case 'CALL': return '#00bfff';
       case 'SHORT': return '#ff4444';
       case 'PUT': return '#ff8c00';
-      case 'EXIT': return '#888';
-      case 'HOLD': return '#aaa';
       default: return TEXT_COLOR;
     }
   };
 
   return (
     <div
-      ref={containerRef}
       style={{
         background: PANEL_BG,
         borderRadius: 8,
@@ -453,8 +574,13 @@ const DecisionStream: React.FC<{ entries: DecisionEntry[] }> = ({ entries }) => 
           flexShrink: 0,
         }}
       >
-        Decisions
+        Live Decisions
       </h3>
+      {entries.length === 0 && (
+        <div style={{ color: '#666', fontSize: 11, padding: '8px 0' }}>
+          Waiting for AI decisions...
+        </div>
+      )}
       {entries.map((entry) => (
         <div
           key={entry.id}
@@ -466,6 +592,7 @@ const DecisionStream: React.FC<{ entries: DecisionEntry[] }> = ({ entries }) => 
             border: `1px solid ${BORDER_COLOR}`,
             fontSize: 11,
             minWidth: 180,
+            borderLeft: `3px solid ${entry.color}`,
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
@@ -473,11 +600,11 @@ const DecisionStream: React.FC<{ entries: DecisionEntry[] }> = ({ entries }) => 
             <span style={{ color: actionColor(entry.action), fontWeight: 700 }}>{entry.action}</span>
           </div>
           <div style={{ marginTop: 2 }}>
-            <span style={{ color: '#aaa' }}>{entry.agent}</span>
+            <span style={{ color: entry.color, fontSize: 10 }}>{entry.source}</span>
             <span style={{ color: '#555' }}> &rarr; </span>
             <span style={{ color: ACCENT }}>{entry.ticker}</span>
           </div>
-          <div style={{ color: '#666', fontSize: 10, marginTop: 2 }}>{entry.reasoning}</div>
+          <div style={{ color: '#666', fontSize: 10, marginTop: 2 }}>{entry.detail}</div>
         </div>
       ))}
     </div>
@@ -490,25 +617,32 @@ const DecisionStream: React.FC<{ entries: DecisionEntry[] }> = ({ entries }) => 
 export default function AgentReactionsPage() {
   const stocks = useStore((s) => s.stocks);
   const setStocks = useStore((s) => s.setStocks);
+  const storeAgentCounts = useStore((s) => s.storeAgentCounts);
+  const storeDoorCounts = useStore((s) => s.storeDoorCounts);
+  const storeLaneCounts = useStore((s) => s.storeLaneCounts);
+
+  const [whales, setWhales] = useState<WhaleFund[]>(getWhales());
+  const [featuredAgents, setFeaturedAgents] = useState<FeaturedAgent[]>(getFeaturedAgents());
+  const [chain, setChain] = useState<ReasoningChain | null>(getLatestChain());
 
   // Initialize stocks if empty
   useEffect(() => {
     if (stocks.length === 0) {
-      setStocks(generateStockData());
+      loadPipelineData()
+        .then(({ stocks: s }) => setStocks(s))
+        .catch(() => setStocks(generateStockData()));
     }
   }, [stocks.length, setStocks]);
 
-  // Generate mock agents
-  const agents = useMemo(() => {
-    if (stocks.length === 0) return [];
-    return generateMockAgents(stocks, 200);
-  }, [stocks]);
-
-  // Generate decision stream
-  const decisions = useMemo(() => {
-    if (agents.length === 0) return [];
-    return generateDecisionStream(agents, 50);
-  }, [agents]);
+  // Poll real data from services
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setWhales([...getWhales()]);
+      setFeaturedAgents([...getFeaturedAgents()]);
+      setChain(getLatestChain());
+    }, 2000);
+    return () => clearInterval(interval);
+  }, []);
 
   if (stocks.length === 0) {
     return (
@@ -545,25 +679,34 @@ export default function AgentReactionsPage() {
     >
       {/* Main content area */}
       <div style={{ flex: 1, display: 'flex', gap: 8, padding: '12px 12px 0 12px', minHeight: 0 }}>
-        {/* Left column (20%) — Leaderboard */}
+        {/* Left column (20%) — Whale + Agent Leaderboard */}
         <div style={{ width: '20%', minWidth: 180 }}>
-          <Leaderboard agents={agents} />
+          <Leaderboard whales={whales} featuredAgents={featuredAgents} />
         </div>
 
         {/* Center (50%) — Agent Heatmap */}
         <div style={{ width: '50%', minWidth: 300 }}>
-          <AgentHeatmap stocks={stocks} agents={agents} />
+          <AgentHeatmap
+            stocks={stocks}
+            storeAgentCounts={storeAgentCounts}
+            storeDoorCounts={storeDoorCounts}
+          />
         </div>
 
         {/* Right (30%) — Store Pressure Map */}
         <div style={{ width: '30%', minWidth: 200 }}>
-          <StorePressureMap stocks={stocks} agents={agents} />
+          <StorePressureMap
+            stocks={stocks}
+            storeAgentCounts={storeAgentCounts}
+            storeDoorCounts={storeDoorCounts}
+            storeLaneCounts={storeLaneCounts}
+          />
         </div>
       </div>
 
       {/* Bottom — Decision Stream */}
       <div style={{ padding: '8px 12px 12px 12px', flexShrink: 0, maxHeight: 130 }}>
-        <DecisionStream entries={decisions} />
+        <DecisionStream whales={whales} chain={chain} featuredAgents={featuredAgents} />
       </div>
     </div>
   );

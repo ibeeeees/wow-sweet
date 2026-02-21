@@ -4,6 +4,7 @@
 
 import React, { Suspense, lazy } from 'react';
 import { useStore } from '../store/useStore';
+import { WhaleLeaderboard } from '../components/WhaleLeaderboard';
 
 // Lazy-load heavy 3D components
 const CandyCity = lazy(() => import('../components/CandyCity'));
@@ -106,20 +107,13 @@ export default function GoldenCityPage() {
         </div>
       </Suspense>
 
-      {/* Store detail panel — shown when a stock is selected */}
+      {/* Whale Arena Leaderboard — right side */}
+      <WhaleLeaderboard />
+
+      {/* Store detail panel — shown when a stock is selected (fixed overlay) */}
       {selectedStock !== null && (
         <Suspense fallback={null}>
-          <div
-            style={{
-              position: 'absolute',
-              bottom: 80,
-              right: 16,
-              zIndex: 20,
-              pointerEvents: 'auto',
-            }}
-          >
-            <StoreDetail />
-          </div>
+          <StoreDetail />
         </Suspense>
       )}
     </div>

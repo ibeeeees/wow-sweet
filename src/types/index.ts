@@ -21,6 +21,15 @@ export interface StockData {
   candy_type: string;
   city_position: { x: number; y: number; z: number };
   store_dimensions: { width: number; height: number; depth: number };
+  agent_density?: number;
+  speed_multiplier?: number;
+  technicals?: {
+    rsi_14: number;
+    macd_histogram: number;
+    bb_pct_b: number;
+    zscore_20d: number;
+    realized_vol_20d: number;
+  };
 }
 
 export interface TicketLevels {

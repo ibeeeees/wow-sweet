@@ -3,11 +3,12 @@
 // Fixed bottom bar with date scrubber, playback controls, speed & mode
 // ============================================================
 
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useEffect, useRef } from 'react';
 import { useStore } from '../store/useStore';
 
 const MIN_TS = new Date('2019-01-02').getTime();
-const MAX_TS = new Date('2024-12-31').getTime();
+const MAX_TS = new Date('2027-12-31').getTime();
+const TODAY_TS = new Date('2026-02-21').getTime();
 
 function tsToDateStr(ts: number): string {
   const d = new Date(ts);
@@ -35,21 +36,54 @@ const modeColors: Record<string, string> = {
 };
 
 const speedOptions = [1, 5, 10];
+const modes = ['historical', 'present', 'future'] as const;
 
 export const TimeSlider: React.FC = () => {
   const timeSlider = useStore((s) => s.timeSlider);
   const setCurrentDate = useStore((s) => s.setCurrentDate);
   const setPlayback = useStore((s) => s.setPlayback);
   const setPlaybackSpeed = useStore((s) => s.setPlaybackSpeed);
+  const setTimeMode = useStore((s) => s.setTimeMode);
 
   const currentTs = useMemo(() => dateStrToTs(timeSlider.currentDate), [timeSlider.currentDate]);
+
+  // Playback loop using ref to avoid re-creating interval
+  const dateRef = useRef(timeSlider.currentDate);
+  dateRef.current = timeSlider.currentDate;
+
+  useEffect(() => {
+    if (!timeSlider.isPlaying) return;
+    const intervalMs = 1000 / timeSlider.playbackSpeed;
+    const timer = setInterval(() => {
+      const ts = dateStrToTs(dateRef.current);
+      const nextTs = ts + 86_400_000;
+      if (nextTs > MAX_TS) {
+        setPlayback(false);
+        return;
+      }
+      setCurrentDate(tsToDateStr(nextTs));
+      // Auto-detect mode from date
+      if (nextTs > TODAY_TS) {
+        setTimeMode('future');
+      } else if (nextTs > new Date('2024-12-31').getTime()) {
+        setTimeMode('present');
+      } else {
+        setTimeMode('historical');
+      }
+    }, intervalMs);
+    return () => clearInterval(timer);
+  }, [timeSlider.isPlaying, timeSlider.playbackSpeed, setCurrentDate, setPlayback, setTimeMode]);
 
   const onSliderChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       const ts = Number(e.target.value);
       setCurrentDate(tsToDateStr(ts));
+      // Auto-detect mode from slider position
+      if (ts > TODAY_TS) setTimeMode('future');
+      else if (ts > new Date('2024-12-31').getTime()) setTimeMode('present');
+      else setTimeMode('historical');
     },
-    [setCurrentDate],
+    [setCurrentDate, setTimeMode],
   );
 
   const stepDate = useCallback(
@@ -63,26 +97,38 @@ export const TimeSlider: React.FC = () => {
   const jumpStart = useCallback(() => setCurrentDate(tsToDateStr(MIN_TS)), [setCurrentDate]);
   const jumpEnd = useCallback(() => setCurrentDate(tsToDateStr(MAX_TS)), [setCurrentDate]);
 
+  const handleModeClick = useCallback(
+    (mode: 'historical' | 'present' | 'future') => {
+      setTimeMode(mode);
+      if (mode === 'historical') setCurrentDate('2023-06-15');
+      else if (mode === 'present') setCurrentDate('2026-02-21');
+      else setCurrentDate('2026-06-01');
+    },
+    [setTimeMode, setCurrentDate],
+  );
+
   const pct = ((currentTs - MIN_TS) / (MAX_TS - MIN_TS)) * 100;
 
   return (
     <div style={containerStyle}>
-      {/* Mode indicator */}
+      {/* Mode toggle buttons — top right */}
       <div style={modeRowStyle}>
-        <span
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: '50%',
-            backgroundColor: modeColors[timeSlider.mode] || '#fff',
-            display: 'inline-block',
-            marginRight: 6,
-            boxShadow: `0 0 6px ${modeColors[timeSlider.mode] || '#fff'}`,
-          }}
-        />
-        <span style={{ fontSize: 11, color: '#ccc', textTransform: 'capitalize', letterSpacing: 1 }}>
-          {timeSlider.mode}
-        </span>
+        {modes.map((mode) => (
+          <button
+            key={mode}
+            onClick={() => handleModeClick(mode)}
+            style={{
+              ...modeBtnStyle,
+              backgroundColor:
+                timeSlider.mode === mode ? modeColors[mode] : 'rgba(255,255,255,0.06)',
+              color: timeSlider.mode === mode ? '#1a1a2e' : '#888',
+              borderColor:
+                timeSlider.mode === mode ? modeColors[mode] : 'rgba(255,255,255,0.15)',
+            }}
+          >
+            {mode}
+          </button>
+        ))}
       </div>
 
       {/* Current date */}
@@ -108,7 +154,7 @@ export const TimeSlider: React.FC = () => {
             style={rangeInputStyle}
           />
         </div>
-        <span style={yearLabelStyle}>2025</span>
+        <span style={yearLabelStyle}>2028</span>
       </div>
 
       {/* Controls row */}
@@ -189,9 +235,23 @@ const containerStyle: React.CSSProperties = {
 const modeRowStyle: React.CSSProperties = {
   display: 'flex',
   alignItems: 'center',
+  gap: 4,
   position: 'absolute',
   top: 6,
   right: 20,
+};
+
+const modeBtnStyle: React.CSSProperties = {
+  border: '1px solid',
+  borderRadius: 4,
+  fontSize: 10,
+  padding: '2px 8px',
+  cursor: 'pointer',
+  fontWeight: 600,
+  textTransform: 'capitalize',
+  letterSpacing: 0.5,
+  transition: 'all 0.15s',
+  background: 'transparent',
 };
 
 const dateDisplayStyle: React.CSSProperties = {
@@ -233,7 +293,7 @@ const trackFillStyle: React.CSSProperties = {
   transform: 'translateY(-50%)',
   height: 4,
   borderRadius: 2,
-  background: 'linear-gradient(90deg, #9370DB, #FF69B4)',
+  background: 'linear-gradient(90deg, #9370DB, #00FF7F, #FF69B4)',
   pointerEvents: 'none',
 };
 
