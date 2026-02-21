@@ -1,4 +1,4 @@
-# Wolf of Wall Sweet
+# Wolf of Wall Sweet <img src="public/favicon.ico" alt="" width="40" height="40" style="vertical-align:middle;" />
 
 **A Candy-Themed AI Agent Stock Market Simulation with Autonomous Trading Intelligence**
 
@@ -15,7 +15,3 @@
 **AI:** Gemini API for agent intelligence
 
 **APIs:** Alpaca (live trading), Webull API
-
-<div align="center">
-  <img src="assets/icon.svg" alt="Wolf of Wall Sweet Logo" />
-</div>

@@ -1,5 +1,14 @@
-# Logs
-logs
+# ── Node / React / Vite ─────────────────────────────────────────────────────
+node_modules/
+dist/
+dist-ssr/
+*.local
+.cache/
+.vite/
+*.tsbuildinfo
+
+# ── Logs ─────────────────────────────────────────────────────────────────────
+logs/
 *.log
 npm-debug.log*
 yarn-debug.log*
@@ -7,20 +16,102 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-dist
-dist-ssr
-*.local
+# ── Environment & Secrets ────────────────────────────────────────────────────
 .env
 .env.*
+!.env.example
+databricks/.env
+!databricks/.env.example
 
-# Editor directories and files
+# Databricks auth files
+.databrickscfg
+databricks.yml
+
+# Kaggle credentials
+.kaggle/
+kaggle.json
+
+# ── Python ───────────────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.pyc
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+.venv-*/
+.venv*/
+venv/
+venv-*/
+env/
+ENV/
+
+# Package metadata
+*.egg
+*.egg-info/
+eggs/
+sdist/
+develop-eggs/
+
+# MyPy / type stubs
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
+
+# pytest / coverage
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+
+# ── Jupyter Notebooks ────────────────────────────────────────────────────────
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/
+
+# ── Large Data Files ─────────────────────────────────────────────────────────
+*.csv
+*.parquet
+*.orc
+*.avro
+
+# Delta Lake / Spark local
+metastore_db/
+derby.log
+spark-warehouse/
+
+# ── OS ───────────────────────────────────────────────────────────────────────
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ── Editors ──────────────────────────────────────────────────────────────────
 .vscode/*
 !.vscode/extensions.json
-.idea
-.DS_Store
+!.vscode/settings.json
+.idea/
 *.suo
 *.ntvs*
 *.njsproj
 *.sln
 *.sw?
+*.swp
+*.swo
+*~
+
+# ── Misc ─────────────────────────────────────────────────────────────────────
+*.zip
+*.tar.gz
+*.tgz
+*.rar
+tmp/
+temp/
+.tmp/
