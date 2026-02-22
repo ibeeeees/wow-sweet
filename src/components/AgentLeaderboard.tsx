@@ -277,13 +277,6 @@ export const AgentLeaderboard: React.FC = () => {
   const [collapsed, setCollapsed] = useState(false);
   const leaderboard = useStore((s) => s.agentLeaderboard);
   const top5 = useMemo(() => leaderboard.slice(0, 5), [leaderboard]);
-  const isPlaying = useStore((s) => s.timeSlider.isPlaying);
-  const currentDate = useStore((s) => s.timeSlider.currentDate);
-  const simDate = useMemo(() => {
-    const d = new Date(currentDate);
-    return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }, [currentDate]);
-
   // ---- drag state ----
   const panelRef = useRef<HTMLDivElement>(null);
   const dragState = useRef<{ dragging: boolean; offsetX: number; offsetY: number }>({

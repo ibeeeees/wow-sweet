@@ -14,6 +14,7 @@ const SectorFilter = lazy(() => import('../components/SectorFilter'));
 const StoreDetail = lazy(() => import('../components/StoreDetail'));
 const AgentLeaderboard = lazy(() => import('../components/AgentLeaderboard'));
 const FuturePredictions = lazy(() => import('../components/FuturePredictions'));
+const NewsInjector = lazy(() => import('../components/NewsInjector'));
 
 const PAGE_BG = '#1a1a2e';
 
@@ -152,7 +153,9 @@ export default function GoldenCityPage() {
         zIndex: 20,
         backdropFilter: 'blur(6px)',
       }}>
-        <NewsInjector />
+        <Suspense fallback={null}>
+          <NewsInjector />
+        </Suspense>
       </div>
     </div>
   );

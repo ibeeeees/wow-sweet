@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import { loadStockData, modulateStocksByTime } from './data/stockData';
 import { apiClient } from './services/apiClient';
-import { initTrackedAgents, processDay, getLeaderboard } from './services/tradeTracker';
+import { initTrackedAgents, getLeaderboard } from './services/tradeTracker';
 import { CandyCane, ChartLine, LightningBolt, WebNodes, Gumball, NoteBook, Lollipop, ChocolateBar } from './components/CandyIcons';
 import type { PageName } from './types';
 
@@ -215,9 +215,6 @@ export default function App() {
     };
   }, [setStocks, setBaseStocks, setCorrelationEdges, setAgentLeaderboard, setDataSource, setBackendConnected, setDatabricksConnected]);
 
-  // Track the last processed date for trade simulation
-  const lastProcessedDate = useRef<string>('');
-
   // Time modulation: update biases when date/mode changes (without re-initializing simulation)
   useEffect(() => {
     if (baseStocks.length === 0) return;
@@ -225,7 +222,7 @@ export default function App() {
     setModulatedBiases(modulated.map((s) => s.direction_bias));
   }, [baseStocks, timeSlider.currentDate, timeSlider.mode, setModulatedBiases]);
 
-  const [minLoadDone, setMinLoadDone] = useState(false);
+  const [_minLoadDone, setMinLoadDone] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => setMinLoadDone(true), 3000);
