@@ -71,6 +71,7 @@
 <li class="toctree-l1 current"><a class="current reference internal" href="#">Continuous Pipeline Loop</a><ul>
 <li class="toctree-l2"><a class="reference internal" href="#loop-architecture">Loop Architecture</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#trigger-mechanisms">Trigger Mechanisms</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#how-advance-works">How Advance Works</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#simulation-feedback">Simulation Feedback</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#tables">Tables</a></li>
 <li class="toctree-l2"><a class="reference internal" href="#dataset-wrapping">Dataset Wrapping</a></li>
@@ -119,11 +120,11 @@ the frontend. No manual intervention is needed once deployed.</p>
 <div class="highlight-text notranslate"><div class="highlight"><pre><span></span>┌──────────────────────────────────────────────────────┐
 │                                                      │
 ▼                                                      │
-DATABRICKS (advance_snapshot.py)                       │
-│  Process next trading day                            │
-│  bronze → silver features → gold tickets             │
-│  + Read simulation_results from previous cycle       │
-│  + Blend crowd sentiment into direction biases       │
+/api/advance (Vercel Serverless — pure SQL)            │
+│  Reads next date from silver.daily_features          │
+│  Computes gold tickets via SQL Warehouse             │
+│  Appends to golden_tickets table                     │
+│  No compute cluster required                         │
 │                                                      │
 ▼                                                      │
 /api/stocks (Vercel Serverless)                        │
@@ -133,7 +134,7 @@ DATABRICKS (advance_snapshot.py)                       │
 ▼                                                      │
 FRONTEND (React, polls every 60s)                      │
 │  Detects new snapshot_date → refreshes city          │
-│  24 agents + 4 whale funds trade all 609 stocks      │
+│  Agents trade all stocks                             │
 │  Generates trade P&amp;L + crowd metrics per store       │
 │                                                      │
 ▼                                                      │
@@ -148,22 +149,36 @@ FRONTEND (React, polls every 60s)                      │
 <section id="trigger-mechanisms">
 <h2>Trigger Mechanisms<a class="headerlink" href="#trigger-mechanisms" title="Link to this heading"></a></h2>
 <p>Three redundant trigger mechanisms ensure the pipeline keeps advancing:</p>
-<ol class="arabic">
+<ol class="arabic simple">
 <li><p><strong>Vercel Cron</strong> — <code class="docutils literal notranslate"><span class="pre">vercel.json</span></code> schedules <code class="docutils literal notranslate"><span class="pre">/api/advance</span></code> every 5 minutes.
 Requires Vercel Pro plan for sub-daily frequency.</p></li>
 <li><p><strong>Frontend Staleness Detection</strong> — If <code class="docutils literal notranslate"><span class="pre">/api/stocks</span></code> returns the same
 <code class="docutils literal notranslate"><span class="pre">snapshot_date</span></code> for 3 consecutive polls (3 minutes), the frontend
 auto-calls <code class="docutils literal notranslate"><span class="pre">/api/advance</span></code> to request a new day. Re-triggers every
 10 minutes if still stale.</p></li>
-<li><p><strong>Databricks Jobs</strong> (optional) — The CLI can create a native Databricks
-scheduled job:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>databricks/cli_pipeline.py<span class="w"> </span>--step<span class="w"> </span>create-job
-python<span class="w"> </span>databricks/cli_pipeline.py<span class="w"> </span>--step<span class="w"> </span>start-loop
-python<span class="w"> </span>databricks/cli_pipeline.py<span class="w"> </span>--step<span class="w"> </span>stop-loop
-python<span class="w"> </span>databricks/cli_pipeline.py<span class="w"> </span>--step<span class="w"> </span>loop-status
-</pre></div>
-</div>
+<li><p><strong>Manual Trigger</strong> — Call <code class="docutils literal notranslate"><span class="pre">GET</span> <span class="pre">/api/advance</span></code> directly via curl or browser.</p></li>
+</ol>
+</section>
+<section id="how-advance-works">
+<h2>How Advance Works<a class="headerlink" href="#how-advance-works" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">/api/advance</span></code> endpoint uses <strong>pure SQL</strong> via the Databricks SQL Warehouse.
+No compute cluster is needed.</p>
+<ol class="arabic simple">
+<li><p><strong>Find next date</strong>: Queries <code class="docutils literal notranslate"><span class="pre">MAX(date)</span></code> from <code class="docutils literal notranslate"><span class="pre">golden_tickets</span></code> and finds
+the next available date in <code class="docutils literal notranslate"><span class="pre">silver.daily_features</span></code>.</p></li>
+<li><p><strong>Compute gold tickets</strong>: Runs a single <code class="docutils literal notranslate"><span class="pre">INSERT</span> <span class="pre">INTO</span> <span class="pre">...</span> <span class="pre">SELECT</span></code> statement
+with CTEs that compute tickets from silver features:</p>
+<ul class="simple">
+<li><p><strong>Dip Ticket</strong>: <code class="docutils literal notranslate"><span class="pre">drawdown_percentile</span> <span class="pre">&gt;</span> <span class="pre">0.80</span></code></p></li>
+<li><p><strong>Shock Ticket</strong>: drawdown + volume + volatility thresholds</p></li>
+<li><p><strong>Asymmetry Ticket</strong>: forward return profile</p></li>
+<li><p><strong>Dislocation Ticket</strong>: momentum reversal signal</p></li>
+<li><p><strong>Convexity Ticket</strong>: all conditions align</p></li>
+</ul>
 </li>
+<li><p><strong>Verify</strong>: Confirms rows were inserted for the target date.</p></li>
+<li><p><strong>Wrap-around</strong>: When all silver dates are consumed, clears <code class="docutils literal notranslate"><span class="pre">golden_tickets</span></code>
+and restarts from the 253rd date (enough lookback for valid features).</p></li>
 </ol>
 </section>
 <section id="simulation-feedback">
@@ -171,7 +186,6 @@ python<span class="w"> </span>databricks/cli_pipeline.py<span class="w"> </span>
 <p>The loop creates a reinforcement signal:</p>
 <ul class="simple">
 <li><p><strong>Crowd sentiment</strong> flows back to Databricks via <code class="docutils literal notranslate"><span class="pre">simulation_results</span></code></p></li>
-<li><p><strong>Direction biases</strong> are blended: 80% technical analysis + 20% crowd sentiment</p></li>
 <li><p><strong>Agent learning</strong>: agents bias toward historically profitable tickers (30% of decisions)
 and boost historically best actions by 20% weight</p></li>
 <li><p><strong>History endpoint</strong>: <code class="docutils literal notranslate"><span class="pre">/api/simulation_history</span></code> provides aggregated performance data</p></li>
@@ -189,8 +203,8 @@ and boost historically best actions by 20% weight</p></li>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sweetreturns.bronze.raw_stock_data</span></code></p></td>
 <td><p>Raw stock prices from Kaggle CSV</p></td>
 </tr>
-<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sweetreturns.silver.stock_features</span></code></p></td>
-<td><p>50+ technical indicators per ticker/date</p></td>
+<tr class="row-odd"><td><p><code class="docutils literal notranslate"><span class="pre">sweetreturns.silver.daily_features</span></code></p></td>
+<td><p>Technical indicators per ticker/date</p></td>
 </tr>
 <tr class="row-even"><td><p><code class="docutils literal notranslate"><span class="pre">sweetreturns.gold.golden_tickets</span></code></p></td>
 <td><p>Final scored stocks served to frontend</p></td>
@@ -204,10 +218,10 @@ crowd metrics) used by next cycle</p></td>
 </section>
 <section id="dataset-wrapping">
 <h2>Dataset Wrapping<a class="headerlink" href="#dataset-wrapping" title="Link to this heading"></a></h2>
-<p>When all dates in the Kaggle dataset (2012-2017) are consumed,
-<code class="docutils literal notranslate"><span class="pre">advance_snapshot.py</span></code> wraps around:</p>
+<p>When all dates in the dataset (1970-2017) are consumed,
+<code class="docutils literal notranslate"><span class="pre">/api/advance</span></code> wraps around:</p>
 <ol class="arabic simple">
-<li><p>Detects no more dates after current MAX(Date)</p></li>
+<li><p>Detects no more dates after current <code class="docutils literal notranslate"><span class="pre">MAX(date)</span></code></p></li>
 <li><p>Clears <code class="docutils literal notranslate"><span class="pre">golden_tickets</span></code> (<code class="docutils literal notranslate"><span class="pre">DELETE</span> <span class="pre">FROM</span></code>)</p></li>
 <li><p>Restarts from the 253rd date (ensures enough lookback)</p></li>
 <li><p>The cycle continues indefinitely</p></li>

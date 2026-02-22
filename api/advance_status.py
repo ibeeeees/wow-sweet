@@ -1,6 +1,9 @@
-"""Vercel serverless: GET /api/advance_status — check pipeline run status.
+"""Vercel serverless: GET /api/advance_status — pipeline monitoring.
 
-Returns the status of recent advance_snapshot runs and overall pipeline health.
+Returns the current state of the continuous pipeline:
+- Current snapshot date and total dates processed
+- Simulation feedback stats
+- Silver/gold table sizes
 """
 import json
 import os
@@ -8,22 +11,7 @@ from http.server import BaseHTTPRequestHandler
 from urllib.request import Request, urlopen
 
 
-def _db_request(host, token, method, path, timeout=10):
-    """Make a Databricks REST API request."""
-    url = f"{host}/api/{path}"
-    req = Request(
-        url,
-        headers={
-            "Authorization": f"Bearer {token}",
-            "Content-Type": "application/json",
-        },
-        method=method,
-    )
-    with urlopen(req, timeout=timeout) as resp:
-        return json.loads(resp.read())
-
-
-def _db_sql(host, token, warehouse_id, sql):
+def _db_sql(host, token, warehouse_id, sql, wait_timeout="8s"):
     """Execute SQL via Databricks SQL Statement API."""
     try:
         req = Request(
@@ -31,7 +19,7 @@ def _db_sql(host, token, warehouse_id, sql):
             data=json.dumps({
                 "warehouse_id": warehouse_id,
                 "statement": sql,
-                "wait_timeout": "5s",
+                "wait_timeout": wait_timeout,
             }).encode(),
             headers={
                 "Authorization": f"Bearer {token}",
@@ -39,7 +27,7 @@ def _db_sql(host, token, warehouse_id, sql):
             },
             method="POST",
         )
-        with urlopen(req, timeout=8) as resp:
+        with urlopen(req, timeout=10) as resp:
             body = json.loads(resp.read())
 
         if body.get("status", {}).get("state") != "SUCCEEDED":
@@ -64,68 +52,65 @@ def _build_status():
     result = {
         "status": "ok",
         "pipeline": {},
-        "cluster": {},
-        "recent_runs": [],
+        "silver": {},
+        "simulation": {},
     }
 
-    # Get current snapshot date from golden_tickets
-    if warehouse_id:
-        date_rows = _db_sql(host, token, warehouse_id,
-            "SELECT MAX(Date) AS d, COUNT(DISTINCT Date) AS total_dates, COUNT(*) AS total_rows FROM sweetreturns.gold.golden_tickets")
-        if date_rows:
-            result["pipeline"] = {
-                "current_date": date_rows[0].get("d", "unknown"),
-                "total_dates_processed": date_rows[0].get("total_dates", 0),
-                "total_rows": date_rows[0].get("total_rows", 0),
-            }
+    if not warehouse_id:
+        result["status"] = "no_warehouse"
+        return result
 
-        # Get simulation stats
-        sim_rows = _db_sql(host, token, warehouse_id,
-            "SELECT COUNT(DISTINCT snapshot_date) AS cycles, COUNT(*) AS records FROM sweetreturns.gold.simulation_results")
-        if sim_rows:
-            result["pipeline"]["simulation_cycles"] = sim_rows[0].get("cycles", 0)
-            result["pipeline"]["simulation_records"] = sim_rows[0].get("records", 0)
+    # Gold table stats (current pipeline state)
+    gold_rows = _db_sql(host, token, warehouse_id, """
+        SELECT MAX(Date) AS current_date,
+               MIN(Date) AS start_date,
+               COUNT(DISTINCT Date) AS total_dates,
+               COUNT(*) AS total_rows
+        FROM sweetreturns.gold.golden_tickets
+    """)
+    if gold_rows:
+        result["pipeline"] = {
+            "current_date": gold_rows[0].get("current_date", "unknown"),
+            "start_date": gold_rows[0].get("start_date", "unknown"),
+            "total_dates_processed": gold_rows[0].get("total_dates", 0),
+            "total_rows": gold_rows[0].get("total_rows", 0),
+        }
 
-    # Get cluster status
+    # Silver table stats (available dates for advancement)
+    silver_rows = _db_sql(host, token, warehouse_id, """
+        SELECT COUNT(DISTINCT Date) AS total_dates,
+               MIN(Date) AS start_date,
+               MAX(Date) AS end_date
+        FROM sweetreturns.silver.daily_features
+    """)
+    if silver_rows:
+        result["silver"] = {
+            "total_dates": silver_rows[0].get("total_dates", 0),
+            "start_date": silver_rows[0].get("start_date", "unknown"),
+            "end_date": silver_rows[0].get("end_date", "unknown"),
+        }
+
+    # Remaining dates to process
     try:
-        clusters = _db_request(host, token, "GET", "2.0/clusters/list")
-        cluster_list = clusters.get("clusters", [])
-        for c in cluster_list:
-            if c["state"] == "RUNNING":
-                result["cluster"] = {
-                    "id": c["cluster_id"],
-                    "name": c["cluster_name"],
-                    "state": c["state"],
-                }
-                break
-        if not result["cluster"]:
-            result["cluster"] = {
-                "state": "NONE_RUNNING",
-                "available": len(cluster_list),
-            }
-    except Exception as e:
-        result["cluster"] = {"error": str(e)[:100]}
-
-    # Get recent advance runs
-    try:
-        runs = _db_request(host, token, "GET",
-            "2.1/jobs/runs/list?limit=10&expand_tasks=false")
-        for run in runs.get("runs", []):
-            name = run.get("run_name", "")
-            if "sweetreturns" in name:
-                state = run.get("state", {})
-                import time
-                start_ms = run.get("start_time", 0)
-                ts = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_ms / 1000)) if start_ms else "?"
-                result["recent_runs"].append({
-                    "run_id": run.get("run_id"),
-                    "name": name,
-                    "started": ts,
-                    "lifecycle": state.get("life_cycle_state", "?"),
-                    "result": state.get("result_state", ""),
-                })
-    except Exception:
+        gold_total = int(result["pipeline"].get("total_dates_processed", 0))
+        silver_total = int(result["silver"].get("total_dates", 0))
+        result["pipeline"]["remaining_dates"] = max(0, silver_total - gold_total)
+    except (ValueError, TypeError):
         pass
+
+    # Simulation feedback stats
+    sim_rows = _db_sql(host, token, warehouse_id, """
+        SELECT COUNT(DISTINCT snapshot_date) AS cycles,
+               COUNT(*) AS records,
+               MAX(submitted_at) AS last_submission
+        FROM sweetreturns.gold.simulation_results
+    """)
+    if sim_rows:
+        result["simulation"] = {
+            "cycles": sim_rows[0].get("cycles", 0),
+            "records": sim_rows[0].get("records", 0),
+            "last_submission": sim_rows[0].get("last_submission"),
+        }
 
     return result
 

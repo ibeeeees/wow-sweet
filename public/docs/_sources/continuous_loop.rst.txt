@@ -12,11 +12,11 @@ Loop Architecture
    ┌──────────────────────────────────────────────────────┐
    │                                                      │
    ▼                                                      │
-   DATABRICKS (advance_snapshot.py)                       │
-   │  Process next trading day                            │
-   │  bronze → silver features → gold tickets             │
-   │  + Read simulation_results from previous cycle       │
-   │  + Blend crowd sentiment into direction biases       │
+   /api/advance (Vercel Serverless — pure SQL)            │
+   │  Reads next date from silver.daily_features          │
+   │  Computes gold tickets via SQL Warehouse             │
+   │  Appends to golden_tickets table                     │
+   │  No compute cluster required                         │
    │                                                      │
    ▼                                                      │
    /api/stocks (Vercel Serverless)                        │
@@ -26,7 +26,7 @@ Loop Architecture
    ▼                                                      │
    FRONTEND (React, polls every 60s)                      │
    │  Detects new snapshot_date → refreshes city          │
-   │  24 agents + 4 whale funds trade all 609 stocks      │
+   │  Agents trade all stocks                             │
    │  Generates trade P&L + crowd metrics per store       │
    │                                                      │
    ▼                                                      │
@@ -49,15 +49,30 @@ Three redundant trigger mechanisms ensure the pipeline keeps advancing:
    auto-calls ``/api/advance`` to request a new day. Re-triggers every
    10 minutes if still stale.
 
-3. **Databricks Jobs** (optional) — The CLI can create a native Databricks
-   scheduled job:
+3. **Manual Trigger** — Call ``GET /api/advance`` directly via curl or browser.
 
-   .. code-block:: bash
+How Advance Works
+-----------------
 
-      python databricks/cli_pipeline.py --step create-job
-      python databricks/cli_pipeline.py --step start-loop
-      python databricks/cli_pipeline.py --step stop-loop
-      python databricks/cli_pipeline.py --step loop-status
+The ``/api/advance`` endpoint uses **pure SQL** via the Databricks SQL Warehouse.
+No compute cluster is needed.
+
+1. **Find next date**: Queries ``MAX(date)`` from ``golden_tickets`` and finds
+   the next available date in ``silver.daily_features``.
+
+2. **Compute gold tickets**: Runs a single ``INSERT INTO ... SELECT`` statement
+   with CTEs that compute tickets from silver features:
+
+   - **Dip Ticket**: ``drawdown_percentile > 0.80``
+   - **Shock Ticket**: drawdown + volume + volatility thresholds
+   - **Asymmetry Ticket**: forward return profile
+   - **Dislocation Ticket**: momentum reversal signal
+   - **Convexity Ticket**: all conditions align
+
+3. **Verify**: Confirms rows were inserted for the target date.
+
+4. **Wrap-around**: When all silver dates are consumed, clears ``golden_tickets``
+   and restarts from the 253rd date (enough lookback for valid features).
 
 Simulation Feedback
 -------------------
@@ -65,7 +80,6 @@ Simulation Feedback
 The loop creates a reinforcement signal:
 
 - **Crowd sentiment** flows back to Databricks via ``simulation_results``
-- **Direction biases** are blended: 80% technical analysis + 20% crowd sentiment
 - **Agent learning**: agents bias toward historically profitable tickers (30% of decisions)
   and boost historically best actions by 20% weight
 - **History endpoint**: ``/api/simulation_history`` provides aggregated performance data
@@ -78,7 +92,7 @@ Tables
 +===========================================+===========================================+
 | ``sweetreturns.bronze.raw_stock_data``    | Raw stock prices from Kaggle CSV          |
 +-------------------------------------------+-------------------------------------------+
-| ``sweetreturns.silver.stock_features``    | 50+ technical indicators per ticker/date  |
+| ``sweetreturns.silver.daily_features``    | Technical indicators per ticker/date      |
 +-------------------------------------------+-------------------------------------------+
 | ``sweetreturns.gold.golden_tickets``      | Final scored stocks served to frontend    |
 +-------------------------------------------+-------------------------------------------+
@@ -89,10 +103,10 @@ Tables
 Dataset Wrapping
 ----------------
 
-When all dates in the Kaggle dataset (2012-2017) are consumed,
-``advance_snapshot.py`` wraps around:
+When all dates in the dataset (1970-2017) are consumed,
+``/api/advance`` wraps around:
 
-1. Detects no more dates after current MAX(Date)
+1. Detects no more dates after current ``MAX(date)``
 2. Clears ``golden_tickets`` (``DELETE FROM``)
 3. Restarts from the 253rd date (ensures enough lookback)
 4. The cycle continues indefinitely
