@@ -144,7 +144,7 @@ export const useStore = create<AppStore>((set) => ({
     set((s) => ({ agentFilters: { ...s.agentFilters, [key]: value } })),
 
   // Correlations
-  correlationThreshold: 0.5,
+  correlationThreshold: 0.3,
   setCorrelationThreshold: (threshold) => set({ correlationThreshold: threshold }),
   showCorrelations: false,
   toggleCorrelations: () => set((s) => ({ showCorrelations: !s.showCorrelations })),

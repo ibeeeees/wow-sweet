@@ -212,8 +212,16 @@ export default function App() {
       setCorrelationEdges(edges);
       setDataSource(source);
 
-      // Initialize trade tracker with live agents
+      // Initialize trade tracker and seed with historical trades
       initTrackedAgents(stocks);
+      // Process 10 historical days so agents have trade history for network connections
+      const today = new Date('2026-02-21');
+      for (let d = 10; d >= 1; d--) {
+        const past = new Date(today);
+        past.setDate(past.getDate() - d);
+        const dateStr = past.toISOString().slice(0, 10);
+        processDay(dateStr, stocks);
+      }
       setAgentLeaderboard(getLeaderboard());
     }
     init();

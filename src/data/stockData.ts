@@ -474,7 +474,7 @@ export function generateStockData(): StockData[] {
 
 export function getCorrelationEdges(
   stocks: StockData[],
-  threshold: number = 0.5,
+  threshold: number = 0.3,
 ): GraphEdge[] {
   const rand = seededRandom(123);
   const edges: GraphEdge[] = [];
@@ -671,7 +671,7 @@ export async function loadStockData(): Promise<{
       });
       // Regenerate edges if API returned empty (Databricks doesn't compute correlations)
       const edges = parsed.edges.length === 0 && parsed.stocks.length > 0
-        ? getCorrelationEdges(parsed.stocks, 0.5)
+        ? getCorrelationEdges(parsed.stocks, 0.3)
         : parsed.edges;
       console.log(`[SweetReturns] Loaded ${parsed.stocks.length} stocks, ${edges.length} edges from Databricks (live)`);
       return { stocks: parsed.stocks, edges, source: 'databricks' };
@@ -684,7 +684,7 @@ export async function loadStockData(): Promise<{
   try {
     const parsed = await loadPipelineData();
     const staticEdges = parsed.edges.length === 0 && parsed.stocks.length > 0
-      ? getCorrelationEdges(parsed.stocks, 0.5)
+      ? getCorrelationEdges(parsed.stocks, 0.3)
       : parsed.edges;
     console.log(`[SweetReturns] Loaded ${parsed.stocks.length} stocks, ${staticEdges.length} edges from static payload`);
     return { stocks: parsed.stocks, edges: staticEdges, source: 'static' };
@@ -694,7 +694,7 @@ export async function loadStockData(): Promise<{
 
   // Tier 3: Synthetic data
   const stocks = generateStockData();
-  const edges = getCorrelationEdges(stocks, 0.5);
+  const edges = getCorrelationEdges(stocks, 0.3);
   console.log(`[SweetReturns] Generated ${stocks.length} synthetic stocks`);
   return { stocks, edges, source: 'synthetic' };
 }
