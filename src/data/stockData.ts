@@ -406,7 +406,7 @@ export function generateStockData(): StockData[] {
   }
 
   // Generate random positions using Poisson disk sampling
-  const positions = poissonDiskSample(allCompanies.length, 900, 900, 12.0, rand);
+  const positions = poissonDiskSample(allCompanies.length, 160, 280, 5.0, rand);
 
   for (let globalRank = 0; globalRank < allCompanies.length; globalRank++) {
     const { ticker, company, brandColor, sector } = allCompanies[globalRank];
@@ -424,7 +424,7 @@ export function generateStockData(): StockData[] {
     const isPlatinum = goldenScore >= 4 && rand() < 0.3;
     const mcapPercentile = 1 - ((globalRank + 1) / allCompanies.length);
 
-    const pos = positions[globalRank] || { x: rand() * 200 - 100, z: rand() * 200 - 100 };
+      const pos = positions[globalRank] || { x: rand() * 70 - 35, z: rand() * 70 - 35 };
 
     stocks.push({
       ticker,
@@ -577,10 +577,10 @@ export async function loadPipelineData(): Promise<{
   const payload: PipelinePayload = await res.json();
 
   const rand = seededRandom(42);
-  const positions = poissonDiskSample(payload.stocks.length, 900, 900, 12.0, rand);
+  const positions = poissonDiskSample(payload.stocks.length, 160, 280, 5.0, rand);
 
   const stocks: StockData[] = payload.stocks.map((raw, i) => {
-    const pos = positions[i] || { x: rand() * 200 - 100, z: rand() * 200 - 100 };
+    const pos = positions[i] || { x: rand() * 70 - 35, z: rand() * 70 - 35 };
     const companyName = COMPANY_NAME_MAP[raw.ticker] || raw.company;
     const gs = raw.golden_score ?? 0;
     const vol = raw.volatility ?? (0.01 + rand() * 0.04);
