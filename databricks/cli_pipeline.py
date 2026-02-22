@@ -8,17 +8,33 @@ creates the schema, and runs the full medallion pipeline on your Databricks work
 Usage:
     python databricks/cli_pipeline.py [--step STEP] [--check-only]
 
-Steps:
-    1  check       Verify prerequisites (CLI, credentials, cluster)
-    2  download    Download Kaggle dataset to local cache
-    3  upload      Upload CSV to DBFS
-    4  schema      Create sweetreturns DB + bronze/silver/gold schemas
-    5  bronze      Run bronze_ingestion.py on the cluster
-    6  silver      Run silver_features.py on the cluster
-    7  gold        Run gold_tickets.py on the cluster
-    8  export      Run export_json.py + download frontend_payload.json
-    9  quality     Run data quality checks across all layers
-    all            Run all steps in order (default)
+Steps (core pipeline):
+    1   check              Verify prerequisites (CLI, credentials, cluster)
+    2   download           Download Kaggle dataset to local cache
+    3   upload             Upload CSV to DBFS
+    4   schema             Create sweetreturns DB + bronze/silver/gold schemas
+    5   bronze             Run bronze_ingestion.py (stock prices)
+    6   bronze-news        Run bronze_news_ingestion.py (GDELT news articles)
+    7   bronze-reddit      Run bronze_reddit_ingestion.py (WallStreetBets posts)
+    8   bronze-macro       Run bronze_macro_ingestion.py (FRED macro indicators)
+    9   silver             Run silver_features.py (50+ technical indicators)
+    10  silver-news        Run silver_multimodal_features.py (news-enriched features)
+    11  ml-sentiment       Run ml_finbert_sentiment.py (FinBERT sentiment scoring)
+    12  ml-correlation     Run ml_correlation_graph.py (correlation network + communities)
+    13  ml-regime          Run ml_regime_detection.py (HMM market regime detection)
+    14  ml-topics          Run ml_news_topics.py (BERTopic news clustering)
+    15  gold               Run gold_tickets.py (golden ticket scoring)
+    16  gold-agents        Run gold_agent_archetypes.py (100 agent archetypes)
+    17  gold-scenarios     Run gold_precompute_scenarios.py (agent decisions per scenario)
+    18  export             Run export_json.py + download frontend_payload.json
+    19  quality            Run data quality checks across all layers
+    all                    Run all steps in order (default)
+
+Step groups:
+    bronze-all         Run all bronze ingestion steps (5-8)
+    silver-all         Run all silver steps (9-10)
+    ml-all             Run all ML steps (11-14)
+    gold-all           Run all gold steps (15-17)
 
 Prerequisites:
     pip install requests python-dotenv kagglehub tqdm
@@ -52,10 +68,25 @@ UC_CSV     = f"{UC_VOL_DIR}/stock_details_5_years.csv"
 UC_SPARK_CSV = UC_CSV
 
 NOTEBOOK_SCRIPTS = {
-    "bronze": SCRIPT_DIR / "bronze_ingestion.py",
-    "silver": SCRIPT_DIR / "silver_features.py",
-    "gold"  : SCRIPT_DIR / "gold_tickets.py",
-    "export": SCRIPT_DIR / "export_json.py",
+    # Core pipeline
+    "bronze":           SCRIPT_DIR / "bronze_ingestion.py",
+    "silver":           SCRIPT_DIR / "silver_features.py",
+    "gold":             SCRIPT_DIR / "gold_tickets.py",
+    "export":           SCRIPT_DIR / "export_json.py",
+    # Extended bronze ingestion
+    "bronze-news":      SCRIPT_DIR / "bronze_news_ingestion.py",
+    "bronze-reddit":    SCRIPT_DIR / "bronze_reddit_ingestion.py",
+    "bronze-macro":     SCRIPT_DIR / "bronze_macro_ingestion.py",
+    # Extended silver
+    "silver-news":      SCRIPT_DIR / "silver_multimodal_features.py",
+    # ML models
+    "ml-sentiment":     SCRIPT_DIR / "ml_finbert_sentiment.py",
+    "ml-correlation":   SCRIPT_DIR / "ml_correlation_graph.py",
+    "ml-regime":        SCRIPT_DIR / "ml_regime_detection.py",
+    "ml-topics":        SCRIPT_DIR / "ml_news_topics.py",
+    # Extended gold
+    "gold-agents":      SCRIPT_DIR / "gold_agent_archetypes.py",
+    "gold-scenarios":   SCRIPT_DIR / "gold_precompute_scenarios.py",
 }
 
 # ── Colour helpers ────────────────────────────────────────────────────────────
@@ -612,7 +643,7 @@ print("✓ Schemas created. CSV path: {csv_spark_path or 'default'}")
         tmp.unlink(missing_ok=True)
 
 
-# ── Step 5-8: Run pipeline notebooks ─────────────────────────────────────────
+# ── Run pipeline notebooks (steps 5-18) ──────────────────────────────────────
 def step_run_notebook(client: DatabricksClient, cluster_id: str,
                       step_name: str, local_script: Path,
                       csv_spark_path: str = None):
@@ -729,10 +760,10 @@ def cmd_check_only(client: DatabricksClient):
         warn(f"DBFS path {DBFS_DIR} is empty or does not exist (CSV not yet uploaded)")
 
 
-# ── Step 9: Data Quality ──────────────────────────────────────────────────────
+# ── Step 19: Data Quality ─────────────────────────────────────────────────────
 def step_quality(client: DatabricksClient, cluster_id: str):
     """Run the data quality monitor across all layers."""
-    hdr("STEP 9 — Data Quality Checks")
+    hdr("STEP 19 — Data Quality Checks")
     try:
         from data_quality_monitor import check_bronze, check_gold, check_silver, check_payload, print_summary, export_report
     except ImportError:
@@ -770,9 +801,15 @@ def main():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__,
     )
-    parser.add_argument("--step", choices=["check", "download", "upload", "schema",
-                                            "bronze", "silver", "gold", "export",
-                                            "quality", "all"],
+    ALL_STEPS = [
+        "check", "download", "upload", "schema",
+        "bronze", "bronze-news", "bronze-reddit", "bronze-macro", "bronze-all",
+        "silver", "silver-news", "silver-all",
+        "ml-sentiment", "ml-correlation", "ml-regime", "ml-topics", "ml-all",
+        "gold", "gold-agents", "gold-scenarios", "gold-all",
+        "export", "quality", "all",
+    ]
+    parser.add_argument("--step", choices=ALL_STEPS,
                         default="all", help="Which step to run (default: all)")
     parser.add_argument("--check-only", action="store_true",
                         help="Just verify connectivity and list clusters/files. No changes.")
@@ -811,47 +848,156 @@ def main():
         cmd_check_only(client)
         return
 
+    # Helper: ensure cluster_id is available for standalone step runs
+    def ensure_cluster():
+        nonlocal cluster_id
+        if "cluster_id" not in dir() or not cluster_id:
+            cluster_id = step_check(client)
+        return cluster_id
+
+    # Helper: ensure CSV is downloaded and uploaded for standalone bronze runs
+    def ensure_csv():
+        nonlocal csv_path, csv_spark_path
+        if "csv_path" not in dir() or not csv_path:
+            csv_path = step_download()
+        if "csv_spark_path" not in dir() or not csv_spark_path:
+            csv_spark_path = step_upload(client, csv_path)
+        return csv_spark_path
+
+    # Initialize variables
+    cluster_id = ""
+    csv_path = None
+    csv_spark_path = None
+
+    # ── Step 1: Check prerequisites ──────────────────────────────────────
     if step in ("check", "all"):
         cluster_id = step_check(client)
+
+    # ── Step 2: Download dataset ─────────────────────────────────────────
     if step in ("download", "all"):
         csv_path = step_download()
+
+    # ── Step 3: Upload CSV ───────────────────────────────────────────────
     if step in ("upload", "all"):
-        if step == "upload":
+        if not csv_path:
             csv_path = step_download()
         csv_spark_path = step_upload(client, csv_path)
+
+    # ── Step 4: Create schemas ───────────────────────────────────────────
     if step in ("schema", "all"):
         if step == "schema":
-            cluster_id = step_check(client)
-            csv_path = step_download()
-            csv_spark_path = step_upload(client, csv_path)
+            ensure_cluster()
+            ensure_csv()
         step_schema(client, cluster_id, csv_spark_path)
-    if step in ("bronze", "all"):
-        if step == "bronze":
-            cluster_id = step_check(client)
-            csv_path = step_download()
-            csv_spark_path = step_upload(client, csv_path)
-        step_run_notebook(client, cluster_id, "bronze", NOTEBOOK_SCRIPTS["bronze"], csv_spark_path)
-    if step in ("silver", "all"):
-        if step == "silver":
-            cluster_id = step_check(client)
-        step_run_notebook(client, cluster_id, "silver", NOTEBOOK_SCRIPTS["silver"])
-    if step in ("gold", "all"):
-        if step == "gold":
-            cluster_id = step_check(client)
-        step_run_notebook(client, cluster_id, "gold", NOTEBOOK_SCRIPTS["gold"])
+
+    # ── Step 5: Bronze — stock prices ────────────────────────────────────
+    if step in ("bronze", "bronze-all", "all"):
+        if step in ("bronze", "bronze-all"):
+            ensure_cluster()
+            ensure_csv()
+        step_run_notebook(client, cluster_id, "bronze",
+                          NOTEBOOK_SCRIPTS["bronze"], csv_spark_path)
+
+    # ── Step 6: Bronze — news articles (GDELT) ───────────────────────────
+    if step in ("bronze-news", "bronze-all", "all"):
+        if step == "bronze-news":
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "bronze-news",
+                          NOTEBOOK_SCRIPTS["bronze-news"])
+
+    # ── Step 7: Bronze — Reddit WallStreetBets ───────────────────────────
+    if step in ("bronze-reddit", "bronze-all", "all"):
+        if step == "bronze-reddit":
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "bronze-reddit",
+                          NOTEBOOK_SCRIPTS["bronze-reddit"])
+
+    # ── Step 8: Bronze — macro indicators (FRED) ─────────────────────────
+    if step in ("bronze-macro", "bronze-all", "all"):
+        if step == "bronze-macro":
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "bronze-macro",
+                          NOTEBOOK_SCRIPTS["bronze-macro"])
+
+    # ── Step 9: Silver — technical indicators ────────────────────────────
+    if step in ("silver", "silver-all", "all"):
+        if step in ("silver", "silver-all"):
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "silver",
+                          NOTEBOOK_SCRIPTS["silver"])
+
+    # ── Step 10: Silver — news-enriched features ─────────────────────────
+    if step in ("silver-news", "silver-all", "all"):
+        if step == "silver-news":
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "silver-news",
+                          NOTEBOOK_SCRIPTS["silver-news"])
+
+    # ── Step 11: ML — FinBERT sentiment ──────────────────────────────────
+    if step in ("ml-sentiment", "ml-all", "all"):
+        if step == "ml-sentiment":
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "ml-sentiment",
+                          NOTEBOOK_SCRIPTS["ml-sentiment"])
+
+    # ── Step 12: ML — correlation network ────────────────────────────────
+    if step in ("ml-correlation", "ml-all", "all"):
+        if step == "ml-correlation":
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "ml-correlation",
+                          NOTEBOOK_SCRIPTS["ml-correlation"])
+
+    # ── Step 13: ML — regime detection (HMM) ────────────────────────────
+    if step in ("ml-regime", "ml-all", "all"):
+        if step == "ml-regime":
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "ml-regime",
+                          NOTEBOOK_SCRIPTS["ml-regime"])
+
+    # ── Step 14: ML — news topic modeling (BERTopic) ─────────────────────
+    if step in ("ml-topics", "ml-all", "all"):
+        if step == "ml-topics":
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "ml-topics",
+                          NOTEBOOK_SCRIPTS["ml-topics"])
+
+    # ── Step 15: Gold — golden tickets ───────────────────────────────────
+    if step in ("gold", "gold-all", "all"):
+        if step in ("gold", "gold-all"):
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "gold",
+                          NOTEBOOK_SCRIPTS["gold"])
+
+    # ── Step 16: Gold — agent archetypes ─────────────────────────────────
+    if step in ("gold-agents", "gold-all", "all"):
+        if step == "gold-agents":
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "gold-agents",
+                          NOTEBOOK_SCRIPTS["gold-agents"])
+
+    # ── Step 17: Gold — precompute scenarios ─────────────────────────────
+    if step in ("gold-scenarios", "gold-all", "all"):
+        if step == "gold-scenarios":
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "gold-scenarios",
+                          NOTEBOOK_SCRIPTS["gold-scenarios"])
+
+    # ── Step 18: Export JSON ─────────────────────────────────────────────
     if step in ("export", "all"):
         if step == "export":
-            cluster_id = step_check(client)
-        step_run_notebook(client, cluster_id, "export", NOTEBOOK_SCRIPTS["export"])
+            ensure_cluster()
+        step_run_notebook(client, cluster_id, "export",
+                          NOTEBOOK_SCRIPTS["export"])
         step_download_output(client)
+
+    # ── Step 19: Data quality ────────────────────────────────────────────
     if step in ("quality", "all"):
-        cid = cluster_id if "cluster_id" in locals() else ""
-        if step == "quality" and not cid:
-            cid = step_check(client)
+        cid = cluster_id or ""
         step_quality(client, cid)
 
+    # ── Done ─────────────────────────────────────────────────────────────
     if step == "all":
-        hdr("PIPELINE COMPLETE")
+        hdr("PIPELINE COMPLETE — ALL 19 STEPS")
         ok("All steps finished successfully!")
         ok(f"Output: {OUTPUT_JSON}")
         print(f"\n  Next: npm run dev   (the React app now reads the real data)")

@@ -81,23 +81,28 @@ class DatabricksClient:
     ) -> dict:
         """Compute how agents react to this news"""
         reactions = []
+        label = sentiment.get("label", "neutral").lower()
+        score = abs(sentiment.get("score", 0.0))
+        # Scale agent count by sentiment strength
+        base_count = max(2000, int(score * 10000))
+
         for ticker in affected_tickers:
-            if sentiment["label"] == "negative":
+            if label in ("negative", "bearish"):
                 reactions.append(
                     {
                         "ticker": ticker,
                         "action": "panic_sell",
-                        "agent_count": 10000,
-                        "urgency": 0.95,
+                        "agent_count": base_count,
+                        "urgency": min(0.5 + score * 0.5, 0.99),
                     }
                 )
-            elif sentiment["label"] == "positive":
+            elif label in ("positive", "bullish"):
                 reactions.append(
                     {
                         "ticker": ticker,
                         "action": "rush_buy",
-                        "agent_count": 8000,
-                        "urgency": 0.85,
+                        "agent_count": base_count,
+                        "urgency": min(0.4 + score * 0.5, 0.95),
                     }
                 )
             else:

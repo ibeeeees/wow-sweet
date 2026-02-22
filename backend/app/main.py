@@ -216,12 +216,19 @@ async def inject_news(payload: NewsInput):
         analysis = gemini_result.get("analysis", "")
         trade_suggestion = gemini_result.get("trade_suggestion", "")
 
-        # Broadcast to connected clients
+        # Build agent reactions so 3D agents respond to the news
+        sentiment_for_reaction = {"label": sentiment_label, "score": score}
+        agent_reaction = await db_client.compute_agent_reaction(
+            sentiment_for_reaction, affected
+        )
+
+        # Broadcast to connected clients (includes agent_reaction for 3D agent movement)
         await manager.broadcast({
             "type": "breaking_news",
             "news": news_text[:500],
             "sentiment": {"label": sentiment_label, "score": score},
             "affected_tickers": affected,
+            "agent_reaction": agent_reaction,
         })
 
         return {
