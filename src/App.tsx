@@ -1,4 +1,4 @@
-import { useEffect, useRef, lazy, Suspense } from 'react';
+import { useEffect, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import { loadStockData, modulateStocksByTime } from './data/stockData';
@@ -223,14 +223,14 @@ export default function App() {
     if (baseStocks.length === 0) return;
     const modulated = modulateStocksByTime(baseStocks, timeSlider.currentDate, timeSlider.mode);
     setModulatedBiases(modulated.map((s) => s.direction_bias));
+  }, [baseStocks, timeSlider.currentDate, timeSlider.mode, setModulatedBiases]);
 
-    // Process trades when date changes
-    if (timeSlider.currentDate !== lastProcessedDate.current) {
-      lastProcessedDate.current = timeSlider.currentDate;
-      processDay(timeSlider.currentDate, modulated);
-      setAgentLeaderboard(getLeaderboard());
-    }
-  }, [baseStocks, timeSlider.currentDate, timeSlider.mode, setModulatedBiases, setAgentLeaderboard]);
+  const [minLoadDone, setMinLoadDone] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => setMinLoadDone(true), 3000);
+    return () => clearTimeout(timer);
+  }, []);
 
   return (
     <BrowserRouter>

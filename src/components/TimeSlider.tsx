@@ -111,17 +111,6 @@ export const TimeSlider: React.FC = () => {
 
   return (
     <div style={containerStyle}>
-      <style>{`
-        @keyframes tsLivePulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
-        @media (max-width: 700px) {
-          .ts-sep { display: none !important; }
-          .ts-date-picker { display: none !important; }
-          .ts-date-display { font-size: 9px !important; }
-        }
-        @media (max-width: 500px) {
-          .ts-speed-group { display: none !important; }
-        }
-      `}</style>
       {/* Top row: mode buttons | date display | date picker | playback | speed */}
       <div style={topRowStyle}>
         {/* Mode toggle buttons */}
@@ -145,12 +134,11 @@ export const TimeSlider: React.FC = () => {
         </div>
 
         {/* Separator */}
-        <div className="ts-sep" style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.15)' }} />
+        <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.15)' }} />
 
         {/* Date display + picker */}
-        <div className="ts-date-display" style={dateDisplayStyle}>{formatDisplayDate(timeSlider.currentDate)}</div>
+        <div style={dateDisplayStyle}>{formatDisplayDate(timeSlider.currentDate)}</div>
         <input
-          className="ts-date-picker"
           type="date"
           value={timeSlider.currentDate}
           min="2019-01-02"
@@ -169,7 +157,7 @@ export const TimeSlider: React.FC = () => {
         />
 
         {/* Separator */}
-        <div className="ts-sep" style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.15)' }} />
+        <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.15)' }} />
 
         {/* Playback buttons */}
         <div style={btnGroupStyle}>
@@ -192,20 +180,6 @@ export const TimeSlider: React.FC = () => {
           >
             {timeSlider.isPlaying ? '\u275A\u275A' : '\u25B6'}
           </button>
-          {timeSlider.isPlaying && (
-            <span style={{
-              fontSize: 9,
-              fontWeight: 700,
-              color: '#fff',
-              background: '#FF4444',
-              padding: '1px 6px',
-              borderRadius: 3,
-              letterSpacing: 0.8,
-              animation: 'tsLivePulse 1.2s ease-in-out infinite',
-            }}>
-              LIVE
-            </span>
-          )}
           <button style={ctrlBtnStyle} onClick={() => stepDate(1)} title="Forward 1 day">
             &rsaquo;
           </button>
@@ -215,7 +189,7 @@ export const TimeSlider: React.FC = () => {
         </div>
 
         {/* Speed selector */}
-        <div className="ts-speed-group" style={btnGroupStyle}>
+        <div style={btnGroupStyle}>
           {speedOptions.map((spd) => (
             <button
               key={spd}
@@ -268,6 +242,7 @@ const containerStyle: React.CSSProperties = {
   width: '100%',
   height: 'auto',
   minHeight: 56,
+  maxHeight: 96,
   background: 'rgba(26, 26, 46, 0.92)',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',
@@ -278,7 +253,7 @@ const containerStyle: React.CSSProperties = {
   justifyContent: 'center',
   gap: 4,
   zIndex: 1000,
-  padding: '6px 12px',
+  padding: '6px 20px',
   boxSizing: 'border-box',
   fontFamily: "'Inter', 'Segoe UI', sans-serif",
   overflow: 'visible',

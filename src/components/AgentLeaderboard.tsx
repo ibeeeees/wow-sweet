@@ -372,22 +372,6 @@ export const AgentLeaderboard: React.FC = () => {
         <span style={{ fontSize: 14, flexShrink: 0 }}><GoldenStar size={14} /></span>
         <span style={{ fontSize: 12, fontWeight: 700, color: ACCENT, letterSpacing: 0.8, flex: 1 }}>
           Top 5 Agents
-          {isPlaying && (
-            <span style={{
-              display: 'inline-block',
-              width: 6, height: 6,
-              borderRadius: '50%',
-              background: '#00FF7F',
-              marginLeft: 6,
-              verticalAlign: 'middle',
-              animation: 'lbLivePulse 1s ease-in-out infinite',
-            }} />
-          )}
-          {simDate && (
-            <span style={{ fontSize: 9, color: '#888', fontWeight: 400, marginLeft: 6 }}>
-              {simDate}
-            </span>
-          )}
         </span>
         <button
           data-no-drag

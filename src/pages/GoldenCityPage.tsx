@@ -101,6 +101,59 @@ export default function GoldenCityPage() {
           <StoreDetail />
         </Suspense>
       )}
+
+      {/* ── LEFT COLUMN (overlay) ── */}
+      <div style={{
+        position: 'absolute',
+        top: 8,
+        left: 8,
+        width: 220,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        zIndex: 20,
+      }}>
+        {/* Top 5 Agents box */}
+        <div style={{
+          overflow: 'hidden',
+          background: 'rgba(255,255,255,0.72)',
+          border: '1.5px solid rgba(106,0,170,0.13)',
+          borderRadius: 16,
+          boxShadow: '0 2px 16px rgba(106,0,170,0.08)',
+          backdropFilter: 'blur(6px)',
+        }}>
+          <AgentLeaderboard />
+        </div>
+        {/* Whale Arena box */}
+        <div style={{
+          overflow: 'hidden',
+          background: 'rgba(255,255,255,0.72)',
+          border: '1.5px solid rgba(106,0,170,0.13)',
+          borderRadius: 16,
+          boxShadow: '0 2px 16px rgba(106,0,170,0.08)',
+          backdropFilter: 'blur(6px)',
+        }}>
+          <WhaleLeaderboard />
+        </div>
+      </div>
+
+      {/* ── RIGHT PANEL: News Injector (overlay) ── */}
+      <div style={{
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        bottom: 8,
+        width: 300,
+        background: 'rgba(255,255,255,0.72)',
+        border: '1.5px solid rgba(106,0,170,0.13)',
+        borderRadius: 16,
+        overflow: 'hidden',
+        boxShadow: '0 2px 16px rgba(106,0,170,0.08)',
+        zIndex: 20,
+        backdropFilter: 'blur(6px)',
+      }}>
+        <NewsInjector />
+      </div>
     </div>
   );
 }
