@@ -4,6 +4,7 @@
 // ============================================================
 
 import type { StockData, SectorInfo, DirectionBias, GraphEdge } from '../types';
+import { apiClient } from '../services/apiClient';
 
 // --- Deterministic seeded random ---
 export function seededRandom(seed: number): () => number {
@@ -568,26 +569,21 @@ interface PipelinePayload {
   correlation_edges?: GraphEdge[];
 }
 
-export async function loadPipelineData(): Promise<{
+export function parsePipelinePayload(payload: PipelinePayload): {
   stocks: StockData[];
   edges: GraphEdge[];
-}> {
-  const res = await fetch('/frontend_payload.json');
-  if (!res.ok) throw new Error(`Failed to load pipeline data: ${res.status}`);
-  const payload: PipelinePayload = await res.json();
-
+} {
   const rand = seededRandom(42);
   const positions = poissonDiskSample(payload.stocks.length, 900, 900, 12.0, rand);
 
   const stocks: StockData[] = payload.stocks.map((raw, i) => {
     const pos = positions[i] || { x: rand() * 200 - 100, z: rand() * 200 - 100 };
-    const companyName = COMPANY_NAME_MAP[raw.ticker] || raw.company;
+    const companyName = COMPANY_NAME_MAP[raw.ticker] || raw.company || raw.ticker;
     const gs = raw.golden_score ?? 0;
     const vol = raw.volatility ?? (0.01 + rand() * 0.04);
     const dd = raw.max_drawdown ?? (rand() * 0.3);
     const skew = raw.skewness ?? (rand() * 2 - 0.5);
 
-    // Derive brand color from sector if not provided
     const brandColor = raw.brand_color
       || SECTORS.find(s => s.name === raw.sector)?.color
       || `hsl(${hashStr(raw.ticker) % 360}, 60%, 50%)`;
@@ -642,6 +638,58 @@ export async function loadPipelineData(): Promise<{
     stocks,
     edges: payload.edges || payload.correlation_edges || [],
   };
+}
+
+export async function loadPipelineData(): Promise<{
+  stocks: StockData[];
+  edges: GraphEdge[];
+}> {
+  const res = await fetch('/frontend_payload.json');
+  if (!res.ok) throw new Error(`Failed to load pipeline data: ${res.status}`);
+  const payload: PipelinePayload = await res.json();
+  return parsePipelinePayload(payload);
+}
+
+/**
+ * 3-tier data loading:
+ * 1. Backend API (Databricks live)
+ * 2. Static JSON (frontend_payload.json)
+ * 3. Synthetic data (generateStockData)
+ */
+export async function loadStockData(): Promise<{
+  stocks: StockData[];
+  edges: GraphEdge[];
+  source: 'databricks' | 'static' | 'synthetic';
+}> {
+  // Tier 1: Try backend API (Databricks live)
+  try {
+    const result = await apiClient.fetchStocks();
+    if (result && result.stocks.length > 0) {
+      const parsed = parsePipelinePayload({
+        stocks: result.stocks,
+        correlation_edges: result.correlation_edges,
+      });
+      console.log(`[SweetReturns] Loaded ${parsed.stocks.length} stocks from Databricks (live)`);
+      return { ...parsed, source: 'databricks' };
+    }
+  } catch {
+    console.warn('[SweetReturns] Backend API unavailable');
+  }
+
+  // Tier 2: Try static JSON
+  try {
+    const parsed = await loadPipelineData();
+    console.log(`[SweetReturns] Loaded ${parsed.stocks.length} stocks from static payload`);
+    return { ...parsed, source: 'static' };
+  } catch {
+    console.warn('[SweetReturns] Static payload unavailable');
+  }
+
+  // Tier 3: Synthetic data
+  const stocks = generateStockData();
+  const edges = getCorrelationEdges(stocks, 0.5);
+  console.log(`[SweetReturns] Generated ${stocks.length} synthetic stocks`);
+  return { stocks, edges, source: 'synthetic' };
 }
 
 // --- Time-based stock modulation ---

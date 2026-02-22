@@ -1,7 +1,8 @@
 import { useEffect, useRef, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { useStore } from './store/useStore';
-import { generateStockData, getCorrelationEdges, loadPipelineData, modulateStocksByTime } from './data/stockData';
+import { loadStockData, modulateStocksByTime } from './data/stockData';
+import { apiClient } from './services/apiClient';
 import { initTrackedAgents, processDay, getLeaderboard } from './services/tradeTracker';
 import { CandyCane, ChartLine, LightningBolt, WebNodes, Gumball, NoteBook, Lollipop, ChocolateBar } from './components/CandyIcons';
 import type { PageName } from './types';
@@ -51,6 +52,69 @@ function LoadingScreen() {
   );
 }
 
+function ConnectionStatusBadge() {
+  const dataSource = useStore((s) => s.dataSource);
+  const databricksConnected = useStore((s) => s.databricksConnected);
+  const backendConnected = useStore((s) => s.backendConnected);
+
+  let color: string;
+  let label: string;
+  let tooltip: string;
+
+  if (databricksConnected) {
+    color = '#00FF7F';
+    label = 'LIVE';
+    tooltip = 'Connected to Databricks (live data)';
+  } else if (backendConnected) {
+    color = '#FFD700';
+    label = 'API';
+    tooltip = 'Backend connected, Databricks offline';
+  } else if (dataSource === 'static') {
+    color = '#FF8C00';
+    label = 'STATIC';
+    tooltip = 'Using cached static data';
+  } else if (dataSource === 'synthetic') {
+    color = '#FF4500';
+    label = 'MOCK';
+    tooltip = 'Using synthetic mock data';
+  } else {
+    color = '#666';
+    label = '...';
+    tooltip = 'Connecting...';
+  }
+
+  return (
+    <div
+      title={tooltip}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 5,
+        padding: '3px 8px',
+        borderRadius: 12,
+        background: `${color}15`,
+        border: `1px solid ${color}40`,
+        fontSize: 9,
+        fontWeight: 600,
+        letterSpacing: '0.5px',
+        color,
+        cursor: 'default',
+        transition: 'all 0.3s',
+      }}
+    >
+      <div style={{
+        width: 6,
+        height: 6,
+        borderRadius: '50%',
+        background: color,
+        boxShadow: `0 0 4px ${color}`,
+        animation: databricksConnected ? 'statusPulse 2s ease-in-out infinite' : 'none',
+      }} />
+      {label}
+    </div>
+  );
+}
+
 function NavBar() {
   const setCurrentPage = useStore((s) => s.setCurrentPage);
 
@@ -69,6 +133,7 @@ function NavBar() {
         .nav-link:focus-visible { outline: 2px solid #FFD700; outline-offset: -2px; }
         @media (max-width: 900px) { .nav-label { display: none; } }
         @media (max-width: 600px) { .nav-link { padding: 8px 8px !important; } }
+        @keyframes statusPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
       `}</style>
       <div style={{
         fontWeight: 700, fontSize: 16, color: '#FFD700',
@@ -97,9 +162,10 @@ function NavBar() {
         </NavLink>
       ))}
       <div style={{ flex: 1 }} />
+      <ConnectionStatusBadge />
       <div style={{
         fontSize: 11, color: 'rgba(255,255,255,0.3)',
-        letterSpacing: '0.5px',
+        letterSpacing: '0.5px', marginLeft: 8,
       }}>
         HACKLYTICS 2026
       </div>
@@ -113,34 +179,41 @@ export default function App() {
   const setModulatedBiases = useStore((s) => s.setModulatedBiases);
   const setCorrelationEdges = useStore((s) => s.setCorrelationEdges);
   const setAgentLeaderboard = useStore((s) => s.setAgentLeaderboard);
+  const setDataSource = useStore((s) => s.setDataSource);
+  const setBackendConnected = useStore((s) => s.setBackendConnected);
+  const setDatabricksConnected = useStore((s) => s.setDatabricksConnected);
   const baseStocks = useStore((s) => s.baseStocks);
   const timeSlider = useStore((s) => s.timeSlider);
 
   useEffect(() => {
     async function init() {
-      let stocks;
-      let edges;
-      try {
-        // Load real pipeline data
-        const pipeline = await loadPipelineData();
-        stocks = pipeline.stocks;
-        edges = pipeline.edges;
-        console.log(`[SweetReturns] Loaded ${stocks.length} stocks from pipeline data`);
-      } catch {
-        // Fallback to synthetic data
-        console.warn('[SweetReturns] Pipeline data unavailable, using synthetic data');
-        stocks = generateStockData();
-        edges = getCorrelationEdges(stocks, 0.5);
-      }
+      setDataSource('loading');
+
+      const { stocks, edges, source } = await loadStockData();
+
       setStocks(stocks);
       setBaseStocks(stocks);
       setCorrelationEdges(edges);
+      setDataSource(source);
+
       // Initialize trade tracker with live agents
       initTrackedAgents(stocks);
       setAgentLeaderboard(getLeaderboard());
     }
     init();
-  }, [setStocks, setBaseStocks, setCorrelationEdges, setAgentLeaderboard]);
+
+    // Start health check for connection status indicator
+    apiClient.startHealthCheck();
+    const unsub = apiClient.onStatusChange((status) => {
+      setBackendConnected(status === 'connected' || status === 'fallback');
+      setDatabricksConnected(status === 'connected');
+    });
+
+    return () => {
+      apiClient.stopHealthCheck();
+      unsub();
+    };
+  }, [setStocks, setBaseStocks, setCorrelationEdges, setAgentLeaderboard, setDataSource, setBackendConnected, setDatabricksConnected]);
 
   // Track the last processed date for trade simulation
   const lastProcessedDate = useRef<string>('');

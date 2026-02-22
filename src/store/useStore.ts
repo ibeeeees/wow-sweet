@@ -71,6 +71,14 @@ interface AppStore {
   geminiEnabled: boolean;
   setGeminiEnabled: (enabled: boolean) => void;
 
+  // --- Databricks Connection Status ---
+  dataSource: 'databricks' | 'static' | 'synthetic' | 'loading';
+  setDataSource: (source: 'databricks' | 'static' | 'synthetic' | 'loading') => void;
+  backendConnected: boolean;
+  setBackendConnected: (connected: boolean) => void;
+  databricksConnected: boolean;
+  setDatabricksConnected: (connected: boolean) => void;
+
   // --- Per-store crowd data (from simulation) ---
   storeAgentCounts: Int16Array;
   storeDoorCounts: Int16Array;
@@ -160,6 +168,14 @@ export const useStore = create<AppStore>((set) => ({
   // Gemini AI toggle
   geminiEnabled: true,
   setGeminiEnabled: (enabled) => set({ geminiEnabled: enabled }),
+
+  // Databricks Connection Status
+  dataSource: 'loading',
+  setDataSource: (source) => set({ dataSource: source }),
+  backendConnected: false,
+  setBackendConnected: (connected) => set({ backendConnected: connected }),
+  databricksConnected: false,
+  setDatabricksConnected: (connected) => set({ databricksConnected: connected }),
 
   // Per-store crowd data
   storeAgentCounts: new Int16Array(0),

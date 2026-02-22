@@ -11,6 +11,7 @@ Falls back to keyword heuristics only when Databricks is unreachable.
 
 import os
 import re
+import time
 import logging
 import requests as req
 from typing import Optional
@@ -39,6 +40,9 @@ class DatabricksClient:
         self._regime_cache: dict = {}
         self._archetype_cache: list = []
         self._network_cache: dict = {}
+        self._stock_cache: dict = {}
+        self._stock_cache_time: float = 0
+        self._cache_ttl: float = 300  # 5 minutes
 
         self.is_configured = bool(self.host and self.token and self.warehouse_id)
 
@@ -127,6 +131,129 @@ class DatabricksClient:
     def is_connected(self) -> bool:
         """Check if Databricks has successfully responded to at least one query."""
         return self._connected
+
+    # ── Stock Payload (full golden_tickets snapshot) ─────────────────
+
+    async def get_stock_payload(self) -> dict:
+        """Query golden_tickets for latest date snapshot — returns full stock payload."""
+        # Return cache if fresh
+        if self._stock_cache and (time.time() - self._stock_cache_time) < self._cache_ttl:
+            return self._stock_cache
+
+        latest_date = self._query_scalar(
+            "SELECT MAX(Date) FROM sweetreturns.gold.golden_tickets"
+        )
+        if not latest_date:
+            return {"stocks": [], "source": "empty"}
+
+        rows = self._query(
+            """
+            SELECT ticker, sector, Close, daily_return,
+                   drawdown_pct, volume_percentile, vol_percentile,
+                   market_cap_percentile,
+                   golden_score, ticket_1_dip, ticket_2_shock,
+                   ticket_3_asymmetry, ticket_4_dislocation, ticket_5_convexity,
+                   is_platinum, rarity_percentile,
+                   buy_pct, call_pct, put_pct, short_pct,
+                   fwd_60d_p5, fwd_60d_p25, fwd_60d_median,
+                   fwd_60d_p75, fwd_60d_p95, fwd_60d_skew,
+                   store_width, store_height, store_depth, store_glow,
+                   agent_density, speed_multiplier,
+                   rsi_14, macd_histogram, bb_pct_b, zscore_20d, realized_vol_20d,
+                   vol_regime
+            FROM sweetreturns.gold.golden_tickets
+            WHERE Date = %s
+            ORDER BY sector, market_cap_percentile DESC
+            """,
+            [latest_date],
+        )
+
+        if not rows:
+            return {"stocks": [], "source": "empty"}
+
+        def _f(val, default=0.0):
+            try:
+                return float(val) if val is not None else default
+            except (ValueError, TypeError):
+                return default
+
+        stocks = []
+        regime_counts: dict = {}
+        for row in rows:
+            vr = row.get("vol_regime", "unknown")
+            regime_counts[vr] = regime_counts.get(vr, 0) + 1
+
+            stocks.append({
+                "ticker": row["ticker"],
+                "sector": row.get("sector") or "Unknown",
+                "close": _f(row.get("Close")),
+                "daily_return": round(_f(row.get("daily_return")), 6),
+                "drawdown_current": round(_f(row.get("drawdown_pct")), 4),
+                "volume_percentile": round(_f(row.get("volume_percentile")), 4),
+                "volatility_percentile": round(_f(row.get("vol_percentile")), 4),
+                "market_cap_rank": round(_f(row.get("market_cap_percentile"), 0.5), 4),
+                "golden_score": int(_f(row.get("golden_score"))),
+                "ticket_levels": {
+                    "dip_ticket": bool(row.get("ticket_1_dip")),
+                    "shock_ticket": bool(row.get("ticket_2_shock")),
+                    "asymmetry_ticket": bool(row.get("ticket_3_asymmetry")),
+                    "dislocation_ticket": bool(row.get("ticket_4_dislocation")),
+                    "convexity_ticket": bool(row.get("ticket_5_convexity")),
+                },
+                "is_platinum": bool(row.get("is_platinum")),
+                "rarity_percentile": round(_f(row.get("rarity_percentile")), 4),
+                "direction_bias": {
+                    "buy": round(_f(row.get("buy_pct"), 0.25), 2),
+                    "call": round(_f(row.get("call_pct"), 0.25), 2),
+                    "put": round(_f(row.get("put_pct"), 0.25), 2),
+                    "short": round(_f(row.get("short_pct"), 0.25), 2),
+                },
+                "forward_return_distribution": {
+                    "p5": round(_f(row.get("fwd_60d_p5")), 4),
+                    "p25": round(_f(row.get("fwd_60d_p25")), 4),
+                    "median": round(_f(row.get("fwd_60d_median")), 4),
+                    "p75": round(_f(row.get("fwd_60d_p75")), 4),
+                    "p95": round(_f(row.get("fwd_60d_p95")), 4),
+                    "skew": round(_f(row.get("fwd_60d_skew")), 4),
+                },
+                "store_dimensions": {
+                    "width": round(_f(row.get("store_width"), 1.5), 2),
+                    "height": round(_f(row.get("store_height"), 2.0), 2),
+                    "depth": round(_f(row.get("store_depth"), 1.2), 2),
+                    "glow": round(_f(row.get("store_glow")), 2),
+                },
+                "agent_density": int(_f(row.get("agent_density"), 200)),
+                "speed_multiplier": round(_f(row.get("speed_multiplier"), 1.0), 2),
+                "technicals": {
+                    "rsi_14": round(_f(row.get("rsi_14"), 50.0), 2),
+                    "macd_histogram": round(_f(row.get("macd_histogram")), 4),
+                    "bb_pct_b": round(_f(row.get("bb_pct_b"), 0.5), 4),
+                    "zscore_20d": round(_f(row.get("zscore_20d")), 4),
+                    "realized_vol_20d": round(_f(row.get("realized_vol_20d")), 4),
+                },
+                "volatility": round(_f(row.get("realized_vol_20d")), 4),
+                "max_drawdown": round(_f(row.get("drawdown_pct")), 4),
+                "vol_spike": round(_f(row.get("volume_percentile")), 4),
+                "skewness": round(_f(row.get("fwd_60d_skew")), 4),
+                "ret_20d": round(_f(row.get("daily_return")), 6),
+            })
+
+        regime = max(regime_counts, key=regime_counts.get) if regime_counts else "unknown"
+
+        result = {
+            "stocks": stocks,
+            "correlation_edges": [],
+            "snapshot_date": str(latest_date),
+            "regime": regime,
+            "stock_count": len(stocks),
+            "source": "databricks",
+        }
+
+        self._stock_cache = result
+        self._stock_cache_time = time.time()
+        logger.info(f"Stock payload cached: {len(stocks)} stocks from {latest_date}")
+
+        return result
 
     # ── Sentiment Analysis ────────────────────────────────────────────
 

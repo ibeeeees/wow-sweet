@@ -140,10 +140,34 @@ async def health():
         "service": "sweetreturns-api",
         "gemini": bool(GEMINI_API_KEY),
         "databricks": db_client.is_connected,
+        "databricks_configured": db_client.is_configured,
         "databricks_status": db_status,
         "databricks_host": db_client.host[:40] + "..." if db_client.host else "not configured",
         "warehouse_id": db_client.warehouse_id or "not configured",
+        "stocks_available": True,
     }
+
+
+# ── Stocks (full payload from Databricks golden_tickets) ──────────────
+
+@app.get("/stocks")
+async def get_stocks():
+    """Get full stock payload from Databricks golden_tickets table.
+    Falls back to local frontend_payload.json if Databricks is unavailable."""
+    payload = await db_client.get_stock_payload()
+    if payload.get("stocks"):
+        return payload
+
+    # Fallback: serve local frontend_payload.json
+    payload_path = Path(__file__).resolve().parents[2] / "public" / "frontend_payload.json"
+    if payload_path.exists():
+        import json as _json
+        with open(payload_path) as f:
+            data = _json.load(f)
+        data["source"] = "static_fallback"
+        return data
+
+    return {"stocks": [], "correlation_edges": [], "source": "empty"}
 
 
 # ── Market Regime (from HMM model on Databricks) ─────────────────────────
