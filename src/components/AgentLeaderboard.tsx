@@ -138,8 +138,8 @@ const AgentRow: React.FC<{ entry: LeaderboardEntry }> = ({ entry }) => {
           display: 'flex',
           alignItems: 'center',
           width: '100%',
-          padding: '12px 18px',
-          gap: 10,
+          padding: '8px 14px',
+          gap: 8,
           cursor: 'pointer',
           background: expanded ? 'rgba(106,0,170,0.06)' : 'transparent',
           border: 'none',
@@ -150,9 +150,9 @@ const AgentRow: React.FC<{ entry: LeaderboardEntry }> = ({ entry }) => {
         {/* Rank badge */}
         <span
           style={{
-            fontSize: 15,
+            fontSize: 12,
             fontWeight: 800,
-            width: 24,
+            width: 20,
             textAlign: 'center',
             flexShrink: 0,
             color: rankColors[entry.rank] || '#666',
@@ -164,11 +164,11 @@ const AgentRow: React.FC<{ entry: LeaderboardEntry }> = ({ entry }) => {
 
         {/* Name + current position */}
         <div style={{ flex: 1, textAlign: 'left', minWidth: 0 }}>
-          <div style={{ fontSize: 15, color: '#3d0066', fontFamily: FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          <div style={{ fontSize: 12, color: '#3d0066', fontFamily: FONT, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {entry.name}
           </div>
           {entry.currentTicker && (
-            <div style={{ fontSize: 11, color: actionColors[entry.currentAction || 'BUY'] || '#7a4800', marginTop: 2, fontFamily: "'Leckerli One', cursive" }}>
+            <div style={{ fontSize: 9, color: actionColors[entry.currentAction || 'BUY'] || '#7a4800', marginTop: 1, fontFamily: "'Lobster', cursive" }}>
               {entry.currentAction} {entry.currentTicker}
             </div>
           )}
@@ -176,18 +176,18 @@ const AgentRow: React.FC<{ entry: LeaderboardEntry }> = ({ entry }) => {
 
         {/* P&L + win rate */}
         <div style={{ textAlign: 'right', flexShrink: 0 }}>
-          <div style={{ fontSize: 14, fontWeight: 700, color: entry.profit >= 0 ? '#1a7a00' : '#a30000', fontFamily: "'Lobster', cursive" }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: entry.profit >= 0 ? '#1a7a00' : '#a30000', fontFamily: "'Lobster', cursive" }}>
             {entry.profit >= 0 ? '+' : ''}{formatProfit(entry.profit)}
           </div>
           {entry.winRate !== undefined && (
-            <div style={{ fontSize: 10, color: entry.winRate >= 0.5 ? '#1a7a00' : '#a30000', marginTop: 2, fontFamily: "'Lobster', cursive" }}>
+            <div style={{ fontSize: 8, color: entry.winRate >= 0.5 ? '#1a7a00' : '#a30000', marginTop: 1, fontFamily: "'Lobster', cursive" }}>
               {(entry.winRate * 100).toFixed(0)}% win
             </div>
           )}
         </div>
 
         {/* Chevron */}
-        <span style={{ fontSize: 10, color: '#888', marginLeft: 2 }}>
+        <span style={{ fontSize: 8, color: '#666', marginLeft: 2 }}>
           {expanded ? '\u25B2' : '\u25BC'}
         </span>
       </button>
@@ -282,50 +282,32 @@ export const AgentLeaderboard: React.FC = () => {
   return (
     <div style={{
       width: '100%',
-      height: '100%',
       background: PANEL_BG,
       display: 'flex',
       flexDirection: 'column',
-      overflow: 'hidden',
     }}>
       {/* Header */}
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        padding: '14px 18px',
+        padding: '10px 14px',
         gap: 8,
-        background: '#FFFFFF',
+        background: '#fff',
         borderBottom: `2px solid rgba(106,0,170,0.2)`,
         flexShrink: 0,
       }}>
-        <span style={{ fontSize: 14, flexShrink: 0 }}><GoldenStar size={20} /></span>
-        <span style={{ fontSize: 20, color: '#4b0082', fontFamily: FONT, flex: 1 }}>
+        <span style={{ fontSize: 14, flexShrink: 0 }}><GoldenStar size={16} /></span>
+        <span style={{ fontSize: 16, color: '#4b0082', fontFamily: FONT, flex: 1 }}>
           Top 5 Agents
-          {isPlaying && (
-            <span style={{
-              display: 'inline-block',
-              width: 6, height: 6,
-              borderRadius: '50%',
-              background: '#00FF7F',
-              marginLeft: 6,
-              verticalAlign: 'middle',
-              animation: 'lbLivePulse 1s ease-in-out infinite',
-            }} />
-          )}
-          {simDate && (
-            <span style={{ fontSize: 9, color: '#888', fontWeight: 400, marginLeft: 6 }}>
-              {simDate}
-            </span>
-          )}
         </span>
       </div>
 
       {/* List */}
-      <div className="sweet-scroll" style={{ flex: 1, overflowY: 'auto' }}>
+      <div className="sweet-scroll" style={{ overflowY: 'visible' }}>
         {top5.length === 0 ? (
           <div style={{ padding: 20, textAlign: 'center' }}>
             <div style={{ fontSize: 12, color: '#7a4800', fontFamily: FONT }}>No agent rankings yet</div>
-            <div style={{ fontSize: 10, color: '#a06000', marginTop: 4, fontFamily: "'Leckerli One', cursive" }}>Loading simulation…</div>
+            <div style={{ fontSize: 10, color: '#a06000', marginTop: 4, fontFamily: "'Lobster', cursive" }}>Loading simulation…</div>
           </div>
         ) : (
           top5.map((entry) => <AgentRow key={entry.id} entry={entry} />)

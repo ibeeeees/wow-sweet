@@ -12,7 +12,7 @@ import { getFeaturedAgents, getLatestChain, type FeaturedAgent, type ReasoningCh
 import { WHALE_ICONS } from '../components/CandyIcons';
 import type { StockData } from '../types';
 
-const PAGE_BG = '#FFFFFF';
+const PAGE_BG = '#FFF8DC';
 const PANEL_BG = 'rgba(255,255,255,0.7)';
 const ACCENT = '#6a00aa';
 const TEXT_COLOR = '#2d1a00';
@@ -141,7 +141,7 @@ const Leaderboard: React.FC<{
             border: '1px solid rgba(255, 215, 0, 0.1)',
           }}
         >
-          <div style={{ fontSize: 9, color: '#6a00aa', fontWeight: 600, marginBottom: 2 }}>
+          <div style={{ fontSize: 9, color: '#FFD700', fontWeight: 600, marginBottom: 2 }}>
             AI REASONING
           </div>
           <div style={{ fontSize: 9, color: 'rgba(255,255,255,0.6)', lineHeight: 1.3 }}>
@@ -456,7 +456,7 @@ const AgentHeatmap: React.FC<{
                 height: Math.min(15, h),
                 fontSize: 9,
                 fontWeight: 700,
-                fontFamily: "'Leckerli One', cursive",
+                fontFamily: "'Lobster', cursive",
                 color: sectorColor,
                 textTransform: 'uppercase',
                 letterSpacing: 0.5,
@@ -518,7 +518,7 @@ const AgentHeatmap: React.FC<{
                   style={{
                     fontSize: Math.min(w * 0.3, 10),
                     fontWeight: 700,
-                    fontFamily: "'Leckerli One', cursive",
+                    fontFamily: "'Lobster', cursive",
                     color: textColor,
                     lineHeight: 1,
                     textOverflow: 'ellipsis',
@@ -535,7 +535,7 @@ const AgentHeatmap: React.FC<{
                 <div
                   style={{
                     fontSize: Math.min(w * 0.22, 8),
-                    fontFamily: "'Leckerli One', cursive",
+                    fontFamily: "'Lobster', cursive",
                     color: textColor,
                     opacity: 0.8,
                     lineHeight: 1,
@@ -561,7 +561,7 @@ const AgentHeatmap: React.FC<{
               borderRadius: 6,
               padding: '8px 10px',
               fontSize: 11,
-              fontFamily: "'Leckerli One', cursive",
+              fontFamily: "'Lobster', cursive",
               color: TEXT_COLOR,
               pointerEvents: 'none',
               zIndex: 10,
@@ -844,7 +844,7 @@ const DecisionStream: React.FC<{
         ticker: agent.decision.targetTicker,
         action: agent.decision.action,
         detail: agent.decision.reasoning,
-        color: '#FFFFFF',
+        color: '#FFD700',
       });
     }
 
@@ -1007,7 +1007,7 @@ export default function AgentReactionsPage() {
         background: PAGE_BG,
         display: 'flex',
         flexDirection: 'column',
-        fontFamily: "'Leckerli One', cursive",
+        fontFamily: "'Lobster', cursive",
         color: TEXT_COLOR,
         overflow: 'hidden',
       }}

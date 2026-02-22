@@ -1,5 +1,5 @@
 // ============================================================
-// SweetReturns — GoldenCityPage: full-page 3D background + floating panels
+// SweetReturns — GoldenCityPage: 3-column layout
 // ============================================================
 
 import { Suspense, lazy } from 'react';
@@ -16,16 +16,6 @@ const StoreDetail = lazy(() => import('../components/StoreDetail'));
 
 const FONT = `'Leckerli One', cursive`;
 
-const PANEL_STYLE: React.CSSProperties = {
-  background: 'rgba(255,255,255,0.84)',
-  backdropFilter: 'blur(14px)',
-  WebkitBackdropFilter: 'blur(14px)',
-  border: '1.5px solid rgba(106,0,170,0.15)',
-  borderRadius: 18,
-  overflow: 'hidden',
-  boxShadow: '0 8px 40px rgba(0,0,0,0.22), 0 2px 8px rgba(106,0,170,0.10)',
-};
-
 export default function GoldenCityPage() {
   const selectedStock = useStore((s) => s.selectedStock);
 
@@ -36,6 +26,7 @@ export default function GoldenCityPage() {
       height: '100%',
       overflow: 'hidden',
       fontFamily: FONT,
+      background: '#0a0a1e',
     }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Leckerli+One&display=swap');
@@ -44,87 +35,90 @@ export default function GoldenCityPage() {
         .sweet-scroll::-webkit-scrollbar-thumb { background: rgba(106,0,170,0.3); border-radius: 4px; }
       `}</style>
 
-      {/* ── FULL-PAGE 3D CITY BACKGROUND ── */}
-      <Suspense fallback={<div style={{ position: 'absolute', inset: 0, background: '#0a0a1e' }} />}>
-        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
+      {/* ── FULL-PAGE 3D city ── */}
+      <Suspense fallback={null}>
+        <div style={{ position: 'absolute', inset: 0 }}>
           <CandyCity />
         </div>
       </Suspense>
 
-      {/* ── TOP 5 AGENTS — top-left, fixed height to fit 5 rows ── */}
-      <div style={{
-        position: 'absolute',
-        top: 10,
-        left: 10,
-        width: 300,
-        height: 312,
-        zIndex: 10,
-        display: 'flex',
-        flexDirection: 'column',
-        ...PANEL_STYLE,
-      }}>
-        <AgentLeaderboard />
-      </div>
-
-      {/* ── WHALE ARENA — below agents, auto height ── */}
-      <div style={{
-        position: 'absolute',
-        top: 334,
-        left: 10,
-        width: 300,
-        zIndex: 10,
-        display: 'flex',
-        flexDirection: 'column',
-        ...PANEL_STYLE,
-      }}>
-        <WhaleLeaderboard />
-      </div>
-
-      {/* ── RIGHT PANEL: News Injector — full height ── */}
-      <div style={{
-        position: 'absolute',
-        top: 10,
-        right: 10,
-        bottom: 10,
-        width: 310,
-        zIndex: 10,
-        ...PANEL_STYLE,
-      }}>
-        <NewsInjector />
-      </div>
-
-      {/* ── SECTOR FILTER — top-center ── */}
+      {/* Sector filter — top left (above left panel) */}
       <Suspense fallback={null}>
-        <div style={{
-          position: 'absolute',
-          top: 12,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 20,
-        }}>
+        <div style={{ position: 'absolute', top: 12, left: 236, zIndex: 10 }}>
           <SectorFilter />
         </div>
       </Suspense>
 
-      {/* ── TIME SLIDER — bottom-center ── */}
+      {/* Time slider — bottom center */}
       <Suspense fallback={null}>
         <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          zIndex: 20,
+          position: 'absolute', bottom: 0,
+          left: '50%', transform: 'translateX(-50%)',
+          zIndex: 10,
         }}>
           <TimeSlider />
         </div>
       </Suspense>
 
-      {/* ── STORE DETAIL (when a stock is selected) ── */}
+      {/* Store detail */}
       {selectedStock !== null && (
         <Suspense fallback={null}>
           <StoreDetail />
         </Suspense>
       )}
+
+      {/* ── LEFT COLUMN (overlay) ── */}
+      <div style={{
+        position: 'absolute',
+        top: 8,
+        left: 8,
+        width: 220,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: 8,
+        zIndex: 20,
+      }}>
+        {/* Top 5 Agents box */}
+        <div style={{
+          overflow: 'hidden',
+          background: 'rgba(255,255,255,0.72)',
+          border: '1.5px solid rgba(106,0,170,0.13)',
+          borderRadius: 16,
+          boxShadow: '0 2px 16px rgba(106,0,170,0.08)',
+          backdropFilter: 'blur(6px)',
+        }}>
+          <AgentLeaderboard />
+        </div>
+        {/* Whale Arena box */}
+        <div style={{
+          overflow: 'hidden',
+          background: 'rgba(255,255,255,0.72)',
+          border: '1.5px solid rgba(106,0,170,0.13)',
+          borderRadius: 16,
+          boxShadow: '0 2px 16px rgba(106,0,170,0.08)',
+          backdropFilter: 'blur(6px)',
+        }}>
+          <WhaleLeaderboard />
+        </div>
+      </div>
+
+      {/* ── RIGHT PANEL: News Injector (overlay) ── */}
+      <div style={{
+        position: 'absolute',
+        top: 8,
+        right: 8,
+        bottom: 8,
+        width: 260,
+        background: 'rgba(255,255,255,0.72)',
+        border: '1.5px solid rgba(106,0,170,0.13)',
+        borderRadius: 16,
+        overflow: 'hidden',
+        boxShadow: '0 2px 16px rgba(106,0,170,0.08)',
+        zIndex: 20,
+        backdropFilter: 'blur(6px)',
+      }}>
+        <NewsInjector />
+      </div>
     </div>
   );
 }

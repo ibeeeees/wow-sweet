@@ -18,7 +18,7 @@ import { useStore } from '../store/useStore';
 // Skybox: large inverted sphere with a pink-to-purple gradient
 // ---------------------------------------------------------------------------
 function CandySkybox() {
-  const geometry = useMemo(() => new THREE.SphereGeometry(800, 32, 32), []);
+  const geometry = useMemo(() => new THREE.SphereGeometry(1600, 32, 32), []);
 
   const colorAttr = useMemo(() => {
     const posAttr = geometry.getAttribute('position');
@@ -31,7 +31,7 @@ function CandySkybox() {
 
     for (let i = 0; i < count; i++) {
       const y = posAttr.getY(i);
-      const t = (y + 800) / 1600;
+      const t = (y + 1600) / 3200;
       temp.copy(pink).lerp(purple, t);
       colors[i * 3] = temp.r;
       colors[i * 3 + 1] = temp.g;
@@ -104,7 +104,7 @@ function CameraController({ enabled }: { enabled: boolean }) {
       ref={controlsRef}
       maxPolarAngle={Math.PI / 2.2}
       minDistance={5}
-      maxDistance={900}
+      maxDistance={1800}
       enableDamping
       dampingFactor={0.08}
     />
@@ -120,13 +120,13 @@ export default function CandyCity() {
   return (
     <>
       <Canvas
-        camera={{ position: [0, 300, 300], fov: 60, near: 0.1, far: 1800 }}
+        camera={{ position: [0, 550, 550], fov: 60, near: 0.1, far: 3600 }}
         style={{ width: '100%', height: '100vh' }}
         gl={{ antialias: false, toneMapping: THREE.ACESFilmicToneMapping, powerPreference: 'high-performance' }}
         dpr={[1, 1.5]}
       >
         {/* Fog */}
-        <fog attach="fog" args={['#2a1a3a', 200, 1000]} />
+        <fog attach="fog" args={['#2a1a3a', 400, 2000]} />
 
         {/* Lighting */}
         <ambientLight intensity={0.6} color="#FFE4B5" />
@@ -172,14 +172,14 @@ export default function CandyCity() {
           bottom: 16,
           left: 16,
           zIndex: 1000,
-          background: povMode ? '#FFFFFF' : 'rgba(16, 12, 30, 0.85)',
+          background: povMode ? '#FFD700' : 'rgba(16, 12, 30, 0.85)',
           color: povMode ? '#1a1a2e' : '#FFD700',
           border: '1px solid #FFD700',
           borderRadius: 8,
           padding: '8px 16px',
           fontSize: 13,
           fontWeight: 700,
-          fontFamily: "'Leckerli One', cursive",
+          fontFamily: "'Lobster', cursive",
           cursor: 'pointer',
           backdropFilter: 'blur(8px)',
           transition: 'all 0.2s',
@@ -200,7 +200,7 @@ export default function CandyCity() {
           border: '1px solid rgba(255, 215, 0, 0.3)',
           borderRadius: 8,
           padding: '8px 16px',
-          fontFamily: "'Leckerli One', cursive",
+          fontFamily: "'Lobster', cursive",
           fontSize: 11,
           color: 'rgba(255, 255, 255, 0.7)',
           pointerEvents: 'none',

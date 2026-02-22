@@ -8,7 +8,7 @@ import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react'
 import { useStore } from '../store/useStore';
 import { SECTORS, generateStockData, getCorrelationEdges, loadPipelineData, PLATINUM_COLOR } from '../data/stockData';
 
-const PAGE_BG = '#FFFFFF';
+const PAGE_BG = '#FFF8DC';
 const ACCENT = '#6a00aa';
 const BORDER_COLOR = 'rgba(106,0,170,0.18)';
 const FONT = `'Leckerli One', cursive`;
@@ -634,7 +634,7 @@ export default function GraphPlaygroundPage() {
           alignItems: 'center',
           justifyContent: 'center',
           color: ACCENT,
-          fontFamily: "'Leckerli One', cursive",
+          fontFamily: "'Lobster', cursive",
           fontSize: 16,
         }}
       >
@@ -651,7 +651,7 @@ export default function GraphPlaygroundPage() {
         background: '#0a0a1e',
         position: 'relative',
         overflow: 'hidden',
-        fontFamily: "'Leckerli One', cursive",
+        fontFamily: "'Lobster', cursive",
       }}
     >
       {/* Full-screen graph */}
@@ -690,7 +690,7 @@ export default function GraphPlaygroundPage() {
             alignItems: 'center',
             justifyContent: 'center',
             color: '#555',
-            fontFamily: "'Leckerli One', cursive",
+            fontFamily: "'Lobster', cursive",
           }}
         >
           Initializing 3D engine...
@@ -714,7 +714,7 @@ export default function GraphPlaygroundPage() {
         {/* Left: Threshold slider */}
         <div
           style={{
-            background: 'rgba(255,255,255,0.92)',
+            background: 'rgba(255,248,220,0.92)',
             backdropFilter: 'blur(8px)',
             borderRadius: 10,
             padding: '12px 16px',
@@ -765,7 +765,7 @@ export default function GraphPlaygroundPage() {
         {/* Center: Shock Propagation button */}
         <div
           style={{
-            background: 'rgba(255,255,255,0.92)',
+            background: 'rgba(255,248,220,0.92)',
             backdropFilter: 'blur(8px)',
             borderRadius: 10,
             padding: '10px 16px',
@@ -777,7 +777,7 @@ export default function GraphPlaygroundPage() {
           <button
             onClick={() => setShockMode(!shockMode)}
             style={{
-              background: shockMode ? ACCENT : 'rgba(255,255,255,0.8)',
+              background: shockMode ? ACCENT : 'rgba(255,248,220,0.8)',
               color: shockMode ? '#fff' : ACCENT,
               border: `1px solid ${ACCENT}`,
               borderRadius: 6,
@@ -802,7 +802,7 @@ export default function GraphPlaygroundPage() {
         {/* Right: Regime Toggle buttons */}
         <div
           style={{
-            background: 'rgba(255,255,255,0.92)',
+            background: 'rgba(255,248,220,0.92)',
             backdropFilter: 'blur(8px)',
             borderRadius: 10,
             padding: '10px 16px',
@@ -824,7 +824,7 @@ export default function GraphPlaygroundPage() {
                 key={r}
                 onClick={() => setRegime(r)}
                 style={{
-                  background: isActive ? ACCENT : 'rgba(255,255,255,0.6)',
+                  background: isActive ? ACCENT : 'rgba(255,248,220,0.6)',
                   color: isActive ? '#fff' : ACCENT,
                   border: `1px solid ${isActive ? ACCENT : BORDER_COLOR}`,
                   borderRadius: 6,

@@ -33,18 +33,17 @@ export function WhaleLeaderboard() {
     <div style={{
       width: '100%',
       background: 'transparent',
-      fontFamily: "'Leckerli One', cursive",
+      fontFamily: "'Lobster', cursive",
       overflow: 'hidden',
     }}>
       {/* Header */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 6,
-        padding: '13px 18px',
-        borderTop: `2px solid rgba(106,0,170,0.12)`,
+        padding: '10px 14px',
         borderBottom: `1px solid ${BORDER}`,
-        background: '#FFFFFF',
+        background: '#fff',
       }}>
-        <span style={{ fontSize: 20, color: '#4b0082', fontFamily: FONT, flex: 1 }}>
+        <span style={{ fontSize: 16, color: '#4b0082', fontFamily: FONT, flex: 1 }}>
           Whale Arena
         </span>
       </div>
@@ -53,31 +52,31 @@ export function WhaleLeaderboard() {
       <div style={{ padding: '4px 0' }}>
         {sorted.map((whale, rank) => (
           <div key={whale.id} style={{
-            display: 'flex', alignItems: 'center', gap: 10,
-            padding: '10px 18px',
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '6px 14px',
             borderBottom: rank < sorted.length - 1 ? `1px solid ${BORDER}` : 'none',
           }}>
             <span style={{
-              fontSize: 14, fontWeight: 700, width: 20, textAlign: 'center', flexShrink: 0,
+              fontSize: 11, fontWeight: 700, width: 16, textAlign: 'right', flexShrink: 0,
               color: rank === 0 ? '#6a00aa' : rank === 1 ? '#9b30d9' : '#7a4800',
-              fontFamily: "'Leckerli One', cursive",
+              fontFamily: "'Lobster', cursive",
             }}>
               {rank + 1}
             </span>
             <span style={{
-              width: 10, height: 10, borderRadius: '50%', background: whale.color, flexShrink: 0,
+              width: 8, height: 8, borderRadius: '50%', background: whale.color, flexShrink: 0,
             }} />
             <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ fontSize: 14, fontFamily: FONT, color: '#3d0066', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              <div style={{ fontSize: 11, fontFamily: FONT, color: '#3d0066', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {WHALE_ICONS[whale.id] || whale.icon} {whale.name}
               </div>
-              <div style={{ fontSize: 10, color: '#7a4800' }}>{whale.strategy}</div>
+              <div style={{ fontSize: 8, color: '#7a4800' }}>{whale.strategy}</div>
             </div>
             <div style={{ textAlign: 'right', flexShrink: 0 }}>
-              <div style={{ fontSize: 13, fontWeight: 700, color: whale.totalProfit >= 0 ? '#1a7a00' : '#a30000', fontFamily: "'Lobster', cursive" }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: whale.totalProfit >= 0 ? '#1a7a00' : '#a30000', fontFamily: "'Lobster', cursive" }}>
                 {whale.totalProfit >= 0 ? '+' : ''}{whale.totalProfit.toFixed(0)}
               </div>
-              <div style={{ fontSize: 9, color: '#a06000' }}>{whale.allocations.length} pos</div>
+              <div style={{ fontSize: 7, color: '#a06000' }}>{whale.allocations.length} pos</div>
             </div>
           </div>
         ))}

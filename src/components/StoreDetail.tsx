@@ -17,8 +17,8 @@ const StarRating: React.FC<{ score: number }> = ({ score }) => (
         key={i}
         style={{
           fontSize: 22,
-          color: i <= score ? '#FFFFFF' : 'rgba(255,255,255,0.15)',
-          textShadow: i <= score ? '0 0 8px rgba(255,255,255,0.5)' : 'none',
+          color: i <= score ? '#FFD700' : 'rgba(255,255,255,0.15)',
+          textShadow: i <= score ? '0 0 8px rgba(255,215,0,0.5)' : 'none',
         }}
       >
         {'\u2605'}
@@ -81,7 +81,7 @@ const DoorCrowdViz: React.FC<{ doorCount: number; insideCount: number }> = ({ do
         width: 30,
         height: 50,
         borderRadius: '4px 4px 0 0',
-        border: '2px solid #FFFFFF',
+        border: '2px solid #FFD700',
         borderBottom: 'none',
         display: 'flex',
         alignItems: 'center',
@@ -92,7 +92,7 @@ const DoorCrowdViz: React.FC<{ doorCount: number; insideCount: number }> = ({ do
           width: 4,
           height: 4,
           borderRadius: '50%',
-          background: '#FFFFFF',
+          background: '#FFD700',
           position: 'absolute',
           right: 4,
           top: '50%',
@@ -170,7 +170,7 @@ const TicketRow: React.FC<{ label: string; candy: string; active: boolean }> = (
     <span style={{ fontSize: 14, width: 20, textAlign: 'center' }}>
       {active ? '\u2713' : '\u2717'}
     </span>
-    <span style={{ fontSize: 11, color: active ? '#FFFFFF' : '#555', fontWeight: active ? 600 : 400 }}>
+    <span style={{ fontSize: 11, color: active ? '#FFD700' : '#555', fontWeight: active ? 600 : 400 }}>
       {candy}
     </span>
     <span style={{ fontSize: 10, color: active ? '#bbb' : '#444', marginLeft: 'auto' }}>
@@ -282,7 +282,7 @@ export const StoreDetail: React.FC = () => {
             </div>
             <div style={{ marginLeft: 'auto' }}>
               <StarRating score={golden_score} />
-              <span style={{ fontSize: 11, color: '#FFFFFF', fontWeight: 700 }}>
+              <span style={{ fontSize: 11, color: '#FFD700', fontWeight: 700 }}>
                 {golden_score}/5
               </span>
             </div>
@@ -466,7 +466,7 @@ const headerStyle: React.CSSProperties = {
 
 const platBadgeStyle: React.CSSProperties = {
   display: 'inline-block',
-  background: 'linear-gradient(135deg, #aaa, #FFFFFF)',
+  background: 'linear-gradient(135deg, #DAA520, #FFD700)',
   color: '#1a1a2e',
   fontSize: 9,
   fontWeight: 800,

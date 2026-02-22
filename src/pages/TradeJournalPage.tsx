@@ -6,7 +6,7 @@
 
 import React, { useState, useRef, useCallback, useEffect, useMemo } from 'react';
 
-const PAGE_BG = '#FFFFFF';
+const PAGE_BG = '#FFF8DC';
 const ACCENT = '#6a00aa';
 const BORDER = 'rgba(106,0,170,0.18)';
 const FONT = `'Leckerli One', cursive`;
@@ -372,7 +372,7 @@ const NeuralNetworkViz: React.FC<{
         const color = node.layer === 'input' ? '#00BFFF'
           : node.layer === 'hidden' ? '#9370DB'
             : node.id === 'out_win' ? '#00FF7F'
-              : node.id === 'out_loss' ? '#FF4500' : '#FFFFFF';
+              : node.id === 'out_loss' ? '#FF4500' : '#FFD700';
         ctx.fillStyle = color;
         ctx.globalAlpha = 0.8;
         ctx.fill();
@@ -418,7 +418,7 @@ const NeuralNetworkViz: React.FC<{
       <div style={{
         width: '100%', height: '100%',
         display: 'flex', alignItems: 'center', justifyContent: 'center',
-        color: '#666', fontSize: 14, fontFamily: "'Leckerli One', cursive",
+        color: '#666', fontSize: 14, fontFamily: "'Lobster', cursive",
       }}>
         Import trades to see neural network visualization
       </div>
@@ -601,7 +601,7 @@ export default function TradeJournalPage() {
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.1)',
                 borderRadius: 6, padding: 10,
-                color: '#ddd', fontSize: 11, fontFamily: "'Leckerli One', cursive",
+                color: '#ddd', fontSize: 11, fontFamily: "'Lobster', cursive",
                 lineHeight: 1.5, outline: 'none',
               }}
             />
@@ -650,7 +650,7 @@ export default function TradeJournalPage() {
         {/* Parsed Trades List */}
         {trades.length > 0 && (
           <>
-            <div style={{ fontSize: 10, color: '#FFFFFF', fontWeight: 700, marginTop: 4 }}>
+            <div style={{ fontSize: 10, color: '#FFD700', fontWeight: 700, marginTop: 4 }}>
               PARSED TRADES ({trades.length})
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 2, maxHeight: 200, overflowY: 'auto' }}>
@@ -661,8 +661,8 @@ export default function TradeJournalPage() {
                   style={{
                     display: 'flex', alignItems: 'center', gap: 6,
                     padding: '4px 8px', width: '100%',
-                    background: selectedTrade?.id === trade.id ? 'rgba(106,0,170,0.08)' : 'transparent',
-                    border: '1px solid ' + (selectedTrade?.id === trade.id ? 'rgba(255,255,255,0.3)' : 'transparent'),
+                    background: selectedTrade?.id === trade.id ? 'rgba(255,215,0,0.08)' : 'transparent',
+                    border: '1px solid ' + (selectedTrade?.id === trade.id ? '#FFD70033' : 'transparent'),
                     borderRadius: 4, cursor: 'pointer', textAlign: 'left',
                   }}
                 >
@@ -705,7 +705,7 @@ export default function TradeJournalPage() {
             </div>
             <div style={{
               fontSize: 10, fontWeight: 700, marginTop: 4,
-              color: selectedTrade.outcome === 'win' ? '#00FF7F' : selectedTrade.outcome === 'loss' ? '#FF4500' : '#FFFFFF',
+              color: selectedTrade.outcome === 'win' ? '#00FF7F' : selectedTrade.outcome === 'loss' ? '#FF4500' : '#FFD700',
             }}>
               {selectedTrade.outcome === 'win' ? 'What went RIGHT' : selectedTrade.outcome === 'loss' ? 'What went WRONG' : 'Status: Open'}
               : {selectedTrade.reasonForEntry}
@@ -760,7 +760,7 @@ export default function TradeJournalPage() {
         {trades.length > 0 && (
           <div style={{
             position: 'absolute', bottom: 12, left: '50%', transform: 'translateX(-50%)',
-            fontSize: 9, color: '#666', fontFamily: "'Leckerli One', cursive",
+            fontSize: 9, color: '#666', fontFamily: "'Lobster', cursive",
           }}>
             Click any node to simulate a crash shock through the network
           </div>

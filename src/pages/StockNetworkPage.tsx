@@ -10,7 +10,7 @@ import type { StockData, GraphEdge } from '../types';
 // Dynamic import holder for ForceGraph3D; loaded inside component useEffect
 let ForceGraph3D: React.ComponentType<any> | null = null;
 
-const PAGE_BG = '#FFFFFF';
+const PAGE_BG = '#FFF8DC';
 const PANEL_BG = 'rgba(255,255,255,0.7)';
 const ACCENT = '#6a00aa';
 const TEXT_COLOR = '#2d1a00';
@@ -27,7 +27,7 @@ const PipelineStep: React.FC<{ label: string; index: number; last?: boolean }> =
         alignItems: 'center',
         gap: 6,
         padding: '7px 12px',
-        background: 'rgba(255,255,255,0.25)',
+        background: 'rgba(255,215,0,0.25)',
         border: `1px solid ${BORDER_COLOR}`,
         borderRadius: 8,
         color: ACCENT,
@@ -343,7 +343,7 @@ export default function StockNetworkPage() {
         <div style={{
           padding: '16px 20px 12px',
           borderBottom: `1px solid ${BORDER_COLOR}`,
-          background: '#FFFFFF',
+          background: '#FFD700',
         }}>
           <h2 style={{ margin: 0, fontSize: 18, fontWeight: 700, color: '#4b0082', letterSpacing: 0.5, fontFamily: FONT }}>
             Stock Network
@@ -376,10 +376,10 @@ export default function StockNetworkPage() {
               fontFamily: "'Lobster', cursive",
               fontSize: 13,
               color: ACCENT,
-              background: 'rgba(255,255,255,0.12)',
+              background: 'rgba(255,215,0,0.12)',
               padding: '2px 8px',
               borderRadius: 4,
-              border: `1px solid rgba(255,255,255,0.3)`,
+              border: `1px solid rgba(255,215,0,0.3)`,
               fontWeight: 700,
             }}>
               {correlationThreshold.toFixed(2)}
@@ -400,7 +400,7 @@ export default function StockNetworkPage() {
             fontSize: 10,
             color: '#7a4800',
             marginTop: 4,
-            fontFamily: "'Leckerli One', cursive",
+            fontFamily: "'Lobster', cursive",
           }}>
             <span>0.00</span>
             <span style={{ color: '#aaa' }}>{filteredEdges.length} edges</span>
@@ -425,7 +425,7 @@ export default function StockNetworkPage() {
                   fontSize: 10,
                   cursor: 'pointer',
                   padding: 0,
-                  fontFamily: "'Leckerli One', cursive",
+                  fontFamily: "'Lobster', cursive",
                   textTransform: 'uppercase',
                   letterSpacing: 0.5,
                   transition: 'color 0.15s',
@@ -444,7 +444,7 @@ export default function StockNetworkPage() {
                   fontSize: 10,
                   cursor: 'pointer',
                   padding: 0,
-                  fontFamily: "'Leckerli One', cursive",
+                  fontFamily: "'Lobster', cursive",
                   textTransform: 'uppercase',
                   letterSpacing: 0.5,
                   transition: 'color 0.15s',
@@ -567,7 +567,7 @@ export default function StockNetworkPage() {
               justifyContent: 'center',
               color: '#555',
               fontSize: 16,
-              fontFamily: "'Leckerli One', cursive",
+              fontFamily: "'Lobster', cursive",
             }}
           >
             Loading stock network...
