@@ -5,23 +5,19 @@ import { loadStockData, modulateStocksByTime } from './data/stockData';
 import { apiClient } from './services/apiClient';
 import { initTrackedAgents, processDay, getLeaderboard, loadSimulationHistory } from './services/tradeTracker';
 import { updateWhaleAllocations } from './services/whaleArena';
-import { CandyCane, ChartLine, LightningBolt, WebNodes, Gumball, NoteBook, Lollipop } from './components/CandyIcons';
+import { CandyCane, ChartLine, LightningBolt, Gumball, Lollipop } from './components/CandyIcons';
 import type { PageName } from './types';
 
 const GoldenCityPage = lazy(() => import('./pages/GoldenCityPage'));
 const StockNetworkPage = lazy(() => import('./pages/StockNetworkPage'));
 const AgentReactionsPage = lazy(() => import('./pages/AgentReactionsPage'));
 const GraphPlaygroundPage = lazy(() => import('./pages/GraphPlaygroundPage'));
-const AgentNetworkPage = lazy(() => import('./pages/AgentNetworkPage'));
-const TradeJournalPage = lazy(() => import('./pages/TradeJournalPage'));
 
 const NAV_ITEMS: { path: string; label: string; icon: React.ReactNode; page: PageName }[] = [
   { path: '/', label: 'City', icon: <CandyCane size={16} />, page: 'city' },
   { path: '/network', label: 'Stock Network', icon: <ChartLine size={16} />, page: 'network' },
   { path: '/agents', label: 'Agent Reactions', icon: <LightningBolt size={16} />, page: 'agents' },
-  { path: '/agent-network', label: 'Agent Network', icon: <WebNodes size={16} />, page: 'agent-network' },
   { path: '/playground', label: 'Playground', icon: <Gumball size={16} />, page: 'playground' },
-  { path: '/journal', label: 'Trade Journal', icon: <NoteBook size={16} />, page: 'journal' },
 ];
 
 function LoadingScreen() {
@@ -137,12 +133,12 @@ function NavBar() {
         @keyframes statusPulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
       `}</style>
 
-      {/* Brand */}
+      {/* Brand + status badge */}
       <div style={{
         display: 'flex', alignItems: 'center', gap: 10,
         fontFamily: `'Leckerli One', cursive`,
         fontSize: 22, color: '#6a00aa',
-        marginRight: 28, whiteSpace: 'nowrap',
+        whiteSpace: 'nowrap',
         letterSpacing: '0.3px',
       }}>
         <img
@@ -151,9 +147,10 @@ function NavBar() {
           style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'contain' }}
         />
         Wolf of Wall Sweet
+        <ConnectionStatusBadge />
       </div>
 
-      {/* Spacer — pushes nav + badge to the right */}
+      {/* Spacer — pushes nav links to the right */}
       <div style={{ flex: 1 }} />
 
       {/* Nav links */}
@@ -178,14 +175,6 @@ function NavBar() {
           <span className="nav-label">{item.label}</span>
         </NavLink>
       ))}
-      <div style={{ flex: 1 }} />
-      <ConnectionStatusBadge />
-      <div style={{
-        fontSize: 11, color: 'rgba(255,255,255,0.3)',
-        letterSpacing: '0.5px', marginLeft: 8,
-      }}>
-        HACKLYTICS 2026
-      </div>
     </nav>
   );
 }
@@ -355,9 +344,7 @@ export default function App() {
                   <Route path="/" element={<GoldenCityPage />} />
                   <Route path="/network" element={<StockNetworkPage />} />
                   <Route path="/agents" element={<AgentReactionsPage />} />
-                  <Route path="/agent-network" element={<AgentNetworkPage />} />
                   <Route path="/playground" element={<GraphPlaygroundPage />} />
-                  <Route path="/journal" element={<TradeJournalPage />} />
                 </Routes>
               </Suspense>
             </div>
