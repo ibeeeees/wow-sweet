@@ -13,6 +13,7 @@ const CandyCity = lazy(() => import('../components/CandyCity'));
 const TimeSlider = lazy(() => import('../components/TimeSlider'));
 const SectorFilter = lazy(() => import('../components/SectorFilter'));
 const StoreDetail = lazy(() => import('../components/StoreDetail'));
+const FuturePredictions = lazy(() => import('../components/FuturePredictions'));
 const FONT = `'Leckerli One', cursive`;
 
 export default function GoldenCityPage() {
@@ -101,25 +102,51 @@ export default function GoldenCityPage() {
         </div>
       </div>
 
-      {/* ── RIGHT PANEL: Future Prediction (overlay) ── */}
+      {/* ── RIGHT COLUMN (overlay) ── */}
       <div style={{
         position: 'absolute',
         top: 8, right: 8, bottom: 8,
         width: 380,
-        background: 'rgba(255,255,255,0.72)',
-        border: '1.5px solid rgba(106,0,170,0.13)',
-        borderRadius: 16,
-        overflow: 'hidden',
-        boxShadow: '0 2px 16px rgba(106,0,170,0.08)',
-        zIndex: 20,
-        backdropFilter: 'blur(6px)',
         display: 'flex',
         flexDirection: 'column',
+        gap: 8,
+        zIndex: 20,
+        pointerEvents: 'none',
       }}>
-        {/* Injector fills everything */}
-        <Suspense fallback={null}>
-          <NewsInjector />
-        </Suspense>
+        {/* News Injector */}
+        <div style={{
+          flex: 1,
+          background: 'rgba(255,255,255,0.72)',
+          border: '1.5px solid rgba(106,0,170,0.13)',
+          borderRadius: 16,
+          overflow: 'hidden',
+          boxShadow: '0 2px 16px rgba(106,0,170,0.08)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          flexDirection: 'column',
+          pointerEvents: 'auto',
+        }}>
+          <Suspense fallback={null}>
+            <NewsInjector />
+          </Suspense>
+        </div>
+        {/* Future Predictions */}
+        <div style={{
+          flex: 1,
+          background: 'rgba(255,255,255,0.72)',
+          border: '1.5px solid rgba(106,0,170,0.13)',
+          borderRadius: 16,
+          overflow: 'hidden',
+          boxShadow: '0 2px 16px rgba(106,0,170,0.08)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          flexDirection: 'column',
+          pointerEvents: 'auto',
+        }}>
+          <Suspense fallback={null}>
+            <FuturePredictions />
+          </Suspense>
+        </div>
       </div>
     </div>
   );

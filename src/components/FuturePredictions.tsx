@@ -191,6 +191,7 @@ function FuturePredictions() {
           onClick={handlePredict}
           disabled={isLoading || !input.trim()}
           style={{
+            width: '100%',
             padding: '12px 0',
             background: isLoading || !input.trim()
               ? 'rgba(106,0,170,0.08)'
