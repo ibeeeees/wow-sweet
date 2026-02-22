@@ -128,6 +128,87 @@ class ApiClient {
     return null;
   }
 
+  /** Submit simulation results (trades + crowd metrics) back to Databricks. Fire-and-forget. */
+  async submitSimulationResults(data: {
+    snapshot_date: string;
+    trades: Array<{
+      ticker: string;
+      agent_name: string;
+      action: string;
+      profit: number;
+      whale_fund?: string | null;
+      whale_weight?: number | null;
+    }>;
+    crowd_metrics: Array<{
+      ticker: string;
+      buy: number;
+      call: number;
+      put: number;
+      short: number;
+    }>;
+  }): Promise<{ rows_inserted: number } | null> {
+    const base = this._resolvedBase || '/api';
+    try {
+      const res = await fetch(`${base}/simulation`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null; // fire-and-forget — don't block UI
+    }
+  }
+
+  /** Fetch stocks and return snapshot_date alongside data */
+  async fetchStocksWithDate(): Promise<{
+    stocks: any[];
+    correlation_edges: any[];
+    source: string;
+    snapshot_date: string;
+  } | null> {
+    const urls = this._resolvedBase
+      ? [`${this._resolvedBase}/stocks`]
+      : ['/api/stocks', `${this._externalUrl}/stocks`];
+
+    for (const url of urls) {
+      try {
+        const res = await fetch(url, { signal: AbortSignal.timeout(45000) });
+        if (!res.ok) continue;
+        const data = await res.json();
+        if (!data.stocks || data.stocks.length === 0) continue;
+        return {
+          stocks: data.stocks,
+          correlation_edges: data.correlation_edges || [],
+          source: data.source || 'backend',
+          snapshot_date: data.snapshot_date || '',
+        };
+      } catch { /* try next */ }
+    }
+    return null;
+  }
+
+  /** Fetch simulation history — crowd sentiment + agent performance from Databricks */
+  async fetchSimulationHistory(): Promise<{
+    crowd_sentiment: Record<string, Array<{ date: string; buy: number; call: number; put: number; short: number }>>;
+    agent_leaderboard: Array<{ name: string; total_trades: number; total_profit: number; avg_profit: number; win_rate: number }>;
+    ticker_performance: Array<{ ticker: string; trade_count: number; total_profit: number; avg_profit: number; best_action: string }>;
+    cycles: { count: number; first_date: string; last_date: string; total_records: number };
+  } | null> {
+    const base = this._resolvedBase || '/api';
+    try {
+      const res = await fetch(`${base}/simulation_history`, {
+        signal: AbortSignal.timeout(10000),
+      });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch {
+      return null;
+    }
+  }
+
   async fetchRegime(): Promise<any | null> {
     const base = this._resolvedBase || this._externalUrl;
     try {

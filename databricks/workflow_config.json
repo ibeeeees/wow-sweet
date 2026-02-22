@@ -1,0 +1,28 @@
+{
+  "name": "sweetreturns-continuous-loop",
+  "description": "Continuous pipeline loop: advances one trading day per cycle, processes silver features and gold tickets incrementally, reads simulation feedback from frontend.",
+  "schedule": {
+    "quartz_cron_expression": "0 */5 * * * ?",
+    "timezone_id": "America/New_York",
+    "pause_status": "PAUSED"
+  },
+  "tasks": [
+    {
+      "task_key": "advance_snapshot",
+      "description": "Process the next trading day: silver features + gold tickets + simulation feedback",
+      "notebook_task": {
+        "notebook_path": "/sweetreturns-pipeline/advance_snapshot",
+        "source": "WORKSPACE"
+      },
+      "timeout_seconds": 1800,
+      "max_retries": 1,
+      "retry_on_timeout": true
+    }
+  ],
+  "max_concurrent_runs": 1,
+  "email_notifications": {},
+  "tags": {
+    "project": "sweetreturns",
+    "type": "continuous-loop"
+  }
+}

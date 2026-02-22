@@ -30,6 +30,12 @@ Steps (core pipeline):
     19  quality            Run data quality checks across all layers
     all                    Run all steps in order (default)
 
+Continuous loop commands:
+    create-job             Create/update the scheduled Databricks workflow job
+    start-loop             Start (unpause) the continuous loop
+    stop-loop              Pause the continuous loop
+    loop-status            Check current loop job status
+
 Step groups:
     bronze-all         Run all bronze ingestion steps (5-8)
     silver-all         Run all silver steps (9-10)
@@ -87,7 +93,13 @@ NOTEBOOK_SCRIPTS = {
     # Extended gold
     "gold-agents":      SCRIPT_DIR / "gold_agent_archetypes.py",
     "gold-scenarios":   SCRIPT_DIR / "gold_precompute_scenarios.py",
+    # Continuous loop
+    "advance-snapshot": SCRIPT_DIR / "advance_snapshot.py",
+    "create-sim-table": SCRIPT_DIR / "create_simulation_table.py",
 }
+
+WORKFLOW_CONFIG = SCRIPT_DIR / "workflow_config.json"
+LOOP_JOB_ID_FILE = SCRIPT_DIR / ".loop_job_id"
 
 # ── Colour helpers ────────────────────────────────────────────────────────────
 GREEN  = "\033[92m"
@@ -794,6 +806,162 @@ def step_quality(client: DatabricksClient, cluster_id: str):
         warn("Some quality checks failed — review the report above")
 
 
+# ── Continuous Loop Commands ──────────────────────────────────────────────────
+
+def step_create_job(client: DatabricksClient, cluster_id: str):
+    """Create or update the scheduled Databricks workflow job for continuous looping."""
+    hdr("CREATE CONTINUOUS LOOP JOB")
+
+    # First, import the advance_snapshot notebook
+    info("Importing advance_snapshot notebook …")
+    client.import_notebook(NOTEBOOK_SCRIPTS["advance-snapshot"], "/sweetreturns-pipeline/advance_snapshot")
+    ok("advance_snapshot notebook imported")
+
+    # Import simulation table creation notebook
+    info("Importing create_simulation_table notebook …")
+    client.import_notebook(NOTEBOOK_SCRIPTS["create-sim-table"], "/sweetreturns-pipeline/create_simulation_table")
+    ok("create_simulation_table notebook imported")
+
+    # Run the simulation table creation (one-time setup)
+    info("Creating simulation_results table (if not exists) …")
+    run_id = client.run_notebook("/sweetreturns-pipeline/create_simulation_table", cluster_id)
+    state = client.wait_run(run_id, timeout=120)
+    if state.get("result_state") == "SUCCESS":
+        ok("simulation_results table ready")
+    else:
+        warn(f"Table creation result: {state} — may already exist")
+
+    # Load workflow config
+    config = json.loads(WORKFLOW_CONFIG.read_text(encoding="utf-8"))
+
+    # Check if job already exists
+    existing_job_id = None
+    if LOOP_JOB_ID_FILE.exists():
+        try:
+            existing_job_id = int(LOOP_JOB_ID_FILE.read_text().strip())
+            # Verify it still exists
+            client.get("2.1/jobs/get", params={"job_id": existing_job_id})
+            info(f"Found existing job: {existing_job_id}")
+        except Exception:
+            existing_job_id = None
+
+    # Add cluster to task config
+    config["tasks"][0]["existing_cluster_id"] = cluster_id
+
+    if existing_job_id:
+        # Update existing job
+        info(f"Updating job {existing_job_id} …")
+        client.post("2.1/jobs/reset", {
+            "job_id": existing_job_id,
+            "new_settings": config,
+        })
+        ok(f"Job {existing_job_id} updated")
+        job_id = existing_job_id
+    else:
+        # Create new job
+        info("Creating new scheduled job …")
+        resp = client.post("2.1/jobs/create", config)
+        job_id = resp["job_id"]
+        LOOP_JOB_ID_FILE.write_text(str(job_id))
+        ok(f"Job created: {job_id}")
+
+    ok(f"Continuous loop job ready (ID: {job_id})")
+    info("Job is PAUSED by default. Run --step start-loop to activate.")
+    return job_id
+
+
+def step_start_loop(client: DatabricksClient):
+    """Unpause the continuous loop job."""
+    hdr("START CONTINUOUS LOOP")
+
+    job_id = _get_loop_job_id()
+
+    info(f"Unpausing job {job_id} …")
+    client.post("2.1/jobs/update", {
+        "job_id": job_id,
+        "new_settings": {
+            "schedule": {
+                "quartz_cron_expression": "0 */5 * * * ?",
+                "timezone_id": "America/New_York",
+                "pause_status": "UNPAUSED",
+            }
+        },
+    })
+    ok(f"Job {job_id} is now RUNNING on schedule (every 5 minutes)")
+    info("Each cycle processes the next trading day and feeds it to the frontend")
+    info("Run --step stop-loop to pause")
+
+
+def step_stop_loop(client: DatabricksClient):
+    """Pause the continuous loop job."""
+    hdr("STOP CONTINUOUS LOOP")
+
+    job_id = _get_loop_job_id()
+
+    info(f"Pausing job {job_id} …")
+    client.post("2.1/jobs/update", {
+        "job_id": job_id,
+        "new_settings": {
+            "schedule": {
+                "quartz_cron_expression": "0 */5 * * * ?",
+                "timezone_id": "America/New_York",
+                "pause_status": "PAUSED",
+            }
+        },
+    })
+    ok(f"Job {job_id} is now PAUSED")
+
+
+def step_loop_status(client: DatabricksClient):
+    """Check the status of the continuous loop job."""
+    hdr("LOOP STATUS")
+
+    job_id = _get_loop_job_id()
+
+    job = client.get("2.1/jobs/get", params={"job_id": job_id})
+    settings = job.get("settings", {})
+    schedule = settings.get("schedule", {})
+    pause_status = schedule.get("pause_status", "UNKNOWN")
+    cron = schedule.get("quartz_cron_expression", "N/A")
+
+    colour = GREEN if pause_status == "UNPAUSED" else YELLOW
+    print(f"  Job ID:    {job_id}")
+    print(f"  Name:      {settings.get('name', 'unknown')}")
+    print(f"  Schedule:  {cron}")
+    print(f"  Status:    {colour}{pause_status}{RESET}")
+
+    # Show recent runs
+    try:
+        runs = client.get("2.1/jobs/runs/list", params={"job_id": job_id, "limit": 5})
+        run_list = runs.get("runs", [])
+        if run_list:
+            print(f"\n  Recent runs:")
+            for r in run_list:
+                state = r.get("state", {})
+                life = state.get("life_cycle_state", "?")
+                result = state.get("result_state", "")
+                start = r.get("start_time", 0)
+                ts = time.strftime("%Y-%m-%d %H:%M", time.localtime(start / 1000)) if start else "?"
+                colour = GREEN if result == "SUCCESS" else (RED if result == "FAILED" else CYAN)
+                print(f"    {colour}• {ts}  {life} {result}{RESET}")
+        else:
+            info("No runs yet")
+    except Exception:
+        info("Could not fetch run history")
+
+
+def _get_loop_job_id() -> int:
+    """Read the stored loop job ID."""
+    if not LOOP_JOB_ID_FILE.exists():
+        err("No loop job found. Run --step create-job first.")
+        sys.exit(1)
+    try:
+        return int(LOOP_JOB_ID_FILE.read_text().strip())
+    except ValueError:
+        err(f"Invalid job ID in {LOOP_JOB_ID_FILE}")
+        sys.exit(1)
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 def main():
     parser = argparse.ArgumentParser(
@@ -808,6 +976,9 @@ def main():
         "ml-sentiment", "ml-correlation", "ml-regime", "ml-topics", "ml-all",
         "gold", "gold-agents", "gold-scenarios", "gold-all",
         "export", "quality", "all",
+        # Continuous loop commands
+        "create-job", "start-loop", "stop-loop", "loop-status",
+        "advance",  # Run advance_snapshot once (manual single-step)
     ]
     parser.add_argument("--step", choices=ALL_STEPS,
                         default="all", help="Which step to run (default: all)")
@@ -994,6 +1165,30 @@ def main():
     if step in ("quality", "all"):
         cid = cluster_id or ""
         step_quality(client, cid)
+
+    # ── Continuous loop commands ──────────────────────────────────────────
+    if step == "create-job":
+        ensure_cluster()
+        step_create_job(client, cluster_id)
+        return
+
+    if step == "start-loop":
+        step_start_loop(client)
+        return
+
+    if step == "stop-loop":
+        step_stop_loop(client)
+        return
+
+    if step == "loop-status":
+        step_loop_status(client)
+        return
+
+    if step == "advance":
+        ensure_cluster()
+        step_run_notebook(client, cluster_id, "advance-snapshot",
+                          NOTEBOOK_SCRIPTS["advance-snapshot"])
+        return
 
     # ── Done ─────────────────────────────────────────────────────────────
     if step == "all":

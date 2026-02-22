@@ -6,6 +6,7 @@
 
 import type { StockData, LeaderboardEntry, TradeRecord } from '../types';
 import { hashStr, seededRandom } from '../data/stockData';
+import { apiClient } from './apiClient';
 
 // ── Agent names ──
 
@@ -49,6 +50,35 @@ interface TrackedAgent {
 let agents: TrackedAgent[] = [];
 let initialized = false;
 
+// ── Simulation history from Databricks (populated asynchronously) ──
+
+interface TickerPerformance {
+  ticker: string;
+  avg_profit: number;
+  best_action: string;
+  trade_count: number;
+}
+
+let tickerPerformanceMap = new Map<string, TickerPerformance>();
+let historyLoaded = false;
+
+/** Load simulation history from Databricks — called once after init, then periodically */
+export async function loadSimulationHistory(): Promise<void> {
+  try {
+    const history = await apiClient.fetchSimulationHistory();
+    if (!history || !history.ticker_performance) return;
+
+    tickerPerformanceMap.clear();
+    for (const tp of history.ticker_performance) {
+      tickerPerformanceMap.set(tp.ticker, tp);
+    }
+    historyLoaded = true;
+    console.log(`[TradeTracker] Loaded simulation history: ${tickerPerformanceMap.size} tickers, ${history.cycles.count} cycles`);
+  } catch {
+    // silently fail — agents work without history
+  }
+}
+
 // ── Deterministic synthetic return ──
 
 function getSyntheticReturn(ticker: string, date: string): number {
@@ -90,8 +120,23 @@ export function initTrackedAgents(_stocks: StockData[]): void {
   initialized = true;
 }
 
+// Track the last submitted date to avoid duplicate submissions
+let lastSubmittedDate = '';
+
 export function processDay(date: string, stocks: StockData[]): void {
   if (!initialized || stocks.length === 0) return;
+
+  // Collect trades for write-back
+  const dayTrades: Array<{
+    ticker: string;
+    agent_name: string;
+    action: string;
+    profit: number;
+    whale_fund?: string | null;
+  }> = [];
+
+  // Track crowd per store for this day
+  const crowdMap = new Map<string, { buy: number; call: number; put: number; short: number }>();
 
   for (let a = 0; a < agents.length; a++) {
     const agent = agents[a];
@@ -100,13 +145,43 @@ export function processDay(date: string, stocks: StockData[]): void {
     const seed = hashStr(agent.id + date);
     const rand = seededRandom(seed);
 
-    const storeIdx = Math.floor(rand() * stocks.length);
+    // Pick a store — if we have historical data, bias toward profitable tickers
+    let storeIdx: number;
+    if (historyLoaded && tickerPerformanceMap.size > 0 && rand() < 0.3) {
+      // 30% of the time, pick a historically profitable ticker
+      const profitableTickers = Array.from(tickerPerformanceMap.values())
+        .filter(tp => tp.avg_profit > 0)
+        .sort((a, b) => b.avg_profit - a.avg_profit);
+
+      if (profitableTickers.length > 0) {
+        // Pick from top profitable tickers with some randomness
+        const pickIdx = Math.floor(rand() * Math.min(profitableTickers.length, 20));
+        const targetTicker = profitableTickers[pickIdx].ticker;
+        const foundIdx = stocks.findIndex(s => s.ticker === targetTicker);
+        storeIdx = foundIdx >= 0 ? foundIdx : Math.floor(rand() * stocks.length);
+      } else {
+        storeIdx = Math.floor(rand() * stocks.length);
+      }
+    } else {
+      storeIdx = Math.floor(rand() * stocks.length);
+    }
+
     const stock = stocks[storeIdx];
     const ticker = stock.ticker;
 
-    // Pick action based on stock's direction bias
+    // Pick action: blend stock's direction bias with historical best action
     const bias = stock.direction_bias;
     const biases = [bias.buy, bias.call, bias.put, bias.short];
+
+    // If we have historical performance for this ticker, boost the best action
+    const tickerHistory = historyLoaded ? tickerPerformanceMap.get(ticker) : undefined;
+    if (tickerHistory && tickerHistory.trade_count >= 3) {
+      const bestIdx = ACTIONS.indexOf(tickerHistory.best_action as typeof ACTIONS[number]);
+      if (bestIdx >= 0) {
+        // Boost the historically best action by 20%
+        biases[bestIdx] *= 1.2;
+      }
+    }
     const totalBias = biases[0] + biases[1] + biases[2] + biases[3];
     let roll = rand() * totalBias;
     let actionIdx = 0;
@@ -152,6 +227,39 @@ export function processDay(date: string, stocks: StockData[]): void {
     if (tradeProfit >= 0) agent.winCount++;
     agent.currentTicker = ticker;
     agent.currentAction = action;
+
+    // Collect for write-back
+    dayTrades.push({
+      ticker,
+      agent_name: agent.name,
+      action,
+      profit: tradeProfit,
+      whale_fund: agent.id.startsWith('whale_') ? agent.name : null,
+    });
+
+    // Accumulate crowd counts
+    if (!crowdMap.has(ticker)) {
+      crowdMap.set(ticker, { buy: 0, call: 0, put: 0, short: 0 });
+    }
+    const crowd = crowdMap.get(ticker)!;
+    if (action === 'BUY') crowd.buy++;
+    else if (action === 'CALL') crowd.call++;
+    else if (action === 'PUT') crowd.put++;
+    else if (action === 'SHORT') crowd.short++;
+  }
+
+  // Fire-and-forget: submit simulation results to Databricks
+  if (date !== lastSubmittedDate && apiClient.status !== 'disconnected') {
+    lastSubmittedDate = date;
+    const crowdMetrics = Array.from(crowdMap.entries()).map(([ticker, counts]) => ({
+      ticker,
+      ...counts,
+    }));
+    apiClient.submitSimulationResults({
+      snapshot_date: date,
+      trades: dayTrades,
+      crowd_metrics: crowdMetrics,
+    }).catch(() => {}); // swallow errors silently
   }
 }
 

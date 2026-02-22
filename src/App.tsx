@@ -3,7 +3,7 @@ import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import { loadStockData, modulateStocksByTime } from './data/stockData';
 import { apiClient } from './services/apiClient';
-import { initTrackedAgents, processDay, getLeaderboard } from './services/tradeTracker';
+import { initTrackedAgents, processDay, getLeaderboard, loadSimulationHistory } from './services/tradeTracker';
 import { updateWhaleAllocations } from './services/whaleArena';
 import { CandyCane, ChartLine, LightningBolt, WebNodes, Gumball, NoteBook, Lollipop } from './components/CandyIcons';
 import type { PageName } from './types';
@@ -224,6 +224,10 @@ export default function App() {
         processDay(dateStr, stocks);
       }
       setAgentLeaderboard(getLeaderboard());
+
+      // Load simulation history from Databricks (async, non-blocking)
+      // Agents will use this to make smarter decisions in future cycles
+      loadSimulationHistory();
     }
     init();
 
@@ -239,6 +243,48 @@ export default function App() {
       unsub();
     };
   }, [setStocks, setBaseStocks, setCorrelationEdges, setAgentLeaderboard, setDataSource, setBackendConnected, setDatabricksConnected]);
+
+  // Auto-refresh: poll for new data every 60 seconds
+  const snapshotDateRef = useRef<string>('');
+  useEffect(() => {
+    if (baseStocks.length === 0) return;
+
+    const pollInterval = setInterval(async () => {
+      try {
+        const result = await apiClient.fetchStocksWithDate();
+        if (!result || result.stocks.length === 0) return;
+
+        // Only refresh if snapshot_date changed (Databricks advanced to next day)
+        if (result.snapshot_date && result.snapshot_date !== snapshotDateRef.current) {
+          console.log(`[SweetReturns] New snapshot detected: ${snapshotDateRef.current} → ${result.snapshot_date}`);
+          snapshotDateRef.current = result.snapshot_date;
+
+          const parsed = result.stocks.map((s: any) => ({
+            ...s,
+            direction_bias: s.direction_bias || { buy: 0.3, call: 0.25, put: 0.25, short: 0.2 },
+            store_dimensions: s.store_dimensions || { width: 1.5, height: 2.0, depth: 1.0, glow: 0 },
+            forward_return_distribution: s.forward_return_distribution || { p5: -0.05, p25: -0.01, median: 0.02, p75: 0.05, p95: 0.1, skew: 0 },
+            technicals: s.technicals || { rsi_14: 50, macd_histogram: 0, bb_pct_b: 0.5, zscore_20d: 0, realized_vol_20d: 0.2 },
+          }));
+
+          setBaseStocks(parsed);
+          setStocks(parsed);
+          setDataSource('databricks');
+
+          // Process the new day's trades
+          processDay(result.snapshot_date, parsed);
+          setAgentLeaderboard(getLeaderboard());
+
+          // Refresh simulation history so agents learn from past cycles
+          loadSimulationHistory();
+        }
+      } catch {
+        // Silently ignore polling errors
+      }
+    }, 60_000);
+
+    return () => clearInterval(pollInterval);
+  }, [baseStocks, setBaseStocks, setStocks, setDataSource, setAgentLeaderboard]);
 
   // Time modulation: update biases when date/mode changes (without re-initializing simulation)
   useEffect(() => {
