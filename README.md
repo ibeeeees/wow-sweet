@@ -45,6 +45,7 @@
 - **First-Person Mode** — WASD + mouse look via pointer lock to walk the streets at eye level
 - **Golden Ticket System** — 5-tier signal detection (Dip, Shock, Asymmetry, Dislocation, Convexity) + Platinum (Wonka Bar) rarity tier
 - **GNN Correlation Network** — Stock correlation graph rendered as interlocking candy cane pairs with helical red/white stripes
+- **Shock Propagation Analysis** — Click any stock node to simulate contagion cascade through the correlation network with sector impact breakdown, depth analysis, and affected ticker rankings
 - **4 Competing Whale Funds** — Wonka (Gemini AI), Slugworth (Momentum), Oompa (Value), Gobstopper (Contrarian)
 - **Future Predictions** — Gemini-powered market predictions injected into the simulation
 - **Time Travel** — Scrub through 5 years of historical data, present state, and predictive future modes
@@ -63,9 +64,9 @@
 | **Golden City** | Main 3D simulation — 500 stores, 10K agents, leaderboard, time slider, whale arena |
 | **Stock Network** | 3D force-directed graph of stock correlations with threshold slider and community detection |
 | **Agent Network** | Agent relationship visualization — featured agents and whales as nodes, shared positions as edges |
-| **Graph Playground** | Interactive GNN exploration — adjust correlation threshold, toggle regimes, simulate shock propagation |
+| **Graph Playground** | Interactive GNN exploration — correlation threshold, regime toggle, shock propagation with cascade analysis, node detail panel (technicals, golden tickets, top correlations), sector/golden score color modes, ticker search, network stats |
 | **Trade Journal** | Markdown-imported trade notes parsed into neural network graph with P&L tracking |
-| **Agent Reactions** | Real-time agent sentiment dashboard — heatmaps of sector flows from breaking news via Gemini |
+| **Agent Reactions** | Real-time dashboard — whale arena leaderboard, D3 treemap agent heatmap, store pressure grid, live decision stream with AI reasoning |
 
 ---
 

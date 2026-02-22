@@ -1,38 +1,61 @@
 // ============================================================
 // SweetReturns — GraphPlaygroundPage: Full-screen interactive
-//   force graph with shock propagation, regime toggle, pulsing
-//   platinum nodes, and adjustable correlation threshold.
+//   force graph with shock propagation, node detail, sector legend,
+//   color modes, search, network stats, and regime toggle.
 // ============================================================
 
 import React, { useState, useEffect, useMemo, useCallback, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { SECTORS, generateStockData, getCorrelationEdges, loadPipelineData, PLATINUM_COLOR } from '../data/stockData';
+import { SECTORS, generateStockData, getCorrelationEdges, loadPipelineData, PLATINUM_COLOR, TIER_COLORS } from '../data/stockData';
 
-const PAGE_BG = '#1a1a2e';
 const ACCENT = '#FFD700';
 const TEXT_COLOR = '#e0e0e0';
 const BORDER_COLOR = '#2a2a4a';
+const PANEL_BG = 'rgba(15,15,35,0.92)';
 
-// ---- Sector color lookup ----
 function sectorColor(sectorName: string): string {
   return SECTORS.find((s) => s.name === sectorName)?.color ?? '#888888';
 }
 
-// ---- Regime types ----
 type Regime = 'all' | 'highVol' | 'lowVol';
+type ColorMode = 'sector' | 'golden';
 
-// ---- Dynamic import holder for ForceGraph3D ----
 let ForceGraph3DComponent: React.ComponentType<any> | null = null;
 
-// ---- Shock propagation state ----
 interface ShockState {
   active: boolean;
   sourceNode: string | null;
   affectedNodes: Map<string, { intensity: number; timestamp: number }>;
 }
 
+interface ShockResults {
+  sourceTicker: string;
+  sourceGoldenScore: number;
+  sourceSector: string;
+  affectedTickers: Array<{ ticker: string; sector: string; intensity: number; company: string }>;
+  sectorBreakdown: Array<{ sector: string; count: number; color: string }>;
+  totalReach: number;
+  maxDepth: number;
+}
+
+interface NodeDetailData {
+  ticker: string;
+  company: string;
+  sector: string;
+  sectorColor: string;
+  goldenScore: number;
+  isPlatinum: boolean;
+  tickets: { dip: boolean; shock: boolean; asymmetry: boolean; dislocation: boolean; convexity: boolean };
+  technicals: { rsi: number; macd: number; bbPctB: number; zscore: number; vol: number } | null;
+  connectionCount: number;
+  topCorrelated: Array<{ ticker: string; weight: number }>;
+  drawdown: number;
+  volumePct: number;
+  volPct: number;
+}
+
 // ============================================================
-// Fallback canvas graph (used when react-force-graph-3d unavailable)
+// Fallback canvas graph
 // ============================================================
 interface FallbackNodeData {
   id: string;
@@ -53,8 +76,9 @@ const FallbackCanvasGraph: React.FC<{
   nodes: FallbackNodeData[];
   links: FallbackLinkData[];
   shock: ShockState;
+  searchHighlight: string | null;
   onNodeClick: (node: FallbackNodeData) => void;
-}> = ({ nodes, links, shock, onNodeClick }) => {
+}> = ({ nodes, links, shock, searchHighlight, onNodeClick }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const positionsRef = useRef<Map<string, { x: number; y: number; vx: number; vy: number }>>(new Map());
   const frameRef = useRef<number>(0);
@@ -68,7 +92,6 @@ const FallbackCanvasGraph: React.FC<{
     const w = canvas.width;
     const h = canvas.height;
 
-    // Initialize positions
     const positions = positionsRef.current;
     nodes.forEach((node) => {
       if (!positions.has(node.id)) {
@@ -88,13 +111,10 @@ const FallbackCanvasGraph: React.FC<{
 
       const alpha = 0.1;
 
-      // Simple force simulation
       nodes.forEach((node) => {
         const p = positions.get(node.id)!;
-        // Center gravity
         p.vx += (w / 2 - p.x) * 0.001;
         p.vy += (h / 2 - p.y) * 0.001;
-        // Repulsion from nearby nodes (sample subset)
         for (let j = 0; j < Math.min(nodes.length, 80); j++) {
           const other = nodes[j];
           if (other.id === node.id) continue;
@@ -116,7 +136,6 @@ const FallbackCanvasGraph: React.FC<{
         p.y = Math.max(20, Math.min(h - 20, p.y));
       });
 
-      // Link attraction
       links.forEach((link) => {
         const sp = positions.get(link.source);
         const tp = positions.get(link.target);
@@ -131,89 +150,22 @@ const FallbackCanvasGraph: React.FC<{
         tp.vy -= (dy / dist) * force;
       });
 
-      // Draw links as interlocked candy cane pairs
+      // Draw links
       links.forEach((link) => {
         const sp = positions.get(link.source);
         const tp = positions.get(link.target);
         if (!sp || !tp) return;
-
-        const dx = tp.x - sp.x;
-        const dy = tp.y - sp.y;
-        const len = Math.sqrt(dx * dx + dy * dy) || 1;
-        const nx = -dy / len;  // perpendicular
-        const ny = dx / len;
-        const hookR = Math.min(len * 0.15, 12);
         const lw = Math.max(0.5, Math.abs(link.weight) * 2);
-
-        // Midpoint and hook origins
-        const mx = (sp.x + tp.x) / 2;
-        const my = (sp.y + tp.y) / 2;
-        const hax = mx - (dx / len) * hookR * 0.35;
-        const hay = my - (dy / len) * hookR * 0.35;
-        const hbx = mx + (dx / len) * hookR * 0.35;
-        const hby = my + (dy / len) * hookR * 0.35;
-
         const baseAlpha = link.weight > 0 ? 0.2 : 0.15;
-
-        // --- Cane A: source → hookA with J-hook in +perp direction ---
-        // White base
         ctx.beginPath();
         ctx.moveTo(sp.x, sp.y);
-        ctx.lineTo(hax, hay);
-        ctx.quadraticCurveTo(
-          hax + nx * hookR, hay + ny * hookR,
-          hax + (dx / len) * hookR * 0.7 + nx * hookR * 0.7,
-          hay + (dy / len) * hookR * 0.7 + ny * hookR * 0.7,
-        );
+        ctx.lineTo(tp.x, tp.y);
         ctx.strokeStyle = `rgba(255,255,255,${baseAlpha})`;
-        ctx.lineWidth = lw + 0.5;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-        // Red stripe overlay
-        ctx.beginPath();
-        ctx.moveTo(sp.x, sp.y);
-        ctx.lineTo(hax, hay);
-        ctx.quadraticCurveTo(
-          hax + nx * hookR, hay + ny * hookR,
-          hax + (dx / len) * hookR * 0.7 + nx * hookR * 0.7,
-          hay + (dy / len) * hookR * 0.7 + ny * hookR * 0.7,
-        );
-        ctx.setLineDash([3, 3]);
-        ctx.strokeStyle = link.weight > 0 ? `rgba(204,51,51,${baseAlpha + 0.1})` : `rgba(34,170,68,${baseAlpha + 0.1})`;
         ctx.lineWidth = lw;
         ctx.stroke();
-        ctx.setLineDash([]);
-
-        // --- Cane B: target → hookB with J-hook in -perp direction ---
-        ctx.beginPath();
-        ctx.moveTo(tp.x, tp.y);
-        ctx.lineTo(hbx, hby);
-        ctx.quadraticCurveTo(
-          hbx - nx * hookR, hby - ny * hookR,
-          hbx - (dx / len) * hookR * 0.7 - nx * hookR * 0.7,
-          hby - (dy / len) * hookR * 0.7 - ny * hookR * 0.7,
-        );
-        ctx.strokeStyle = `rgba(255,255,255,${baseAlpha})`;
-        ctx.lineWidth = lw + 0.5;
-        ctx.lineCap = 'round';
-        ctx.stroke();
-        // Red stripe overlay
-        ctx.beginPath();
-        ctx.moveTo(tp.x, tp.y);
-        ctx.lineTo(hbx, hby);
-        ctx.quadraticCurveTo(
-          hbx - nx * hookR, hby - ny * hookR,
-          hbx - (dx / len) * hookR * 0.7 - nx * hookR * 0.7,
-          hby - (dy / len) * hookR * 0.7 - ny * hookR * 0.7,
-        );
-        ctx.setLineDash([3, 3]);
-        ctx.strokeStyle = link.weight > 0 ? `rgba(204,51,51,${baseAlpha + 0.1})` : `rgba(34,170,68,${baseAlpha + 0.1})`;
-        ctx.lineWidth = lw;
-        ctx.stroke();
-        ctx.setLineDash([]);
       });
 
-      // --- Shock edge glow overlay ---
+      // Shock edge glow
       const now = Date.now();
       if (shock.active) {
         ctx.save();
@@ -224,18 +176,10 @@ const FallbackCanvasGraph: React.FC<{
           const sp2 = positions.get(link.source);
           const tp2 = positions.get(link.target);
           if (!sp2 || !tp2) return;
-
           let maxT = 0;
-          if (srcShock) {
-            const el = now - srcShock.timestamp;
-            if (el >= 0 && el < 2000) maxT = Math.max(maxT, srcShock.intensity * (1 - el / 2000));
-          }
-          if (tgtShock) {
-            const el = now - tgtShock.timestamp;
-            if (el >= 0 && el < 2000) maxT = Math.max(maxT, tgtShock.intensity * (1 - el / 2000));
-          }
+          if (srcShock) { const el = now - srcShock.timestamp; if (el >= 0 && el < 2000) maxT = Math.max(maxT, srcShock.intensity * (1 - el / 2000)); }
+          if (tgtShock) { const el = now - tgtShock.timestamp; if (el >= 0 && el < 2000) maxT = Math.max(maxT, tgtShock.intensity * (1 - el / 2000)); }
           if (maxT <= 0) return;
-
           ctx.beginPath();
           ctx.moveTo(sp2.x, sp2.y);
           ctx.lineTo(tp2.x, tp2.y);
@@ -248,16 +192,15 @@ const FallbackCanvasGraph: React.FC<{
         ctx.restore();
       }
 
-      // --- Draw nodes ---
+      // Draw nodes
       nodes.forEach((node) => {
         const p = positions.get(node.id)!;
         let radius = 2 + node.goldenScore * 1.5;
         let drawX = p.x;
         let drawY = p.y;
-
-        // Shock effects: color overlay, position shaking, size pulsing, glow ring
         let fillColor = node.color;
         let shockT = 0;
+
         if (shock.active && shock.affectedNodes.has(node.id)) {
           const { intensity, timestamp } = shock.affectedNodes.get(node.id)!;
           const elapsed = now - timestamp;
@@ -265,19 +208,14 @@ const FallbackCanvasGraph: React.FC<{
             const fade = Math.max(0, 1 - elapsed / 2000);
             shockT = intensity * fade;
             fillColor = `rgb(${Math.round(255 * shockT + 136 * (1 - shockT))},${Math.round(215 * shockT + 136 * (1 - shockT))},${Math.round(0 * shockT + 136 * (1 - shockT))})`;
-
-            // Position shaking — random oscillation scaled by intensity
             const shake = shockT * 10;
             drawX += (Math.random() - 0.5) * shake * 2;
             drawY += (Math.random() - 0.5) * shake * 2;
-
-            // Size pulsing — grow/shrink with shock intensity
-            const pulse = 1 + shockT * 2 * (0.5 + 0.5 * Math.sin(now * 0.012));
-            radius *= pulse;
+            radius *= 1 + shockT * 2 * (0.5 + 0.5 * Math.sin(now * 0.012));
           }
         }
 
-        // Shock glow ring behind the node
+        // Shock glow ring
         if (shockT > 0.01) {
           ctx.save();
           ctx.beginPath();
@@ -289,12 +227,24 @@ const FallbackCanvasGraph: React.FC<{
           ctx.restore();
         }
 
+        // Search highlight ring
+        if (searchHighlight === node.id) {
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(drawX, drawY, radius + 8, 0, Math.PI * 2);
+          ctx.strokeStyle = ACCENT;
+          ctx.lineWidth = 2;
+          ctx.shadowColor = ACCENT;
+          ctx.shadowBlur = 12;
+          ctx.stroke();
+          ctx.restore();
+        }
+
         ctx.beginPath();
         ctx.arc(drawX, drawY, radius, 0, Math.PI * 2);
         ctx.fillStyle = fillColor;
         ctx.fill();
 
-        // Platinum glow
         if (node.isPlatinum) {
           const pulse = 0.5 + 0.5 * Math.sin(now * 0.003);
           ctx.strokeStyle = PLATINUM_COLOR;
@@ -304,16 +254,15 @@ const FallbackCanvasGraph: React.FC<{
           ctx.globalAlpha = 1;
         }
 
-        // Label for large nodes
-        if (node.val > 5) {
-          ctx.fillStyle = 'rgba(255,255,255,0.6)';
-          ctx.font = '9px system-ui';
+        if (node.val > 5 || searchHighlight === node.id) {
+          ctx.fillStyle = searchHighlight === node.id ? ACCENT : 'rgba(255,255,255,0.6)';
+          ctx.font = searchHighlight === node.id ? 'bold 11px system-ui' : '9px system-ui';
           ctx.textAlign = 'left';
           ctx.fillText(node.id, drawX + radius + 2, drawY + 3);
         }
       });
 
-      // --- Expanding ripple rings from shock source ---
+      // Shock ripple rings
       if (shock.active && shock.sourceNode) {
         const sourcePos = positions.get(shock.sourceNode);
         const sourceInfo = shock.affectedNodes.get(shock.sourceNode);
@@ -339,7 +288,6 @@ const FallbackCanvasGraph: React.FC<{
 
     simulate();
 
-    // Click handler
     const handleClick = (e: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
       const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
@@ -361,7 +309,7 @@ const FallbackCanvasGraph: React.FC<{
       cancelAnimationFrame(frameRef.current);
       canvas.removeEventListener('click', handleClick);
     };
-  }, [nodes, links, onNodeClick, shock]);
+  }, [nodes, links, onNodeClick, shock, searchHighlight]);
 
   return (
     <canvas
@@ -372,6 +320,192 @@ const FallbackCanvasGraph: React.FC<{
     />
   );
 };
+
+// ============================================================
+// Side Panel — Node Detail
+// ============================================================
+const NodeDetailPanel: React.FC<{ detail: NodeDetailData }> = ({ detail }) => {
+  const ticketNames = [
+    { key: 'dip' as const, label: 'Dip', emoji: '🍬' },
+    { key: 'shock' as const, label: 'Shock', emoji: '💥' },
+    { key: 'asymmetry' as const, label: 'Asymmetry', emoji: '🥠' },
+    { key: 'dislocation' as const, label: 'Dislocation', emoji: '🍬' },
+    { key: 'convexity' as const, label: 'Convexity', emoji: '🐻' },
+  ];
+
+  return (
+    <>
+      <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+        Node Detail
+      </div>
+      <div style={{ fontSize: 22, fontWeight: 700, color: ACCENT, marginBottom: 2 }}>
+        {detail.ticker}
+        {detail.isPlatinum && (
+          <span style={{ fontSize: 10, color: PLATINUM_COLOR, marginLeft: 8, padding: '2px 6px', background: 'rgba(228,180,255,0.1)', borderRadius: 4 }}>
+            PLATINUM
+          </span>
+        )}
+      </div>
+      <div style={{ fontSize: 11, color: '#aaa', marginBottom: 4 }}>{detail.company}</div>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 12 }}>
+        <div style={{ width: 10, height: 10, borderRadius: '50%', background: detail.sectorColor }} />
+        <span style={{ fontSize: 11, color: detail.sectorColor }}>{detail.sector}</span>
+      </div>
+
+      {/* Golden Score */}
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 9, color: '#666', marginBottom: 4 }}>GOLDEN SCORE</div>
+        <div style={{ display: 'flex', gap: 3 }}>
+          {[0, 1, 2, 3, 4].map(i => (
+            <div key={i} style={{
+              width: 24, height: 8, borderRadius: 2,
+              background: i < detail.goldenScore ? (TIER_COLORS[detail.goldenScore] || '#888') : '#1e1e3a',
+              border: '1px solid #2a2a4a',
+            }} />
+          ))}
+          <span style={{ fontSize: 11, fontWeight: 700, color: TIER_COLORS[detail.goldenScore] || '#888', marginLeft: 4 }}>
+            {detail.goldenScore}/5
+          </span>
+        </div>
+      </div>
+
+      {/* Ticket Levels */}
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 9, color: '#666', marginBottom: 4 }}>GOLDEN TICKETS</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+          {ticketNames.map(t => (
+            <div key={t.key} style={{
+              fontSize: 9, padding: '3px 6px', borderRadius: 4,
+              background: detail.tickets[t.key] ? 'rgba(255,215,0,0.12)' : 'rgba(255,255,255,0.02)',
+              color: detail.tickets[t.key] ? ACCENT : '#444',
+              border: `1px solid ${detail.tickets[t.key] ? 'rgba(255,215,0,0.3)' : '#2a2a4a'}`,
+            }}>
+              {t.label}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Technicals */}
+      {detail.technicals && (
+        <div style={{ marginBottom: 12 }}>
+          <div style={{ fontSize: 9, color: '#666', marginBottom: 4 }}>TECHNICALS</div>
+          {[
+            { label: 'RSI', value: detail.technicals.rsi.toFixed(1), color: detail.technicals.rsi > 70 ? '#FF4500' : detail.technicals.rsi < 30 ? '#00FF7F' : '#aaa' },
+            { label: 'MACD', value: detail.technicals.macd.toFixed(3), color: detail.technicals.macd > 0 ? '#00FF7F' : '#FF4500' },
+            { label: 'BB%B', value: detail.technicals.bbPctB.toFixed(2), color: '#aaa' },
+            { label: 'Z-Score', value: detail.technicals.zscore.toFixed(2), color: Math.abs(detail.technicals.zscore) > 2 ? '#FF69B4' : '#aaa' },
+            { label: 'Volatility', value: (detail.technicals.vol * 100).toFixed(1) + '%', color: '#aaa' },
+          ].map(row => (
+            <div key={row.label} style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 11 }}>
+              <span style={{ color: '#888' }}>{row.label}</span>
+              <span style={{ color: row.color, fontFamily: 'monospace', fontWeight: 600 }}>{row.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Market Stats */}
+      <div style={{ marginBottom: 12 }}>
+        <div style={{ fontSize: 9, color: '#666', marginBottom: 4 }}>MARKET</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 11 }}>
+          <span style={{ color: '#888' }}>Drawdown</span>
+          <span style={{ color: '#FF4500', fontFamily: 'monospace' }}>{(detail.drawdown * 100).toFixed(1)}%</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 11 }}>
+          <span style={{ color: '#888' }}>Volume Pctl</span>
+          <span style={{ color: '#aaa', fontFamily: 'monospace' }}>{(detail.volumePct * 100).toFixed(0)}%</span>
+        </div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', padding: '2px 0', fontSize: 11 }}>
+          <span style={{ color: '#888' }}>Connections</span>
+          <span style={{ color: ACCENT, fontFamily: 'monospace' }}>{detail.connectionCount}</span>
+        </div>
+      </div>
+
+      {/* Top Correlated */}
+      {detail.topCorrelated.length > 0 && (
+        <div>
+          <div style={{ fontSize: 9, color: '#666', marginBottom: 4 }}>TOP CORRELATED</div>
+          {detail.topCorrelated.map(c => (
+            <div key={c.ticker} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 0' }}>
+              <span style={{ fontSize: 11, color: ACCENT, minWidth: 48 }}>{c.ticker}</span>
+              <div style={{ flex: 1, height: 6, background: '#1e1e3a', borderRadius: 3, overflow: 'hidden' }}>
+                <div style={{ width: `${Math.abs(c.weight) * 100}%`, height: '100%', background: c.weight > 0 ? '#00FF7F' : '#FF4500', borderRadius: 3 }} />
+              </div>
+              <span style={{ fontSize: 10, color: '#888', fontFamily: 'monospace', minWidth: 36, textAlign: 'right' }}>
+                {c.weight.toFixed(2)}
+              </span>
+            </div>
+          ))}
+        </div>
+      )}
+    </>
+  );
+};
+
+// ============================================================
+// Side Panel — Shock Results
+// ============================================================
+const ShockResultsPanel: React.FC<{ results: ShockResults }> = ({ results }) => (
+  <>
+    <div style={{ fontSize: 9, color: '#666', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 4 }}>
+      Shock Propagation Results
+    </div>
+
+    {/* Source */}
+    <div style={{ marginBottom: 12, padding: '8px 10px', background: 'rgba(255,215,0,0.06)', borderRadius: 6, border: '1px solid rgba(255,215,0,0.15)' }}>
+      <div style={{ fontSize: 9, color: '#888', marginBottom: 2 }}>SOURCE</div>
+      <div style={{ fontSize: 18, fontWeight: 700, color: ACCENT }}>{results.sourceTicker}</div>
+      <div style={{ display: 'flex', gap: 8, marginTop: 4, fontSize: 10 }}>
+        <span style={{ color: sectorColor(results.sourceSector) }}>{results.sourceSector}</span>
+        <span style={{ color: TIER_COLORS[results.sourceGoldenScore] || '#888' }}>Score {results.sourceGoldenScore}/5</span>
+      </div>
+    </div>
+
+    {/* Cascade Stats */}
+    <div style={{ display: 'flex', gap: 8, marginBottom: 12 }}>
+      <div style={{ flex: 1, padding: '6px 8px', background: '#1e1e3a', borderRadius: 6, textAlign: 'center' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#FF4500' }}>{results.totalReach}</div>
+        <div style={{ fontSize: 8, color: '#888' }}>Nodes Hit</div>
+      </div>
+      <div style={{ flex: 1, padding: '6px 8px', background: '#1e1e3a', borderRadius: 6, textAlign: 'center' }}>
+        <div style={{ fontSize: 18, fontWeight: 700, color: '#FF69B4' }}>{results.maxDepth}</div>
+        <div style={{ fontSize: 8, color: '#888' }}>Max Depth</div>
+      </div>
+    </div>
+
+    {/* Sector Breakdown */}
+    <div style={{ marginBottom: 12 }}>
+      <div style={{ fontSize: 9, color: '#666', marginBottom: 4 }}>SECTOR IMPACT</div>
+      {results.sectorBreakdown.map(s => (
+        <div key={s.sector} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '2px 0' }}>
+          <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+          <span style={{ fontSize: 10, color: '#aaa', flex: 1 }}>{s.sector}</span>
+          <div style={{ width: 60, height: 5, background: '#1e1e3a', borderRadius: 3, overflow: 'hidden' }}>
+            <div style={{ width: `${Math.min((s.count / (results.totalReach || 1)) * 100, 100)}%`, height: '100%', background: s.color, borderRadius: 3 }} />
+          </div>
+          <span style={{ fontSize: 10, color: '#888', fontFamily: 'monospace', minWidth: 20, textAlign: 'right' }}>{s.count}</span>
+        </div>
+      ))}
+    </div>
+
+    {/* Affected Tickers */}
+    <div>
+      <div style={{ fontSize: 9, color: '#666', marginBottom: 4 }}>MOST AFFECTED ({results.affectedTickers.length})</div>
+      {results.affectedTickers.map((t, i) => (
+        <div key={t.ticker} style={{ display: 'flex', alignItems: 'center', gap: 6, padding: '3px 0', borderBottom: i < results.affectedTickers.length - 1 ? `1px solid ${BORDER_COLOR}` : 'none' }}>
+          <span style={{ fontSize: 10, color: '#666', minWidth: 16 }}>#{i + 1}</span>
+          <div style={{ width: 6, height: 6, borderRadius: '50%', background: sectorColor(t.sector), flexShrink: 0 }} />
+          <span style={{ fontSize: 11, color: ACCENT, minWidth: 48, fontWeight: 600 }}>{t.ticker}</span>
+          <div style={{ flex: 1, height: 4, background: '#1e1e3a', borderRadius: 2, overflow: 'hidden' }}>
+            <div style={{ width: `${t.intensity * 100}%`, height: '100%', background: `rgba(255,215,0,${0.3 + t.intensity * 0.7})`, borderRadius: 2 }} />
+          </div>
+          <span style={{ fontSize: 9, color: '#888', fontFamily: 'monospace' }}>{(t.intensity * 100).toFixed(0)}%</span>
+        </div>
+      ))}
+    </div>
+  </>
+);
 
 // ============================================================
 // Main page component
@@ -385,12 +519,13 @@ export default function GraphPlaygroundPage() {
   const setCorrelationEdges = useStore((s) => s.setCorrelationEdges);
 
   const [regime, setRegime] = useState<Regime>('all');
+  const [colorMode, setColorMode] = useState<ColorMode>('sector');
   const [shockMode, setShockMode] = useState(false);
-  const [shock, setShock] = useState<ShockState>({
-    active: false,
-    sourceNode: null,
-    affectedNodes: new Map(),
-  });
+  const [shock, setShock] = useState<ShockState>({ active: false, sourceNode: null, affectedNodes: new Map() });
+  const [shockResults, setShockResults] = useState<ShockResults | null>(null);
+  const [selectedNode, setSelectedNode] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchHighlight, setSearchHighlight] = useState<string | null>(null);
   const [forceGraphReady, setForceGraphReady] = useState(ForceGraph3DComponent !== null);
   const [fallbackMode, setFallbackMode] = useState(false);
   const graphRef = useRef<any>(null);
@@ -400,10 +535,7 @@ export default function GraphPlaygroundPage() {
   useEffect(() => {
     if (stocks.length === 0) {
       loadPipelineData()
-        .then(({ stocks: s, edges }) => {
-          setStocks(s);
-          setCorrelationEdges(edges);
-        })
+        .then(({ stocks: s, edges }) => { setStocks(s); setCorrelationEdges(edges); })
         .catch(() => setStocks(generateStockData()));
     }
   }, [stocks.length, setStocks, setCorrelationEdges]);
@@ -420,31 +552,32 @@ export default function GraphPlaygroundPage() {
   useEffect(() => {
     if (!ForceGraph3DComponent) {
       import('react-force-graph-3d')
-        .then((mod) => {
-          ForceGraph3DComponent = mod.default;
-          setForceGraphReady(true);
-        })
-        .catch(() => {
-          setFallbackMode(true);
-        });
+        .then((mod) => { ForceGraph3DComponent = mod.default; setForceGraphReady(true); })
+        .catch(() => { setFallbackMode(true); });
     }
   }, []);
 
-  // Filter edges based on regime (volatility-based filtering)
+  // Filter edges based on regime
   const regimeEdges = useMemo(() => {
     if (regime === 'all') return correlationEdges;
     const volMap = new Map<string, number>();
     stocks.forEach((s) => volMap.set(s.ticker, s.volatility_percentile));
-
     return correlationEdges.filter((e) => {
-      const srcVol = volMap.get(e.source) ?? 0.5;
-      const tgtVol = volMap.get(e.target) ?? 0.5;
-      const avgVol = (srcVol + tgtVol) / 2;
+      const avgVol = ((volMap.get(e.source) ?? 0.5) + (volMap.get(e.target) ?? 0.5)) / 2;
       if (regime === 'highVol') return avgVol > 0.6;
-      if (regime === 'lowVol') return avgVol <= 0.4;
-      return true;
+      return avgVol <= 0.4;
     });
   }, [correlationEdges, regime, stocks]);
+
+  // Network stats
+  const networkStats = useMemo(() => {
+    const nodeCount = stocks.length;
+    const edgeCount = regimeEdges.length;
+    const avgConnections = nodeCount > 0 ? (edgeCount * 2 / nodeCount) : 0;
+    const maxPossible = nodeCount * (nodeCount - 1) / 2;
+    const density = maxPossible > 0 ? edgeCount / maxPossible : 0;
+    return { nodeCount, edgeCount, avgConnections, density };
+  }, [stocks.length, regimeEdges.length]);
 
   // Adjacency list for BFS shock propagation
   const adjacency = useMemo(() => {
@@ -458,64 +591,141 @@ export default function GraphPlaygroundPage() {
     return adj;
   }, [regimeEdges]);
 
-  // BFS shock propagation
-  const triggerShock = useCallback(
-    (sourceId: string) => {
-      const affected = new Map<string, { intensity: number; timestamp: number }>();
-      const queue: Array<{ id: string; intensity: number; depth: number }> = [
-        { id: sourceId, intensity: 1.0, depth: 0 },
-      ];
-      const visited = new Set<string>();
-      visited.add(sourceId);
-      const now = Date.now();
+  // BFS shock propagation with results
+  const triggerShock = useCallback((sourceId: string) => {
+    const affected = new Map<string, { intensity: number; timestamp: number }>();
+    const queue: Array<{ id: string; intensity: number; depth: number }> = [{ id: sourceId, intensity: 1.0, depth: 0 }];
+    const visited = new Set<string>();
+    visited.add(sourceId);
+    const now = Date.now();
+    let maxDepth = 0;
 
-      while (queue.length > 0) {
-        const current = queue.shift()!;
-        affected.set(current.id, {
-          intensity: current.intensity,
-          timestamp: now + current.depth * 300,
-        });
-
-        if (current.intensity < 0.05 || current.depth > 8) continue;
-
-        const neighbors = adjacency.get(current.id) ?? [];
-        for (const neighbor of neighbors) {
-          if (!visited.has(neighbor.target)) {
-            visited.add(neighbor.target);
-            const nextIntensity = current.intensity * (1 - Math.abs(neighbor.weight) * 0.5) * 0.8;
-            queue.push({
-              id: neighbor.target,
-              intensity: nextIntensity,
-              depth: current.depth + 1,
-            });
-          }
+    while (queue.length > 0) {
+      const current = queue.shift()!;
+      affected.set(current.id, { intensity: current.intensity, timestamp: now + current.depth * 300 });
+      maxDepth = Math.max(maxDepth, current.depth);
+      if (current.intensity < 0.05 || current.depth > 8) continue;
+      const neighbors = adjacency.get(current.id) ?? [];
+      for (const neighbor of neighbors) {
+        if (!visited.has(neighbor.target)) {
+          visited.add(neighbor.target);
+          const nextIntensity = current.intensity * (1 - Math.abs(neighbor.weight) * 0.5) * 0.8;
+          queue.push({ id: neighbor.target, intensity: nextIntensity, depth: current.depth + 1 });
         }
       }
+    }
 
-      setShock({ active: true, sourceNode: sourceId, affectedNodes: affected });
+    // Build shock results
+    const sourceStock = stocks.find(s => s.ticker === sourceId);
+    const affectedTickers: ShockResults['affectedTickers'] = [];
+    const sectorCounts = new Map<string, number>();
 
-      // Clear shock after animation completes
-      const maxDelay = Math.max(0, ...Array.from(affected.values()).map((v) => v.timestamp - now));
-      setTimeout(() => {
-        setShock({ active: false, sourceNode: null, affectedNodes: new Map() });
-      }, maxDelay + 3000);
-    },
-    [adjacency],
-  );
-
-  // Handle node click (shock mode or normal)
-  const handleNodeClick = useCallback(
-    (node: any) => {
-      if (shockMode) {
-        const id = typeof node === 'string' ? node : node?.id;
-        if (id) triggerShock(id);
-        setShockMode(false);
+    for (const [id, info] of affected) {
+      if (id === sourceId) continue;
+      const stock = stocks.find(s => s.ticker === id);
+      if (stock) {
+        affectedTickers.push({ ticker: id, sector: stock.sector, intensity: info.intensity, company: stock.company });
+        sectorCounts.set(stock.sector, (sectorCounts.get(stock.sector) || 0) + 1);
       }
-    },
-    [shockMode, triggerShock],
-  );
+    }
 
-  // Build graph data for ForceGraph3D
+    affectedTickers.sort((a, b) => b.intensity - a.intensity);
+
+    const sectorBreakdown = Array.from(sectorCounts.entries())
+      .map(([sector, count]) => ({ sector, count, color: sectorColor(sector) }))
+      .sort((a, b) => b.count - a.count);
+
+    setShockResults({
+      sourceTicker: sourceId,
+      sourceGoldenScore: sourceStock?.golden_score ?? 0,
+      sourceSector: sourceStock?.sector ?? '',
+      affectedTickers: affectedTickers.slice(0, 15),
+      sectorBreakdown,
+      totalReach: affected.size - 1,
+      maxDepth,
+    });
+
+    setSelectedNode(null);
+    setShock({ active: true, sourceNode: sourceId, affectedNodes: affected });
+
+    const maxDelay = Math.max(0, ...Array.from(affected.values()).map((v) => v.timestamp - now));
+    setTimeout(() => {
+      setShock({ active: false, sourceNode: null, affectedNodes: new Map() });
+    }, maxDelay + 3000);
+  }, [adjacency, stocks]);
+
+  // Handle node click
+  const handleNodeClick = useCallback((node: any) => {
+    const id = typeof node === 'string' ? node : node?.id;
+    if (!id) return;
+    if (shockMode) {
+      triggerShock(id);
+      setShockMode(false);
+      return;
+    }
+    // Toggle node detail
+    if (selectedNode === id) {
+      setSelectedNode(null);
+    } else {
+      setSelectedNode(id);
+      setShockResults(null);
+    }
+  }, [shockMode, triggerShock, selectedNode]);
+
+  // Node detail data
+  const nodeDetail = useMemo((): NodeDetailData | null => {
+    if (!selectedNode) return null;
+    const stock = stocks.find(s => s.ticker === selectedNode);
+    if (!stock) return null;
+    const connections = regimeEdges.filter(e => e.source === selectedNode || e.target === selectedNode);
+    const topCorrelated = connections
+      .map(e => ({ ticker: e.source === selectedNode ? e.target : e.source, weight: e.weight }))
+      .sort((a, b) => Math.abs(b.weight) - Math.abs(a.weight))
+      .slice(0, 5);
+    return {
+      ticker: stock.ticker,
+      company: stock.company,
+      sector: stock.sector,
+      sectorColor: sectorColor(stock.sector),
+      goldenScore: stock.golden_score,
+      isPlatinum: stock.is_platinum,
+      tickets: {
+        dip: stock.ticket_levels.dip_ticket,
+        shock: stock.ticket_levels.shock_ticket,
+        asymmetry: stock.ticket_levels.asymmetry_ticket,
+        dislocation: stock.ticket_levels.dislocation_ticket,
+        convexity: stock.ticket_levels.convexity_ticket,
+      },
+      technicals: stock.technicals ? {
+        rsi: stock.technicals.rsi_14,
+        macd: stock.technicals.macd_histogram,
+        bbPctB: stock.technicals.bb_pct_b,
+        zscore: stock.technicals.zscore_20d,
+        vol: stock.technicals.realized_vol_20d,
+      } : null,
+      connectionCount: connections.length,
+      topCorrelated,
+      drawdown: stock.drawdown_current,
+      volumePct: stock.volume_percentile,
+      volPct: stock.volatility_percentile,
+    };
+  }, [selectedNode, stocks, regimeEdges]);
+
+  // Search handler
+  const handleSearch = useCallback((q: string) => {
+    setSearchQuery(q);
+    const upper = q.toUpperCase();
+    const match = stocks.find(s => s.ticker === upper);
+    if (match) {
+      setSearchHighlight(upper);
+      setSelectedNode(upper);
+      setShockResults(null);
+    } else {
+      setSearchHighlight(null);
+    }
+  }, [stocks]);
+
+  // Build graph data
   const graphData = useMemo(() => {
     const nodes = stocks.map((s) => ({
       id: s.ticker,
@@ -524,136 +734,81 @@ export default function GraphPlaygroundPage() {
       goldenScore: s.golden_score,
       isPlatinum: s.is_platinum,
       val: 2 + s.golden_score * 3,
-      color: sectorColor(s.sector),
+      color: colorMode === 'sector' ? sectorColor(s.sector) : (TIER_COLORS[s.golden_score] ?? '#888'),
     }));
-    const links = regimeEdges.map((e) => ({
-      source: e.source,
-      target: e.target,
-      weight: e.weight,
-    }));
+    const links = regimeEdges.map((e) => ({ source: e.source, target: e.target, weight: e.weight }));
     return { nodes, links };
-  }, [stocks, regimeEdges]);
+  }, [stocks, regimeEdges, colorMode]);
 
-  // Node color incorporating shock animation
-  const getNodeColor = useCallback(
-    (node: any) => {
-      const id = node.id as string;
-      if (shock.active && shock.affectedNodes.has(id)) {
-        const { intensity, timestamp } = shock.affectedNodes.get(id)!;
-        const elapsed = Date.now() - timestamp;
-        if (elapsed < 0) return node.color;
-        if (elapsed < 2000) {
-          const fade = Math.max(0, 1 - elapsed / 2000);
-          const t = intensity * fade;
-          const baseColor = node.color || '#888888';
-          const br = parseInt(baseColor.slice(1, 3), 16) || 136;
-          const bg = parseInt(baseColor.slice(3, 5), 16) || 136;
-          const bb = parseInt(baseColor.slice(5, 7), 16) || 136;
-          const r = Math.round(255 * t + br * (1 - t));
-          const g = Math.round(215 * t + bg * (1 - t));
-          const b = Math.round(0 * t + bb * (1 - t));
-          return `rgb(${r},${g},${b})`;
-        }
+  // Node color with shock animation
+  const getNodeColor = useCallback((node: any) => {
+    const id = node.id as string;
+    // Search highlight
+    if (searchHighlight === id) return ACCENT;
+    // Shock animation
+    if (shock.active && shock.affectedNodes.has(id)) {
+      const { intensity, timestamp } = shock.affectedNodes.get(id)!;
+      const elapsed = Date.now() - timestamp;
+      if (elapsed >= 0 && elapsed < 2000) {
+        const fade = Math.max(0, 1 - elapsed / 2000);
+        const t = intensity * fade;
+        const br = parseInt((node.color || '#888888').slice(1, 3), 16) || 136;
+        const bg = parseInt((node.color || '#888888').slice(3, 5), 16) || 136;
+        const bb = parseInt((node.color || '#888888').slice(5, 7), 16) || 136;
+        return `rgb(${Math.round(255 * t + br * (1 - t))},${Math.round(215 * t + bg * (1 - t))},${Math.round(bb * (1 - t))})`;
       }
-      return node.color;
-    },
-    [shock],
-  );
+    }
+    return node.color;
+  }, [shock, searchHighlight]);
 
-  // Platinum pulsing custom node objects for ForceGraph3D
+  // Platinum pulsing for ForceGraph3D
   const nodeThreeObject = useCallback((node: any) => {
     if (!node.isPlatinum) return undefined;
     try {
-      // Dynamically access THREE from the global scope or import
       const THREE = (window as any).__THREE_PLAYGROUND;
       if (!THREE) return undefined;
-
       const radius = 2 + (node.goldenScore ?? 0) * 3;
       const geometry = new THREE.SphereGeometry(radius, 16, 16);
-      const material = new THREE.MeshBasicMaterial({
-        color: new THREE.Color(PLATINUM_COLOR),
-        transparent: true,
-        opacity: 0.85,
-      });
+      const material = new THREE.MeshBasicMaterial({ color: new THREE.Color(PLATINUM_COLOR), transparent: true, opacity: 0.85 });
       const mesh = new THREE.Mesh(geometry, material);
       (mesh as any).__platinumPulse = { material };
       return mesh;
-    } catch {
-      return undefined;
-    }
+    } catch { return undefined; }
   }, []);
 
-  // Load THREE for platinum pulse and run animation loop
+  // Load THREE and run platinum pulse animation
   useEffect(() => {
     if (!forceGraphReady || fallbackMode) return;
     let running = true;
-
-    (async () => {
-      try {
-        const THREE = await import('three');
-        (window as any).__THREE_PLAYGROUND = THREE;
-      } catch {
-        // three not available
-      }
-    })();
-
+    (async () => { try { const THREE = await import('three'); (window as any).__THREE_PLAYGROUND = THREE; } catch {} })();
     const animate = () => {
       if (!running) return;
       if (graphRef.current) {
         const scene = graphRef.current.scene?.();
         if (scene) {
           const now = Date.now();
-          scene.traverse((obj: any) => {
-            if (obj.__platinumPulse) {
-              const pulse = 0.6 + 0.4 * Math.sin(now * 0.004);
-              obj.__platinumPulse.material.opacity = pulse;
-            }
-          });
+          scene.traverse((obj: any) => { if (obj.__platinumPulse) { obj.__platinumPulse.material.opacity = 0.6 + 0.4 * Math.sin(now * 0.004); } });
         }
       }
       animFrameRef.current = requestAnimationFrame(animate);
     };
     animFrameRef.current = requestAnimationFrame(animate);
-
-    return () => {
-      running = false;
-      cancelAnimationFrame(animFrameRef.current);
-    };
+    return () => { running = false; cancelAnimationFrame(animFrameRef.current); };
   }, [forceGraphReady, fallbackMode]);
 
-  // ---- Render ----
+  const showSidePanel = nodeDetail !== null || shockResults !== null;
 
   if (stocks.length === 0) {
     return (
-      <div
-        style={{
-          width: '100%',
-          height: '100%',
-          background: PAGE_BG,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: ACCENT,
-          fontFamily: 'monospace',
-          fontSize: 16,
-        }}
-      >
+      <div style={{ width: '100%', height: '100%', background: '#0a0a1e', display: 'flex', alignItems: 'center', justifyContent: 'center', color: ACCENT, fontFamily: 'monospace', fontSize: 16 }}>
         Loading graph playground...
       </div>
     );
   }
 
   return (
-    <div
-      style={{
-        width: '100%',
-        height: '100%',
-        background: '#0a0a1e',
-        position: 'relative',
-        overflow: 'hidden',
-        fontFamily: 'system-ui, sans-serif',
-      }}
-    >
+    <div style={{ width: '100%', height: '100%', background: '#0a0a1e', position: 'relative', overflow: 'hidden', fontFamily: 'system-ui, sans-serif' }}>
+
       {/* Full-screen graph */}
       {forceGraphReady && ForceGraph3DComponent && !fallbackMode ? (
         <ForceGraph3DComponent
@@ -664,10 +819,7 @@ export default function GraphPlaygroundPage() {
           nodeColor={getNodeColor}
           nodeThreeObject={nodeThreeObject}
           nodeThreeObjectExtend={false}
-          linkColor={(link: any) => {
-            const w = link.weight ?? 0;
-            return w > 0 ? '#224466' : '#442222';
-          }}
+          linkColor={(link: any) => (link.weight ?? 0) > 0 ? '#224466' : '#442222'}
           linkOpacity={0.15}
           linkWidth={0.3}
           onNodeClick={handleNodeClick}
@@ -679,113 +831,84 @@ export default function GraphPlaygroundPage() {
           nodes={graphData.nodes}
           links={graphData.links}
           shock={shock}
+          searchHighlight={searchHighlight}
           onNodeClick={handleNodeClick}
         />
       ) : (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            color: '#555',
-            fontFamily: 'monospace',
-          }}
-        >
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#555', fontFamily: 'monospace' }}>
           Initializing 3D engine...
         </div>
       )}
 
       {/* ---- Top overlay controls ---- */}
-      <div
-        style={{
-          position: 'absolute',
-          top: 16,
-          left: 16,
-          right: 16,
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          pointerEvents: 'none',
-          zIndex: 20,
-        }}
-      >
-        {/* Left: Threshold slider */}
-        <div
-          style={{
-            background: 'rgba(15,15,35,0.92)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: 10,
-            padding: '12px 16px',
-            border: `1px solid ${BORDER_COLOR}`,
-            pointerEvents: 'auto',
-            minWidth: 220,
-          }}
-        >
-          <div
-            style={{
-              color: ACCENT,
-              fontSize: 11,
-              letterSpacing: 1,
-              textTransform: 'uppercase',
-              marginBottom: 6,
-            }}
-          >
+      <div style={{ position: 'absolute', top: 16, left: 16, right: showSidePanel ? 340 : 16, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', pointerEvents: 'none', zIndex: 20, gap: 12 }}>
+
+        {/* Left: Threshold + Stats + Color + Search */}
+        <div style={{ background: PANEL_BG, backdropFilter: 'blur(8px)', borderRadius: 10, padding: '12px 16px', border: `1px solid ${BORDER_COLOR}`, pointerEvents: 'auto', minWidth: 240 }}>
+          <div style={{ color: ACCENT, fontSize: 11, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 }}>
             Correlation Threshold
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
             <input
-              type="range"
-              min={0}
-              max={1}
-              step={0.05}
+              type="range" min={0} max={1} step={0.05}
               value={correlationThreshold}
               onChange={(e) => setCorrelationThreshold(parseFloat(e.target.value))}
               style={{ flex: 1, accentColor: ACCENT }}
             />
-            <span
-              style={{
-                fontFamily: 'monospace',
-                color: ACCENT,
-                fontSize: 14,
-                minWidth: 36,
-                textAlign: 'right',
-              }}
-            >
+            <span style={{ fontFamily: 'monospace', color: ACCENT, fontSize: 14, minWidth: 36, textAlign: 'right' }}>
               {correlationThreshold.toFixed(2)}
             </span>
           </div>
-          <div style={{ fontSize: 10, color: '#666', marginTop: 4 }}>
-            {regimeEdges.length} edges | {stocks.length} nodes
+
+          {/* Network Stats */}
+          <div style={{ fontSize: 10, color: '#666', marginTop: 6, lineHeight: 1.6 }}>
+            <div>{networkStats.nodeCount} nodes | {networkStats.edgeCount} edges</div>
+            <div>Avg connections: {networkStats.avgConnections.toFixed(1)} | Density: {(networkStats.density * 100).toFixed(2)}%</div>
           </div>
+
+          {/* Color Mode */}
+          <div style={{ marginTop: 8, display: 'flex', gap: 4 }}>
+            {(['sector', 'golden'] as ColorMode[]).map(mode => (
+              <button
+                key={mode}
+                onClick={() => setColorMode(mode)}
+                style={{
+                  flex: 1, background: colorMode === mode ? ACCENT : '#1e1e3a',
+                  color: colorMode === mode ? '#000' : TEXT_COLOR,
+                  border: `1px solid ${colorMode === mode ? ACCENT : BORDER_COLOR}`,
+                  borderRadius: 4, padding: '4px 8px', cursor: 'pointer', fontSize: 10,
+                  fontWeight: colorMode === mode ? 700 : 400, transition: 'all 0.2s',
+                }}
+              >
+                {mode === 'sector' ? 'Sector' : 'Golden Score'}
+              </button>
+            ))}
+          </div>
+
+          {/* Search */}
+          <input
+            type="text"
+            placeholder="Search ticker..."
+            value={searchQuery}
+            onChange={(e) => handleSearch(e.target.value)}
+            style={{
+              width: '100%', marginTop: 8, background: '#1e1e3a',
+              border: `1px solid ${searchHighlight ? ACCENT : BORDER_COLOR}`,
+              borderRadius: 4, padding: '6px 8px', color: ACCENT,
+              fontFamily: 'monospace', fontSize: 11, outline: 'none',
+              boxSizing: 'border-box', transition: 'border-color 0.2s',
+            }}
+          />
         </div>
 
         {/* Center: Shock Propagation button */}
-        <div
-          style={{
-            background: 'rgba(15,15,35,0.92)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: 10,
-            padding: '10px 16px',
-            border: `1px solid ${BORDER_COLOR}`,
-            pointerEvents: 'auto',
-            textAlign: 'center',
-          }}
-        >
+        <div style={{ background: PANEL_BG, backdropFilter: 'blur(8px)', borderRadius: 10, padding: '10px 16px', border: `1px solid ${BORDER_COLOR}`, pointerEvents: 'auto', textAlign: 'center' }}>
           <button
             onClick={() => setShockMode(!shockMode)}
             style={{
-              background: shockMode ? ACCENT : '#1e1e3a',
-              color: shockMode ? '#000' : ACCENT,
-              border: `1px solid ${ACCENT}`,
-              borderRadius: 6,
-              padding: '8px 18px',
-              cursor: 'pointer',
-              fontSize: 12,
-              fontWeight: 700,
-              letterSpacing: 0.5,
-              transition: 'all 0.2s',
+              background: shockMode ? ACCENT : '#1e1e3a', color: shockMode ? '#000' : ACCENT,
+              border: `1px solid ${ACCENT}`, borderRadius: 6, padding: '8px 18px',
+              cursor: 'pointer', fontSize: 12, fontWeight: 700, letterSpacing: 0.5, transition: 'all 0.2s',
             }}
           >
             {shockMode ? 'Click a node to shock...' : 'Shock Propagation'}
@@ -797,40 +920,19 @@ export default function GraphPlaygroundPage() {
           )}
         </div>
 
-        {/* Right: Regime Toggle buttons */}
-        <div
-          style={{
-            background: 'rgba(15,15,35,0.92)',
-            backdropFilter: 'blur(8px)',
-            borderRadius: 10,
-            padding: '10px 16px',
-            border: `1px solid ${BORDER_COLOR}`,
-            pointerEvents: 'auto',
-            display: 'flex',
-            gap: 6,
-          }}
-        >
+        {/* Right: Regime Toggle */}
+        <div style={{ background: PANEL_BG, backdropFilter: 'blur(8px)', borderRadius: 10, padding: '10px 16px', border: `1px solid ${BORDER_COLOR}`, pointerEvents: 'auto', display: 'flex', gap: 6 }}>
           {(['all', 'highVol', 'lowVol'] as Regime[]).map((r) => {
-            const labels: Record<Regime, string> = {
-              all: 'All',
-              highVol: 'High Vol',
-              lowVol: 'Low Vol',
-            };
+            const labels: Record<Regime, string> = { all: 'All', highVol: 'High Vol', lowVol: 'Low Vol' };
             const isActive = regime === r;
             return (
               <button
-                key={r}
-                onClick={() => setRegime(r)}
+                key={r} onClick={() => setRegime(r)}
                 style={{
-                  background: isActive ? ACCENT : '#1e1e3a',
-                  color: isActive ? '#000' : TEXT_COLOR,
-                  border: `1px solid ${isActive ? ACCENT : BORDER_COLOR}`,
-                  borderRadius: 6,
-                  padding: '6px 14px',
-                  cursor: 'pointer',
-                  fontSize: 12,
-                  fontWeight: isActive ? 700 : 400,
-                  transition: 'all 0.2s',
+                  background: isActive ? ACCENT : '#1e1e3a', color: isActive ? '#000' : TEXT_COLOR,
+                  border: `1px solid ${isActive ? ACCENT : BORDER_COLOR}`, borderRadius: 6,
+                  padding: '6px 14px', cursor: 'pointer', fontSize: 12,
+                  fontWeight: isActive ? 700 : 400, transition: 'all 0.2s',
                 }}
               >
                 {labels[r]}
@@ -840,19 +942,50 @@ export default function GraphPlaygroundPage() {
         </div>
       </div>
 
+      {/* ---- Sector Legend (bottom left) ---- */}
+      <div style={{
+        position: 'absolute', bottom: 16, left: 16, background: PANEL_BG,
+        backdropFilter: 'blur(8px)', borderRadius: 10, padding: '8px 12px',
+        border: `1px solid ${BORDER_COLOR}`, zIndex: 20,
+        display: 'flex', flexWrap: 'wrap', gap: '4px 12px', maxWidth: '60vw',
+        pointerEvents: 'none',
+      }}>
+        {SECTORS.map(s => (
+          <div key={s.name} style={{ display: 'flex', alignItems: 'center', gap: 4, fontSize: 10 }}>
+            <div style={{ width: 8, height: 8, borderRadius: '50%', background: s.color }} />
+            <span style={{ color: colorMode === 'sector' ? '#aaa' : '#555' }}>{s.name}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* ---- Right Side Panel (Node Detail or Shock Results) ---- */}
+      {showSidePanel && (
+        <div style={{
+          position: 'absolute', top: 0, right: 0, width: 320, height: '100%',
+          background: 'rgba(15,15,35,0.95)', backdropFilter: 'blur(12px)',
+          borderLeft: `1px solid ${BORDER_COLOR}`, zIndex: 25,
+          overflowY: 'auto', padding: '16px', boxSizing: 'border-box',
+        }}>
+          <button
+            onClick={() => { setSelectedNode(null); setShockResults(null); }}
+            style={{
+              position: 'absolute', top: 8, right: 12, background: 'none',
+              border: 'none', color: '#666', fontSize: 16, cursor: 'pointer', lineHeight: 1,
+            }}
+          >
+            x
+          </button>
+          {shockResults ? (
+            <ShockResultsPanel results={shockResults} />
+          ) : nodeDetail ? (
+            <NodeDetailPanel detail={nodeDetail} />
+          ) : null}
+        </div>
+      )}
+
       {/* Shock mode cursor indicator */}
       {shockMode && (
-        <div
-          style={{
-            position: 'absolute',
-            inset: 0,
-            cursor: 'crosshair',
-            pointerEvents: 'none',
-            zIndex: 15,
-            border: `3px solid ${ACCENT}44`,
-            borderRadius: 0,
-          }}
-        />
+        <div style={{ position: 'absolute', inset: 0, cursor: 'crosshair', pointerEvents: 'none', zIndex: 15, border: `3px solid ${ACCENT}44` }} />
       )}
     </div>
   );

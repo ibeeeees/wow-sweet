@@ -1004,43 +1004,44 @@ export default function AgentReactionsPage() {
         width: '100%',
         height: '100%',
         background: PAGE_BG,
-        display: 'flex',
-        flexDirection: 'column',
+        display: 'grid',
+        gridTemplateColumns: 'minmax(180px, 280px) 1fr minmax(200px, 1.2fr)',
+        gridTemplateRows: '1fr 140px',
+        gap: 8,
+        padding: 12,
         fontFamily: 'system-ui, sans-serif',
         color: TEXT_COLOR,
         overflow: 'hidden',
+        boxSizing: 'border-box',
       }}
     >
-      {/* Main content area */}
-      <div style={{ flex: 1, display: 'flex', flexWrap: 'wrap', gap: 8, padding: '12px 12px 0 12px', minHeight: 0 }}>
-        {/* Left column — Whale + Agent Leaderboard */}
-        <div style={{ flex: '1 1 180px', minWidth: 180, maxWidth: 280 }}>
-          <Leaderboard whales={whales} featuredAgents={featuredAgents} />
-        </div>
-
-        {/* Center — Agent Heatmap */}
-        <div style={{ flex: '3 1 300px', minWidth: 300 }}>
-          <AgentHeatmap
-            stocks={stocks}
-            storeAgentCounts={storeAgentCounts}
-            storeDoorCounts={storeDoorCounts}
-            storeLaneCounts={storeLaneCounts}
-          />
-        </div>
-
-        {/* Right — Store Pressure Map */}
-        <div style={{ flex: '2 1 200px', minWidth: 200 }}>
-          <StorePressureMap
-            stocks={stocks}
-            storeAgentCounts={storeAgentCounts}
-            storeDoorCounts={storeDoorCounts}
-            storeLaneCounts={storeLaneCounts}
-          />
-        </div>
+      {/* Left column — Whale + Agent Leaderboard */}
+      <div style={{ minHeight: 0, overflow: 'hidden' }}>
+        <Leaderboard whales={whales} featuredAgents={featuredAgents} />
       </div>
 
-      {/* Bottom — Decision Stream */}
-      <div style={{ padding: '8px 12px 12px 12px', flexShrink: 0, maxHeight: 'clamp(100px, 15vh, 160px)' as any }}>
+      {/* Center — Agent Heatmap */}
+      <div style={{ minHeight: 0, overflow: 'hidden' }}>
+        <AgentHeatmap
+          stocks={stocks}
+          storeAgentCounts={storeAgentCounts}
+          storeDoorCounts={storeDoorCounts}
+          storeLaneCounts={storeLaneCounts}
+        />
+      </div>
+
+      {/* Right — Store Pressure Map */}
+      <div style={{ minHeight: 0, overflow: 'hidden' }}>
+        <StorePressureMap
+          stocks={stocks}
+          storeAgentCounts={storeAgentCounts}
+          storeDoorCounts={storeDoorCounts}
+          storeLaneCounts={storeLaneCounts}
+        />
+      </div>
+
+      {/* Bottom — Decision Stream (spans all 3 columns) */}
+      <div style={{ gridColumn: '1 / -1', minHeight: 0 }}>
         <DecisionStream whales={whales} chain={chain} featuredAgents={featuredAgents} />
       </div>
     </div>
