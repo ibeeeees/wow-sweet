@@ -33,8 +33,12 @@ from sklearn.feature_extraction.text import CountVectorizer
 import json
 import warnings
 warnings.filterwarnings("ignore")
+import os
 
 spark = SparkSession.builder.getOrCreate()
+
+# UC Volume path — match what you set in bronze_ingestion / export_json
+VOLUME_BASE = "/Volumes/sweetreturns/landing/data"
 
 # COMMAND ----------
 
@@ -366,9 +370,10 @@ for topic_id in sorted(set(topics)):
     }
 
 metadata_json = json.dumps(topic_metadata, indent=2)
-dbfs_path = "/FileStore/sweetreturns/news_topic_metadata.json"
-dbutils.fs.put(dbfs_path, metadata_json, overwrite=True)
-print(f"Topic metadata saved to dbfs:{dbfs_path}")
+metadata_path = f"{VOLUME_BASE}/news_topic_metadata.json"
+with open(metadata_path, "w") as f:
+    f.write(metadata_json)
+print(f"Topic metadata saved to UC Volume: {metadata_path}")
 
 # COMMAND ----------
 

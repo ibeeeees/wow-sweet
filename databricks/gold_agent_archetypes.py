@@ -31,8 +31,12 @@ from pyspark.sql.types import (
 )
 import numpy as np
 import json
+import os
 
 spark = SparkSession.builder.getOrCreate()
+
+# UC Volume path — match what you set in bronze_ingestion / export_json
+VOLUME_BASE = "/Volumes/sweetreturns/landing/data"
 
 # COMMAND ----------
 
@@ -702,9 +706,10 @@ archetype_json = {
 }
 
 archetype_json_str = json.dumps(archetype_json, indent=2)
-dbfs_path = "/FileStore/sweetreturns/agent_archetypes.json"
-dbutils.fs.put(dbfs_path, archetype_json_str, overwrite=True)
-print(f"Archetype config saved to dbfs:{dbfs_path} ({len(archetype_json_str):,} bytes)")
+archetype_path = f"{VOLUME_BASE}/agent_archetypes.json"
+with open(archetype_path, "w") as f:
+    f.write(archetype_json_str)
+print(f"Archetype config saved to UC Volume: {archetype_path} ({len(archetype_json_str):,} bytes)")
 
 # COMMAND ----------
 

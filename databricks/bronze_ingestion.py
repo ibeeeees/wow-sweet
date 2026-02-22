@@ -14,13 +14,24 @@ spark = SparkSession.builder.getOrCreate()
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Load Raw CSV
-# MAGIC Upload stock_details_5_years.csv to DBFS first:
-# MAGIC ```
-# MAGIC dbfs:/FileStore/sweetreturns/stock_details_5_years.csv
-# MAGIC ```
+# MAGIC ## UC Volume Config
+# MAGIC Upload stock_details_5_years.csv to your UC Volume first.
+# MAGIC In the Databricks UI: Catalog → your catalog → your volume → Upload.
+# MAGIC Then set the path below.
+# MAGIC
+# MAGIC Volume path format: /Volumes/<catalog>/<schema>/<volume_name>/
 
 # COMMAND ----------
+
+# ── CONFIGURE THESE FOR YOUR WORKSPACE ──────────────────────────────────────
+UC_CATALOG = "sweetreturns"           # your Unity Catalog catalog name
+UC_VOLUME_SCHEMA = "landing"          # schema where your volume lives
+UC_VOLUME_NAME = "data"               # volume name
+CSV_FILENAME = "stock_details_5_years.csv"
+
+CSV_PATH = f"/Volumes/{UC_CATALOG}/{UC_VOLUME_SCHEMA}/{UC_VOLUME_NAME}/{CSV_FILENAME}"
+print(f"Reading CSV from UC Volume: {CSV_PATH}")
+# ─────────────────────────────────────────────────────────────────────────────
 
 raw_schema = StructType([
     StructField("Date", DateType(), True),
@@ -37,7 +48,7 @@ raw_schema = StructType([
 raw_df = (spark.read
     .option("header", "true")
     .schema(raw_schema)
-    .csv("dbfs:/FileStore/sweetreturns/stock_details_5_years.csv")
+    .csv(CSV_PATH)
 )
 
 raw_df = raw_df.withColumnRenamed("Company", "ticker").withColumnRenamed("Stock Splits", "stock_splits")

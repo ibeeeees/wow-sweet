@@ -27,8 +27,30 @@ from pyspark.sql.window import Window
 import json
 from datetime import datetime
 import math
+import os
 
 spark = SparkSession.builder.getOrCreate()
+
+# COMMAND ----------
+
+# MAGIC %md
+# MAGIC ## UC Volume Config
+# MAGIC Output JSON files are written to a UC Volume (accessible as a local path on the driver).
+# MAGIC Set the same catalog/volume you used in bronze_ingestion.
+
+# COMMAND ----------
+
+# ── CONFIGURE THESE FOR YOUR WORKSPACE ──────────────────────────────────────
+UC_CATALOG = "sweetreturns"           # your Unity Catalog catalog name
+UC_VOLUME_SCHEMA = "landing"          # schema where your volume lives
+UC_VOLUME_NAME = "data"               # volume name
+
+VOLUME_BASE = f"/Volumes/{UC_CATALOG}/{UC_VOLUME_SCHEMA}/{UC_VOLUME_NAME}"
+OUTPUT_JSON_PATH     = f"{VOLUME_BASE}/frontend_payload.json"
+OUTPUT_MIN_PATH      = f"{VOLUME_BASE}/frontend_payload.min.json"
+OUTPUT_GRAPH_PATH    = f"{VOLUME_BASE}/correlation_graph.json"
+print(f"Output base path: {VOLUME_BASE}")
+# ─────────────────────────────────────────────────────────────────────────────
 
 # COMMAND ----------
 
@@ -408,17 +430,19 @@ print(f"  Platinum stores: {payload['platinum_count']}")
 
 payload_json = json.dumps(payload, indent=2)
 
-# Write to DBFS
-dbfs_path = "/FileStore/sweetreturns/frontend_payload.json"
-dbutils.fs.put(dbfs_path, payload_json, overwrite=True)
-print(f"Written to dbfs:{dbfs_path}")
+# Write to UC Volume (UC volumes are accessible as local filesystem paths on the driver)
+os.makedirs(VOLUME_BASE, exist_ok=True)
+
+with open(OUTPUT_JSON_PATH, "w") as f:
+    f.write(payload_json)
+print(f"Written to UC Volume: {OUTPUT_JSON_PATH}")
 print(f"Payload size: {len(payload_json):,} bytes")
 
 # Also write a minified version for production
 payload_min = json.dumps(payload, separators=(",", ":"))
-dbfs_path_min = "/FileStore/sweetreturns/frontend_payload.min.json"
-dbutils.fs.put(dbfs_path_min, payload_min, overwrite=True)
-print(f"Minified written to dbfs:{dbfs_path_min}")
+with open(OUTPUT_MIN_PATH, "w") as f:
+    f.write(payload_min)
+print(f"Minified written to UC Volume: {OUTPUT_MIN_PATH}")
 print(f"Minified size: {len(payload_min):,} bytes")
 
 # COMMAND ----------
@@ -472,9 +496,9 @@ graph_payload = {
 }
 
 graph_json = json.dumps(graph_payload, indent=2)
-dbfs_graph_path = "/FileStore/sweetreturns/correlation_graph.json"
-dbutils.fs.put(dbfs_graph_path, graph_json, overwrite=True)
-print(f"Graph payload written to dbfs:{dbfs_graph_path}")
+with open(OUTPUT_GRAPH_PATH, "w") as f:
+    f.write(graph_json)
+print(f"Graph payload written to UC Volume: {OUTPUT_GRAPH_PATH}")
 print(f"Graph payload size: {len(graph_json):,} bytes ({len(edges)} edges)")
 
 # COMMAND ----------
@@ -523,15 +547,11 @@ if edges:
 # COMMAND ----------
 
 # MAGIC %md
-# MAGIC ## Download URLs
-# MAGIC After running this notebook, download the JSON files from:
-# MAGIC ```
-# MAGIC https://<databricks-host>/files/sweetreturns/frontend_payload.json
-# MAGIC https://<databricks-host>/files/sweetreturns/frontend_payload.min.json
-# MAGIC https://<databricks-host>/files/sweetreturns/correlation_graph.json
-# MAGIC ```
-# MAGIC Or use the Databricks CLI:
+# MAGIC ## Download the Output Files
+# MAGIC Files are in your UC Volume. Download via Databricks CLI:
 # MAGIC ```bash
-# MAGIC databricks fs cp dbfs:/FileStore/sweetreturns/frontend_payload.json ./public/frontend_payload.json
-# MAGIC databricks fs cp dbfs:/FileStore/sweetreturns/correlation_graph.json ./public/correlation_graph.json
+# MAGIC databricks fs cp /Volumes/sweetreturns/landing/data/frontend_payload.json ./public/frontend_payload.json
+# MAGIC databricks fs cp /Volumes/sweetreturns/landing/data/frontend_payload.min.json ./public/frontend_payload.min.json
+# MAGIC databricks fs cp /Volumes/sweetreturns/landing/data/correlation_graph.json ./public/correlation_graph.json
 # MAGIC ```
+# MAGIC Or in the Databricks UI: Catalog → sweetreturns → landing → data volume → download the files directly.

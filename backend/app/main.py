@@ -3,7 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from typing import List
 import asyncio
-import json
 from .databricks_client import DatabricksClient
 
 app = FastAPI(title="SweetReturns Agent Decision API")
@@ -30,11 +29,14 @@ class ConnectionManager:
         self.active_connections.remove(websocket)
 
     async def broadcast(self, message: dict):
+        dead = []
         for connection in self.active_connections:
             try:
                 await connection.send_json(message)
             except Exception:
-                pass
+                dead.append(connection)
+        for connection in dead:
+            self.active_connections.remove(connection)
 
 
 manager = ConnectionManager()
@@ -53,12 +55,20 @@ async def health():
 @app.websocket("/ws/agent-stream")
 async def websocket_endpoint(websocket: WebSocket):
     await manager.connect(websocket)
+    scenario = "covid_crash"
+    timestamp = 0
     try:
         while True:
-            # Receive time/scenario from client
-            data = await websocket.receive_json()
-            scenario = data.get("scenario", "covid_crash")
-            timestamp = data.get("timestamp", 0)
+            try:
+                # Receive time/scenario from client with timeout
+                data = await asyncio.wait_for(websocket.receive_json(), timeout=0.1)
+                scenario = data.get("scenario", scenario)
+                timestamp = data.get("timestamp", timestamp)
+            except asyncio.TimeoutError:
+                # No data received, continue with last known state
+                pass
+            except Exception:
+                break
 
             # Query Databricks for agent flows
             flows = await db_client.get_agent_flows(scenario, timestamp)
@@ -68,6 +78,8 @@ async def websocket_endpoint(websocket: WebSocket):
 
             await asyncio.sleep(0.1)  # 10 FPS update rate
     except WebSocketDisconnect:
+        pass
+    finally:
         manager.disconnect(websocket)
 
 
@@ -89,4 +101,9 @@ async def inject_news(payload: NewsInput):
         "agent_reaction": agent_reaction,
     })
 
-    return {"status": "broadcasted", "sentiment": sentiment}
+    return {
+        "sentiment": sentiment["label"],
+        "score": sentiment["score"],
+        "affected_tickers": affected_stocks,
+        "message": "News broadcasted to agents"
+    }

@@ -1,6 +1,7 @@
 import os
 import re
 import requests
+import asyncio
 
 
 class DatabricksClient:
@@ -26,15 +27,20 @@ class DatabricksClient:
         payload = {"inputs": [text]}
 
         try:
-            response = requests.post(
-                self.finbert_endpoint, json=payload, headers=headers, timeout=10
+            response = await asyncio.to_thread(
+                requests.post,
+                self.finbert_endpoint,
+                json=payload,
+                headers=headers,
+                timeout=10
             )
             result = response.json()
             return {
                 "score": result["predictions"][0]["score"],
                 "label": result["predictions"][0]["label"],
             }
-        except Exception:
+        except Exception as e:
+            print(f"Sentiment analysis error: {e}")
             return self._fallback_sentiment(text)
 
     def _fallback_sentiment(self, text: str) -> dict:
@@ -118,8 +124,7 @@ class DatabricksClient:
             # Return mock flows for local dev
             return self._mock_agent_flows(scenario, timestamp)
 
-        try:
-            # Query via Databricks SQL Connector
+        def _query_db():
             from databricks import sql as databricks_sql
 
             with databricks_sql.connect(
@@ -149,7 +154,11 @@ class DatabricksClient:
                     }
                     for row in rows
                 ]
-        except Exception:
+
+        try:
+            return await asyncio.to_thread(_query_db)
+        except Exception as e:
+            print(f"Databricks query error: {e}")
             return self._mock_agent_flows(scenario, timestamp)
 
     def _mock_agent_flows(self, scenario: str, timestamp: int) -> list:

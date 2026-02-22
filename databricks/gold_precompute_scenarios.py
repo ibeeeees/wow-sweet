@@ -30,8 +30,12 @@ import pandas as pd
 import numpy as np
 import json
 from datetime import datetime, timedelta
+import os
 
 spark = SparkSession.builder.getOrCreate()
+
+# UC Volume path — match what you set in bronze_ingestion / export_json
+VOLUME_BASE = "/Volumes/sweetreturns/landing/data"
 
 # COMMAND ----------
 
@@ -636,11 +640,12 @@ for scenario_id, scenario_config in SCENARIOS.items():
     if date_entry:
         payload["daily_flows"].append(date_entry)
 
-    # Write to DBFS
+    # Write to UC Volume
     payload_json = json.dumps(payload, indent=2)
-    dbfs_path = f"/FileStore/sweetreturns/scenario_{scenario_id}.json"
-    dbutils.fs.put(dbfs_path, payload_json, overwrite=True)
-    print(f"Scenario {scenario_id} exported to dbfs:{dbfs_path} ({len(payload_json):,} bytes)")
+    scenario_path = f"{VOLUME_BASE}/scenario_{scenario_id}.json"
+    with open(scenario_path, "w") as f:
+        f.write(payload_json)
+    print(f"Scenario {scenario_id} exported to UC Volume: {scenario_path} ({len(payload_json):,} bytes)")
 
 # COMMAND ----------
 

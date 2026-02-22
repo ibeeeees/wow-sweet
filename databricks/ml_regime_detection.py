@@ -31,8 +31,12 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import warnings
 warnings.filterwarnings("ignore", category=DeprecationWarning)
+import os
 
 spark = SparkSession.builder.getOrCreate()
+
+# UC Volume path — match what you set in bronze_ingestion / export_json
+VOLUME_BASE = "/Volumes/sweetreturns/landing/data"
 
 # COMMAND ----------
 
@@ -284,10 +288,9 @@ plt.xticks(rotation=45)
 plt.tight_layout()
 
 # Save to DBFS
-fig_path = "/tmp/regime_detection.png"
+fig_path = f"{VOLUME_BASE}/regime_detection.png"
 plt.savefig(fig_path, dpi=150, bbox_inches="tight")
-dbutils.fs.cp(f"file:{fig_path}", "dbfs:/FileStore/sweetreturns/regime_detection.png")
-print("Visualization saved to dbfs:/FileStore/sweetreturns/regime_detection.png")
+print(f"Visualization saved to UC Volume: {fig_path}")
 plt.show()
 
 # COMMAND ----------
@@ -323,10 +326,9 @@ for i in range(N_REGIMES):
 plt.colorbar(im, ax=ax, label="Transition Probability")
 plt.tight_layout()
 
-fig2_path = "/tmp/regime_transitions.png"
+fig2_path = f"{VOLUME_BASE}/regime_transitions.png"
 plt.savefig(fig2_path, dpi=150, bbox_inches="tight")
-dbutils.fs.cp(f"file:{fig2_path}", "dbfs:/FileStore/sweetreturns/regime_transitions.png")
-print("Transition heatmap saved to dbfs:/FileStore/sweetreturns/regime_transitions.png")
+print(f"Transition heatmap saved to UC Volume: {fig2_path}")
 plt.show()
 
 # COMMAND ----------
@@ -401,9 +403,10 @@ model_params = {
 }
 
 params_json = json.dumps(model_params, indent=2)
-dbfs_params_path = "/FileStore/sweetreturns/hmm_model_params.json"
-dbutils.fs.put(dbfs_params_path, params_json, overwrite=True)
-print(f"HMM model parameters saved to dbfs:{dbfs_params_path}")
+params_path = f"{VOLUME_BASE}/hmm_model_params.json"
+with open(params_path, "w") as f:
+    f.write(params_json)
+print(f"HMM model parameters saved to UC Volume: {params_path}")
 
 # COMMAND ----------
 

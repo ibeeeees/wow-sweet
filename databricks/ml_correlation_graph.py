@@ -29,8 +29,12 @@ import networkx as nx
 from community import community_louvain
 import json
 import pickle
+import os
 
 spark = SparkSession.builder.getOrCreate()
+
+# UC Volume path — match what you set in bronze_ingestion / export_json
+VOLUME_BASE = "/Volumes/sweetreturns/landing/data"
 
 # COMMAND ----------
 
@@ -410,9 +414,10 @@ print("Gold table written: sweetreturns.gold.network_features")
 
 # Save as pickle
 graph_pickle = pickle.dumps(G)
-dbfs_pickle_path = "/FileStore/sweetreturns/correlation_graph.pkl"
-dbutils.fs.put(dbfs_pickle_path, graph_pickle.decode("latin-1"), overwrite=True)
-print(f"Graph pickle saved to dbfs:{dbfs_pickle_path}")
+pickle_path = f"{VOLUME_BASE}/correlation_graph.pkl"
+with open(pickle_path, "wb") as f:
+    f.write(graph_pickle)
+print(f"Graph pickle saved to UC Volume: {pickle_path}")
 
 # Save as JSON for frontend
 graph_json = {
@@ -442,9 +447,10 @@ graph_json = {
 }
 
 graph_json_str = json.dumps(graph_json, indent=2)
-dbfs_json_path = "/FileStore/sweetreturns/correlation_network.json"
-dbutils.fs.put(dbfs_json_path, graph_json_str, overwrite=True)
-print(f"Graph JSON saved to dbfs:{dbfs_json_path} ({len(graph_json_str):,} bytes)")
+json_path = f"{VOLUME_BASE}/correlation_network.json"
+with open(json_path, "w") as f:
+    f.write(graph_json_str)
+print(f"Graph JSON saved to UC Volume: {json_path} ({len(graph_json_str):,} bytes)")
 
 # COMMAND ----------
 
