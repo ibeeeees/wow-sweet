@@ -1,9 +1,9 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import { loadStockData, modulateStocksByTime } from './data/stockData';
 import { apiClient } from './services/apiClient';
-import { initTrackedAgents, getLeaderboard } from './services/tradeTracker';
+import { initTrackedAgents, processDay, getLeaderboard } from './services/tradeTracker';
 import { CandyCane, ChartLine, LightningBolt, WebNodes, Gumball, NoteBook, Lollipop, ChocolateBar } from './components/CandyIcons';
 import type { PageName } from './types';
 
@@ -215,12 +215,22 @@ export default function App() {
     };
   }, [setStocks, setBaseStocks, setCorrelationEdges, setAgentLeaderboard, setDataSource, setBackendConnected, setDatabricksConnected]);
 
+  // Track the last processed date for trade simulation
+  const lastProcessedDate = useRef<string>('');
+
   // Time modulation: update biases when date/mode changes (without re-initializing simulation)
   useEffect(() => {
     if (baseStocks.length === 0) return;
     const modulated = modulateStocksByTime(baseStocks, timeSlider.currentDate, timeSlider.mode);
     setModulatedBiases(modulated.map((s) => s.direction_bias));
-  }, [baseStocks, timeSlider.currentDate, timeSlider.mode, setModulatedBiases]);
+
+    // Process trades when date changes
+    if (timeSlider.currentDate !== lastProcessedDate.current) {
+      lastProcessedDate.current = timeSlider.currentDate;
+      processDay(timeSlider.currentDate, modulated);
+      setAgentLeaderboard(getLeaderboard());
+    }
+  }, [baseStocks, timeSlider.currentDate, timeSlider.mode, setModulatedBiases, setAgentLeaderboard]);
 
   const [_minLoadDone, setMinLoadDone] = useState(false);
 
