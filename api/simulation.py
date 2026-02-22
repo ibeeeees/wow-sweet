@@ -6,8 +6,59 @@ from urllib.request import Request, urlopen
 from datetime import datetime
 
 
+def _exec_sql(host, token, warehouse_id, sql, timeout=9):
+    """Execute a single SQL statement against Databricks, return (success, body)."""
+    try:
+        req = Request(
+            f"{host}/api/2.0/sql/statements/",
+            data=json.dumps({
+                "warehouse_id": warehouse_id,
+                "statement": sql,
+                "wait_timeout": "8s",
+            }).encode(),
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+            method="POST",
+        )
+        with urlopen(req, timeout=timeout) as resp:
+            body = json.loads(resp.read())
+        return body.get("status", {}).get("state") == "SUCCEEDED", body
+    except Exception as e:
+        return False, {"error": str(e)}
+
+
+def _ensure_table(host, token, warehouse_id):
+    """Create simulation_results table if it doesn't exist."""
+    create_sql = """
+    CREATE TABLE IF NOT EXISTS sweetreturns.gold.simulation_results (
+        snapshot_date    DATE,
+        ticker           STRING,
+        agent_name       STRING,
+        action           STRING,
+        profit           DOUBLE,
+        whale_fund       STRING,
+        whale_weight     DOUBLE,
+        buy_crowd        INT,
+        call_crowd       INT,
+        put_crowd        INT,
+        short_crowd      INT,
+        submitted_at     TIMESTAMP
+    )
+    USING DELTA
+    PARTITIONED BY (snapshot_date)
+    """
+    ok, _ = _exec_sql(host, token, warehouse_id, create_sql)
+    return ok
+
+
+_table_ensured = False
+
+
 def _insert_to_databricks(rows: list) -> int:
     """Insert simulation result rows into Databricks via SQL Statement API."""
+    global _table_ensured
     host = os.environ.get("DATABRICKS_HOST", "").strip().rstrip("/")
     token = os.environ.get("DATABRICKS_TOKEN", "").strip()
     http_path = os.environ.get("DATABRICKS_SQL_WAREHOUSE_PATH", "").strip()
@@ -15,6 +66,11 @@ def _insert_to_databricks(rows: list) -> int:
 
     if not (host and token and warehouse_id):
         return 0
+
+    # Ensure table exists on first call
+    if not _table_ensured:
+        _ensure_table(host, token, warehouse_id)
+        _table_ensured = True
 
     # Build batch INSERT statement (max 50 rows per call to stay within limits)
     inserted = 0
@@ -48,30 +104,16 @@ def _insert_to_databricks(rows: list) -> int:
             + ", ".join(values)
         )
 
-        try:
-            req = Request(
-                f"{host}/api/2.0/sql/statements/",
-                data=json.dumps(
-                    {
-                        "warehouse_id": warehouse_id,
-                        "statement": sql,
-                        "wait_timeout": "8s",
-                    }
-                ).encode(),
-                headers={
-                    "Authorization": f"Bearer {token}",
-                    "Content-Type": "application/json",
-                },
-                method="POST",
-            )
-
-            with urlopen(req, timeout=9) as resp:
-                body = json.loads(resp.read())
-
-            if body.get("status", {}).get("state") == "SUCCEEDED":
+        ok, body = _exec_sql(host, token, warehouse_id, sql)
+        if ok:
+            inserted += len(batch)
+        elif not _table_ensured:
+            # Table might not exist — try creating and retry
+            _ensure_table(host, token, warehouse_id)
+            _table_ensured = True
+            ok2, _ = _exec_sql(host, token, warehouse_id, sql)
+            if ok2:
                 inserted += len(batch)
-        except Exception:
-            pass  # Best-effort — don't fail the frontend
 
     return inserted
 
