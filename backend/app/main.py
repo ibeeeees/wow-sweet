@@ -129,12 +129,21 @@ Article{' from ' + source_url if source_url else ''}:
 
 @app.get("/health")
 async def health():
+    if db_client.is_connected:
+        db_status = "connected"
+    elif db_client._connecting:
+        db_status = "connecting"
+    elif db_client.is_configured:
+        db_status = "configured (not yet connected)"
+    else:
+        db_status = "not configured"
     return {
         "status": "healthy",
         "service": "sweetreturns-api",
         "gemini": bool(GEMINI_API_KEY),
         "databricks": db_client.is_connected,
-        "databricks_host": db_client.host[:30] + "..." if db_client.host else "not configured",
+        "databricks_status": db_status,
+        "databricks_host": db_client.host[:40] + "..." if db_client.host else "not configured",
     }
 
 

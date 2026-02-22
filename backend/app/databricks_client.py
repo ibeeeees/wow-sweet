@@ -11,6 +11,7 @@ Falls back to keyword heuristics only when Databricks is unreachable.
 import os
 import re
 import logging
+import threading
 from typing import Optional
 
 logger = logging.getLogger("sweetreturns.databricks")
@@ -27,18 +28,25 @@ class DatabricksClient:
         self.http_path = os.getenv("DATABRICKS_SQL_WAREHOUSE_PATH", "")
         self._connection = None
         self._connected = False
+        self._connect_attempted = False
+        self._connecting = False
 
         # Cache for data that doesn't change often
         self._regime_cache: dict = {}
         self._archetype_cache: list = []
         self._network_cache: dict = {}
 
-        if self.host and self.token:
+        self.is_configured = bool(self.host and self.token and self.http_path)
+
+        if self.is_configured:
             logger.info(f"Databricks configured: {self.host}")
+            # Start background connection attempt so /health doesn't block
+            threading.Thread(target=self._get_connection, daemon=True).start()
         else:
             logger.warning(
                 "Databricks credentials not set — running with local fallbacks. "
-                "Set DATABRICKS_HOST and DATABRICKS_TOKEN in your .env"
+                "Set DATABRICKS_HOST, DATABRICKS_TOKEN, and "
+                "DATABRICKS_SQL_WAREHOUSE_PATH in your .env"
             )
 
     # ── Connection Management ─────────────────────────────────────────────
@@ -48,13 +56,16 @@ class DatabricksClient:
         if self._connection is not None:
             return self._connection
 
-        if not self.host or not self.token:
+        if not self.is_configured or self._connecting:
             return None
 
+        self._connecting = True
+        self._connect_attempted = True
         try:
             from databricks import sql as databricks_sql
 
             hostname = self.host.replace("https://", "").replace("http://", "")
+            logger.info(f"Connecting to Databricks: {hostname} ...")
             self._connection = databricks_sql.connect(
                 server_hostname=hostname,
                 http_path=self.http_path,
@@ -72,6 +83,8 @@ class DatabricksClient:
         except Exception as e:
             logger.warning(f"Could not connect to Databricks: {e}")
             return None
+        finally:
+            self._connecting = False
 
     def _query(self, sql: str, params=None) -> list:
         """Execute SQL and return list of dicts. Returns [] on failure."""
@@ -106,11 +119,8 @@ class DatabricksClient:
 
     @property
     def is_connected(self) -> bool:
-        """Check if Databricks is configured and reachable."""
-        if self._connected:
-            return True
-        # Try connecting
-        return self._get_connection() is not None
+        """Check if Databricks is connected. Non-blocking — never triggers a new connection."""
+        return self._connected
 
     # ── Sentiment Analysis ────────────────────────────────────────────────
 
@@ -404,8 +414,8 @@ class DatabricksClient:
         }
         candidates = [t for t in tickers if t not in stop_words]
 
-        # Validate against Databricks if connected
-        if candidates and self.is_connected:
+        # Validate against Databricks if available
+        if candidates and self.is_configured:
             placeholders = ",".join(["%s"] * len(candidates))
             rows = self._query(
                 f"SELECT DISTINCT ticker FROM sweetreturns.bronze.raw_stock_data "
