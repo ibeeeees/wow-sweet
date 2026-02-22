@@ -474,60 +474,114 @@ export function generateStockData(): StockData[] {
 
 export function getCorrelationEdges(
   stocks: StockData[],
-  threshold: number = 0.3,
+  threshold: number = 0.5,
 ): GraphEdge[] {
+  if (stocks.length < 2) return [];
   const rand = seededRandom(123);
-  const edges: GraphEdge[] = [];
 
-  // Precompute normalized feature vectors for distance-based correlation
-  const features = stocks.map((s) => ({
-    gs: s.golden_score / 5,
-    dd: (s.drawdown_current + 0.3) / 0.3,
-    vol: s.volume_percentile,
-    vola: s.volatility_percentile,
-    fwdMed: (s.forward_return_distribution.median + 0.1) / 0.35,
-    fwdSkew: (s.forward_return_distribution.skew + 0.5) / 2.5,
-  }));
+  // Safe number helper — turns NaN/undefined/Infinity into a fallback
+  const safe = (v: number | undefined, fallback = 0.5): number =>
+    (v != null && Number.isFinite(v)) ? v : fallback;
+
+  // Min-max normalize features across the entire dataset for accurate distances
+  const rawFeatures = stocks.map((s) => [
+    safe(s.golden_score) / 5,
+    safe(Math.abs(s.drawdown_current)),           // use absolute drawdown depth
+    safe(s.volume_percentile),
+    safe(s.volatility_percentile),
+    safe(s.forward_return_distribution?.median, 0),
+    safe(s.forward_return_distribution?.skew, 0),
+  ]);
+
+  // Compute per-feature min/max for normalization
+  const dims = rawFeatures[0].length;
+  const mins = new Array(dims).fill(Infinity);
+  const maxs = new Array(dims).fill(-Infinity);
+  for (const f of rawFeatures) {
+    for (let d = 0; d < dims; d++) {
+      if (f[d] < mins[d]) mins[d] = f[d];
+      if (f[d] > maxs[d]) maxs[d] = f[d];
+    }
+  }
+
+  // Normalize to [0, 1]
+  const features = rawFeatures.map((f) =>
+    f.map((v, d) => {
+      const range = maxs[d] - mins[d];
+      return range > 0 ? (v - mins[d]) / range : 0.5;
+    }),
+  );
+
+  // Collect all candidate edges with their similarity scores
+  const candidates: { source: string; target: string; weight: number }[] = [];
 
   for (let i = 0; i < stocks.length; i++) {
     for (let j = i + 1; j < stocks.length; j++) {
       const fi = features[i];
       const fj = features[j];
 
-      // Euclidean distance across features (lower = more similar)
-      const dist = Math.sqrt(
-        (fi.gs - fj.gs) ** 2 +
-        (fi.dd - fj.dd) ** 2 +
-        (fi.vol - fj.vol) ** 2 +
-        (fi.vola - fj.vola) ** 2 +
-        (fi.fwdMed - fj.fwdMed) ** 2 +
-        (fi.fwdSkew - fj.fwdSkew) ** 2,
-      );
+      // Euclidean distance across normalized features
+      let distSq = 0;
+      for (let d = 0; d < dims; d++) {
+        distSq += (fi[d] - fj[d]) ** 2;
+      }
+      const dist = Math.sqrt(distSq);
 
-      // Convert distance to similarity (max dist ~= sqrt(6) ~= 2.45)
-      const similarity = 1.0 - (dist / 2.45);
+      // Convert distance to similarity (max dist = sqrt(dims))
+      const maxDist = Math.sqrt(dims);
+      const similarity = 1.0 - (dist / maxDist);
 
-      // Same-sector bonus: small additive, not dominant
-      const sectorBonus = stocks[i].sector === stocks[j].sector ? 0.1 : 0.0;
+      // Same-sector bonus
+      const sectorBonus = stocks[i].sector === stocks[j].sector ? 0.15 : 0.0;
 
       // Small random noise for visual variety
-      const noise = (rand() - 0.5) * 0.15;
+      const noise = (rand() - 0.5) * 0.1;
 
       const corr = Math.max(-1, Math.min(1, similarity + sectorBonus + noise));
 
-      if (Math.abs(corr) > threshold) {
-        edges.push({
+      if (corr > threshold) {
+        candidates.push({
           source: stocks[i].ticker,
           target: stocks[j].ticker,
           weight: corr,
         });
       }
-
-      if (edges.length > 3000) return edges;
     }
   }
 
-  return edges;
+  // If we have enough edges, return the strongest ones (cap at 3000)
+  if (candidates.length > 3000) {
+    candidates.sort((a, b) => b.weight - a.weight);
+    return candidates.slice(0, 3000);
+  }
+
+  // If we got very few edges, fallback: collect top-K strongest pairs
+  if (candidates.length < 50 && stocks.length > 10) {
+    // Re-scan with no threshold, keep top 500
+    const allPairs: { source: string; target: string; weight: number }[] = [];
+    const rand2 = seededRandom(123);
+    for (let i = 0; i < stocks.length; i++) {
+      for (let j = i + 1; j < stocks.length; j++) {
+        const fi = features[i];
+        const fj = features[j];
+        let distSq = 0;
+        for (let d = 0; d < dims; d++) {
+          distSq += (fi[d] - fj[d]) ** 2;
+        }
+        const dist = Math.sqrt(distSq);
+        const maxDist = Math.sqrt(dims);
+        const similarity = 1.0 - (dist / maxDist);
+        const sectorBonus = stocks[i].sector === stocks[j].sector ? 0.15 : 0.0;
+        const noise = (rand2() - 0.5) * 0.1;
+        const corr = Math.max(-1, Math.min(1, similarity + sectorBonus + noise));
+        allPairs.push({ source: stocks[i].ticker, target: stocks[j].ticker, weight: corr });
+      }
+    }
+    allPairs.sort((a, b) => b.weight - a.weight);
+    return allPairs.slice(0, Math.min(500, allPairs.length));
+  }
+
+  return candidates;
 }
 
 // --- Company name lookup from COMPANIES data ---
@@ -617,7 +671,7 @@ export function parsePipelinePayload(payload: PipelinePayload): {
         p95: 0.15 + rand() * 0.1,
         skew: skew,
       },
-      drawdown_current: dd,
+      drawdown_current: dd > 0 ? -dd : dd,  // ensure negative (depth of drawdown)
       volume_percentile: raw.vol_spike ? Math.min(raw.vol_spike / 5, 1) : rand(),
       volatility_percentile: vol / 0.06,
       brand_color: brandColor,
@@ -671,7 +725,7 @@ export async function loadStockData(): Promise<{
       });
       // Regenerate edges if API returned empty (Databricks doesn't compute correlations)
       const edges = parsed.edges.length === 0 && parsed.stocks.length > 0
-        ? getCorrelationEdges(parsed.stocks, 0.3)
+        ? getCorrelationEdges(parsed.stocks)
         : parsed.edges;
       console.log(`[SweetReturns] Loaded ${parsed.stocks.length} stocks, ${edges.length} edges from Databricks (live)`);
       return { stocks: parsed.stocks, edges, source: 'databricks' };
@@ -684,7 +738,7 @@ export async function loadStockData(): Promise<{
   try {
     const parsed = await loadPipelineData();
     const staticEdges = parsed.edges.length === 0 && parsed.stocks.length > 0
-      ? getCorrelationEdges(parsed.stocks, 0.3)
+      ? getCorrelationEdges(parsed.stocks)
       : parsed.edges;
     console.log(`[SweetReturns] Loaded ${parsed.stocks.length} stocks, ${staticEdges.length} edges from static payload`);
     return { stocks: parsed.stocks, edges: staticEdges, source: 'static' };
@@ -694,7 +748,7 @@ export async function loadStockData(): Promise<{
 
   // Tier 3: Synthetic data
   const stocks = generateStockData();
-  const edges = getCorrelationEdges(stocks, 0.3);
+  const edges = getCorrelationEdges(stocks);
   console.log(`[SweetReturns] Generated ${stocks.length} synthetic stocks`);
   return { stocks, edges, source: 'synthetic' };
 }

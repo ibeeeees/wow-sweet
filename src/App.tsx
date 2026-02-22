@@ -4,6 +4,7 @@ import { useStore } from './store/useStore';
 import { loadStockData, modulateStocksByTime } from './data/stockData';
 import { apiClient } from './services/apiClient';
 import { initTrackedAgents, processDay, getLeaderboard } from './services/tradeTracker';
+import { updateWhaleAllocations } from './services/whaleArena';
 import { CandyCane, ChartLine, LightningBolt, WebNodes, Gumball, NoteBook, Lollipop } from './components/CandyIcons';
 import type { PageName } from './types';
 
@@ -248,6 +249,7 @@ export default function App() {
 
   // Process trades when date changes — drives leaderboard
   const stocks = useStore((s) => s.stocks);
+  const geminiEnabled = useStore((s) => s.geminiEnabled);
   const lastProcessedDate = useRef<string>('');
   useEffect(() => {
     if (stocks.length === 0 || timeSlider.currentDate === lastProcessedDate.current) return;
@@ -255,6 +257,15 @@ export default function App() {
     processDay(timeSlider.currentDate, stocks);
     setAgentLeaderboard(getLeaderboard());
   }, [stocks, timeSlider.currentDate, setAgentLeaderboard]);
+
+  // Whale arena: update allocations on init and every 15s (independent of city page)
+  useEffect(() => {
+    if (stocks.length === 0) return;
+    const runUpdate = () => updateWhaleAllocations(stocks, timeSlider.mode, geminiEnabled);
+    runUpdate(); // immediate first run
+    const interval = setInterval(runUpdate, 15000);
+    return () => clearInterval(interval);
+  }, [stocks, timeSlider.mode, geminiEnabled]);
 
   const [minLoadDone, setMinLoadDone] = useState(false);
 
