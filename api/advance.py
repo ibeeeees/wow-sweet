@@ -202,13 +202,18 @@ def _do_advance():
 
     # Handle dataset exhaustion: all silver dates consumed → wrap around
     if not next_date:
-        # Find the first usable date (skip ~252 for lookback validity)
+        # Find a date with at least 100 stocks (early years have <20)
+        # Pick the first date with 100+ tickers so the city looks full
         ok2, earliest = _exec_sql(host, token, warehouse_id, """
             SELECT date FROM (
-                SELECT date, ROW_NUMBER() OVER (ORDER BY date) AS rn
-                FROM (SELECT DISTINCT date FROM sweetreturns.silver.daily_features)
-            ) sub WHERE rn = 253
-        """, wait_timeout="8s", http_timeout=10)
+                SELECT date, COUNT(DISTINCT ticker) AS cnt
+                FROM sweetreturns.silver.daily_features
+                GROUP BY date
+                HAVING COUNT(DISTINCT ticker) >= 100
+                ORDER BY date
+                LIMIT 1
+            )
+        """, wait_timeout="10s", http_timeout=15)
 
         if not ok2 or not isinstance(earliest, list) or not earliest or not earliest[0].get("date"):
             return 200, {
@@ -266,8 +271,68 @@ def _do_advance():
     }
 
 
+def _do_reset():
+    """Force wrap-around: clear golden_tickets and restart from a date with 100+ stocks."""
+    host, token, warehouse_id = _get_config()
+    if not (host and token and warehouse_id):
+        return 503, {"error": "Databricks not configured"}
+
+    # Find first date with 100+ tickers
+    ok, rows = _exec_sql(host, token, warehouse_id, """
+        SELECT date FROM (
+            SELECT date, COUNT(DISTINCT ticker) AS cnt
+            FROM sweetreturns.silver.daily_features
+            GROUP BY date
+            HAVING COUNT(DISTINCT ticker) >= 100
+            ORDER BY date
+            LIMIT 1
+        )
+    """, wait_timeout="10s", http_timeout=15)
+
+    if not ok or not rows or not rows[0].get("date"):
+        return 500, {"error": "Could not find a date with 100+ stocks"}
+
+    target = rows[0]["date"]
+
+    # Clear golden_tickets
+    ok2, _ = _exec_sql(host, token, warehouse_id,
+        "DELETE FROM sweetreturns.gold.golden_tickets WHERE 1=1",
+        wait_timeout="15s", http_timeout=20)
+    if not ok2:
+        return 500, {"error": "Failed to clear golden_tickets"}
+
+    # Insert the first day
+    insert_sql = _build_advance_sql(target)
+    ok3, _ = _exec_sql(host, token, warehouse_id, insert_sql,
+                       wait_timeout="50s", http_timeout=55)
+    if not ok3:
+        return 500, {"error": f"Failed to insert for {target}"}
+
+    # Verify
+    ok4, verify = _exec_sql(host, token, warehouse_id, f"""
+        SELECT COUNT(*) AS cnt FROM sweetreturns.gold.golden_tickets WHERE date = '{target}'
+    """, wait_timeout="5s", http_timeout=8)
+    cnt = int(verify[0]["cnt"]) if ok4 and verify else 0
+
+    return 200, {
+        "action": "reset",
+        "message": f"Reset to {target} ({cnt} stocks)",
+        "target_date": str(target),
+        "rows_inserted": cnt,
+    }
+
+
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
+        from urllib.parse import urlparse, parse_qs
+        query = parse_qs(urlparse(self.path).query)
+
+        # ?reset=1 forces a wrap-around to a date with many stocks
+        if query.get("reset", [""])[0] == "1":
+            code, payload = _do_reset()
+            self._respond(code, payload)
+            return
+
         # Optional auth: check CRON_SECRET for automated triggers
         cron_secret = os.environ.get("CRON_SECRET", "")
         auth_header = self.headers.get("Authorization", "")
