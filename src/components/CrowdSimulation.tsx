@@ -77,11 +77,8 @@ export function CrowdSimulation() {
   const shoeMat = useMemo(() => new THREE.MeshLambertMaterial({ color: '#3D1C02' }), []);
 
   useFrame((_state, delta) => {
-    if (!overallsRef.current || !shirtRef.current || !headRef.current
-        || !hairRef.current || !leftLegRef.current || !rightLegRef.current
-        || !leftArmRef.current || !rightArmRef.current
-        || !leftShoeRef.current || !rightShoeRef.current
-        || count === 0) return;
+    if (!bodyRef.current || !headRef.current || !hairRef.current
+      || !leftLegRef.current || !rightLegRef.current || count === 0) return;
 
     // Run physics
     update(delta);
@@ -365,13 +362,13 @@ export function CrowdSimulation() {
             borderRadius: 8,
             padding: '6px 10px',
             maxWidth: 180,
-            fontFamily: 'monospace',
+            fontFamily: "'Leckerli One', cursive",
             fontSize: 10,
             lineHeight: 1.3,
             color: '#fff',
             boxShadow: `0 0 12px ${actionColors[b.action] || '#FFD700'}44`,
           }}>
-            <div style={{ fontWeight: 700, color: '#FFD700', marginBottom: 2 }}>
+            <div style={{ fontWeight: 700, color: '#FFFFFF', marginBottom: 2 }}>
               {b.name} <span style={{ color: actionColors[b.action], fontSize: 9 }}>{b.action}</span>
             </div>
             <div style={{ color: 'rgba(255,255,255,0.7)', fontSize: 9 }}>

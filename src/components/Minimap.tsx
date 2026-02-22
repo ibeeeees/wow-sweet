@@ -117,8 +117,8 @@ export const Minimap: React.FC = () => {
                         width: 4,
                         height: 4,
                         borderRadius: '50%',
-                        backgroundColor: '#FFD700',
-                        boxShadow: '0 0 4px #FFD700',
+                        backgroundColor: '#FFFFFF',
+                        boxShadow: '0 0 4px #FFFFFF',
                       }}
                     />
                   ))}

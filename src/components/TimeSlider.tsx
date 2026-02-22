@@ -222,7 +222,7 @@ export const TimeSlider: React.FC = () => {
               style={{
                 ...speedBtnStyle,
                 backgroundColor:
-                  timeSlider.playbackSpeed === spd ? '#FFD700' : 'rgba(255,255,255,0.08)',
+                  timeSlider.playbackSpeed === spd ? '#FFFFFF' : 'rgba(255,255,255,0.08)',
                 color: timeSlider.playbackSpeed === spd ? '#1a1a2e' : '#aaa',
               }}
               onClick={() => setPlaybackSpeed(spd)}
@@ -322,7 +322,7 @@ const dateInputStyle: React.CSSProperties = {
   fontSize: 10,
   padding: '2px 6px',
   cursor: 'pointer',
-  fontFamily: 'monospace',
+  fontFamily: "'Leckerli One', cursive",
   colorScheme: 'dark',
 };
 
@@ -392,7 +392,7 @@ const ctrlBtnStyle: React.CSSProperties = {
 };
 
 const speedBtnStyle: React.CSSProperties = {
-  border: '1px solid rgba(255,215,0,0.3)',
+  border: '1px solid rgba(255,255,255,0.3)',
   borderRadius: 4,
   fontSize: 11,
   padding: '2px 8px',

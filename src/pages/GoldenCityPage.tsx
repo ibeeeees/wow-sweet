@@ -1,101 +1,125 @@
 // ============================================================
-// SweetReturns — GoldenCityPage: Main city view composition
+// SweetReturns — GoldenCityPage: full-page 3D background + floating panels
 // ============================================================
 
-import React, { Suspense, lazy } from 'react';
+import { Suspense, lazy } from 'react';
 import { useStore } from '../store/useStore';
 import { WhaleLeaderboard } from '../components/WhaleLeaderboard';
-import { Lollipop } from '../components/CandyIcons';
+import { AgentLeaderboard } from '../components/AgentLeaderboard';
+import NewsInjector from '../components/NewsInjector';
 
 // Lazy-load heavy 3D components
 const CandyCity = lazy(() => import('../components/CandyCity'));
 const TimeSlider = lazy(() => import('../components/TimeSlider'));
 const SectorFilter = lazy(() => import('../components/SectorFilter'));
 const StoreDetail = lazy(() => import('../components/StoreDetail'));
-const AgentLeaderboard = lazy(() => import('../components/AgentLeaderboard'));
-const FuturePredictions = lazy(() => import('../components/FuturePredictions'));
 
-const PAGE_BG = '#1a1a2e';
+const FONT = `'Leckerli One', cursive`;
 
-const LoadingFallback: React.FC = () => (
-  <div style={{
-    position: 'absolute', inset: 0,
-    display: 'flex', flexDirection: 'column',
-    alignItems: 'center', justifyContent: 'center',
-    background: PAGE_BG, color: '#FFD700',
-    fontFamily: 'monospace', fontSize: 18, gap: 12,
-  }}>
-    <div style={{ animation: 'pulse 1.5s ease-in-out infinite' }}>
-      <Lollipop size={48} />
-    </div>
-    <div>Loading Golden City...</div>
-    <div style={{
-      width: 160, height: 4, borderRadius: 2,
-      background: 'rgba(255,215,0,0.15)', overflow: 'hidden',
-    }}>
-      <div style={{
-        width: '40%', height: '100%', background: '#FFD700',
-        borderRadius: 2, animation: 'slideRight 1.2s ease-in-out infinite',
-      }} />
-    </div>
-    <style>{`
-      @keyframes pulse { 0%,100% { opacity: 0.5; } 50% { opacity: 1; } }
-      @keyframes slideRight { 0% { transform: translateX(-100%); } 100% { transform: translateX(400%); } }
-    `}</style>
-  </div>
-);
+const PANEL_STYLE: React.CSSProperties = {
+  background: 'rgba(255,255,255,0.84)',
+  backdropFilter: 'blur(14px)',
+  WebkitBackdropFilter: 'blur(14px)',
+  border: '1.5px solid rgba(106,0,170,0.15)',
+  borderRadius: 18,
+  overflow: 'hidden',
+  boxShadow: '0 8px 40px rgba(0,0,0,0.22), 0 2px 8px rgba(106,0,170,0.10)',
+};
 
 export default function GoldenCityPage() {
   const selectedStock = useStore((s) => s.selectedStock);
 
   return (
-    <div style={{ position: 'relative', width: '100%', height: '100%', background: PAGE_BG, overflow: 'hidden' }}>
+    <div style={{
+      position: 'relative',
+      width: '100%',
+      height: '100%',
+      overflow: 'hidden',
+      fontFamily: FONT,
+    }}>
       <style>{`
-        @media (max-width: 768px) {
-          .city-agent-lb { display: none !important; }
-        }
+        @import url('https://fonts.googleapis.com/css2?family=Leckerli+One&display=swap');
+        .sweet-scroll::-webkit-scrollbar { width: 4px; }
+        .sweet-scroll::-webkit-scrollbar-track { background: rgba(106,0,170,0.07); border-radius: 4px; }
+        .sweet-scroll::-webkit-scrollbar-thumb { background: rgba(106,0,170,0.3); border-radius: 4px; }
       `}</style>
-      {/* Full-screen 3D candy city */}
-      <Suspense fallback={<LoadingFallback />}>
-        <div style={{ position: 'absolute', inset: 0 }}>
+
+      {/* ── FULL-PAGE 3D CITY BACKGROUND ── */}
+      <Suspense fallback={<div style={{ position: 'absolute', inset: 0, background: '#0a0a1e' }} />}>
+        <div style={{ position: 'absolute', inset: 0, zIndex: 0 }}>
           <CandyCity />
         </div>
       </Suspense>
 
-      {/* Time slider overlay — fixed bottom bar */}
-      <Suspense fallback={null}>
-        <TimeSlider />
-      </Suspense>
+      {/* ── TOP 5 AGENTS — top-left, fixed height to fit 5 rows ── */}
+      <div style={{
+        position: 'absolute',
+        top: 10,
+        left: 10,
+        width: 300,
+        height: 312,
+        zIndex: 10,
+        display: 'flex',
+        flexDirection: 'column',
+        ...PANEL_STYLE,
+      }}>
+        <AgentLeaderboard />
+      </div>
 
-      {/* Sector filter overlay — top left (collapsible dropdown) */}
+      {/* ── WHALE ARENA — below agents, auto height ── */}
+      <div style={{
+        position: 'absolute',
+        top: 334,
+        left: 10,
+        width: 300,
+        zIndex: 10,
+        display: 'flex',
+        flexDirection: 'column',
+        ...PANEL_STYLE,
+      }}>
+        <WhaleLeaderboard />
+      </div>
+
+      {/* ── RIGHT PANEL: News Injector — full height ── */}
+      <div style={{
+        position: 'absolute',
+        top: 10,
+        right: 10,
+        bottom: 10,
+        width: 310,
+        zIndex: 10,
+        ...PANEL_STYLE,
+      }}>
+        <NewsInjector />
+      </div>
+
+      {/* ── SECTOR FILTER — top-center ── */}
       <Suspense fallback={null}>
-        <div
-          style={{
-            position: 'absolute',
-            top: 12,
-            left: 16,
-            zIndex: 10,
-            pointerEvents: 'auto',
-          }}
-        >
+        <div style={{
+          position: 'absolute',
+          top: 12,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 20,
+        }}>
           <SectorFilter />
         </div>
       </Suspense>
 
-      {/* Agent leaderboard overlay — draggable, default bottom-left */}
+      {/* ── TIME SLIDER — bottom-center ── */}
       <Suspense fallback={null}>
-        <AgentLeaderboard />
+        <div style={{
+          position: 'absolute',
+          bottom: 0,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          zIndex: 20,
+        }}>
+          <TimeSlider />
+        </div>
       </Suspense>
 
-      {/* Whale Arena Leaderboard — right side */}
-      <WhaleLeaderboard />
-
-      {/* Future Predictions — top right floating panel */}
-      <Suspense fallback={null}>
-        <FuturePredictions />
-      </Suspense>
-
-      {/* Store detail panel — shown when a stock is selected (fixed overlay) */}
+      {/* ── STORE DETAIL (when a stock is selected) ── */}
       {selectedStock !== null && (
         <Suspense fallback={null}>
           <StoreDetail />

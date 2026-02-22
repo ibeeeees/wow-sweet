@@ -28,15 +28,15 @@ function LoadingScreen() {
       position: 'fixed', inset: 0,
       display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
       background: '#1a1a2e', color: '#FFD700',
-      fontSize: 20, fontFamily: 'system-ui', gap: 16,
+      fontSize: 20, fontFamily: "'Leckerli One', cursive", gap: 16,
     }}>
       <div style={{ animation: 'pulse 1.5s ease-in-out infinite' }}>
         <Lollipop size={48} />
       </div>
-      <div>Loading Golden City...</div>
+      <div>Welcome to the sweets</div>
       <div style={{
         width: 160, height: 4, borderRadius: 2,
-        background: 'rgba(255,215,0,0.15)', overflow: 'hidden',
+        background: 'rgba(255,255,255,0.15)', overflow: 'hidden',
       }}>
         <div style={{
           width: '40%', height: '100%', background: '#FFD700',
@@ -56,26 +56,41 @@ function NavBar() {
 
   return (
     <nav style={{
-      position: 'fixed', top: 0, left: 0, right: 0, height: 48, zIndex: 1000,
-      background: 'rgba(16, 12, 30, 0.95)',
-      backdropFilter: 'blur(12px)',
-      borderBottom: '1px solid rgba(255, 215, 0, 0.15)',
+      position: 'fixed', top: 0, left: 0, right: 0, height: 56, zIndex: 1000,
+      background: '#FFD700',
+      boxShadow: '0 2px 12px rgba(0,0,0,0.18)',
       display: 'flex', alignItems: 'center',
-      padding: '0 16px', gap: 4,
-      fontFamily: 'system-ui, -apple-system, sans-serif',
+      padding: '0 20px', gap: 4,
+      fontFamily: `'Leckerli One', cursive`,
     }}>
       <style>{`
-        .nav-link:hover { background: rgba(255, 215, 0, 0.06) !important; color: rgba(255,255,255,0.85) !important; }
-        .nav-link:focus-visible { outline: 2px solid #FFD700; outline-offset: -2px; }
+        @import url('https://fonts.googleapis.com/css2?family=Leckerli+One&display=swap');
+        .nav-link:hover { background: rgba(100, 0, 140, 0.1) !important; color: #3d0066 !important; }
+        .nav-link:focus-visible { outline: 2px solid #7b00cc; outline-offset: -2px; }
         @media (max-width: 900px) { .nav-label { display: none; } }
         @media (max-width: 600px) { .nav-link { padding: 8px 8px !important; } }
       `}</style>
+
+      {/* Brand */}
       <div style={{
-        fontWeight: 700, fontSize: 16, color: '#FFD700',
-        marginRight: 24, letterSpacing: '0.5px', whiteSpace: 'nowrap',
+        display: 'flex', alignItems: 'center', gap: 10,
+        fontFamily: `'Leckerli One', cursive`,
+        fontSize: 22, color: '#6a00aa',
+        marginRight: 28, whiteSpace: 'nowrap',
+        letterSpacing: '0.3px',
       }}>
-        <ChocolateBar size={18} /> Wolf of Wall Sweet
+        <img
+          src="/assets/favicon/favicon-96x96.png"
+          alt="logo"
+          style={{ width: 34, height: 34, borderRadius: 8, objectFit: 'contain' }}
+        />
+        Wolf of Wall Sweet
       </div>
+
+      {/* Spacer — pushes nav + badge to the right */}
+      <div style={{ flex: 1 }} />
+
+      {/* Nav links */}
       {NAV_ITEMS.map((item) => (
         <NavLink
           key={item.path}
@@ -85,24 +100,20 @@ function NavBar() {
           className="nav-link"
           style={({ isActive }) => ({
             display: 'flex', alignItems: 'center', gap: 6,
-            padding: '8px 14px', borderRadius: 8,
-            textDecoration: 'none', fontSize: 13, fontWeight: 500,
-            color: isActive ? '#FFD700' : 'rgba(255,255,255,0.6)',
-            background: isActive ? 'rgba(255, 215, 0, 0.1)' : 'transparent',
-            transition: 'all 0.2s',
+            padding: '7px 14px', borderRadius: 8,
+            textDecoration: 'none',
+            fontFamily: `'Leckerli One', cursive`,
+            fontSize: 14,
+            color: isActive ? '#4b0082' : '#7a4800',
+            background: isActive ? 'rgba(100, 0, 160, 0.12)' : 'transparent',
+            transition: 'all 0.18s',
           })}
         >
-          <span>{item.icon}</span>
           <span className="nav-label">{item.label}</span>
         </NavLink>
       ))}
-      <div style={{ flex: 1 }} />
-      <div style={{
-        fontSize: 11, color: 'rgba(255,255,255,0.3)',
-        letterSpacing: '0.5px',
-      }}>
-        HACKLYTICS 2026
-      </div>
+
+
     </nav>
   );
 }
@@ -165,21 +176,27 @@ export default function App() {
         width: '100vw', height: '100vh',
         background: '#1a1a2e', color: '#fff',
         overflow: 'hidden',
-        fontFamily: 'system-ui, -apple-system, sans-serif',
+        fontFamily: "'Leckerli One', cursive",
       }}>
-        <NavBar />
-        <div style={{ marginTop: 48, width: '100%', height: 'calc(100vh - 48px)' }}>
-          <Suspense fallback={<LoadingScreen />}>
-            <Routes>
-              <Route path="/" element={<GoldenCityPage />} />
-              <Route path="/network" element={<StockNetworkPage />} />
-              <Route path="/agents" element={<AgentReactionsPage />} />
-              <Route path="/agent-network" element={<AgentNetworkPage />} />
-              <Route path="/playground" element={<GraphPlaygroundPage />} />
-              <Route path="/journal" element={<TradeJournalPage />} />
-            </Routes>
-          </Suspense>
-        </div>
+        {!minLoadDone ? (
+          <LoadingScreen />
+        ) : (
+          <>
+            <NavBar />
+            <div style={{ marginTop: 56, width: '100%', height: 'calc(100vh - 56px)' }}>
+              <Suspense fallback={<LoadingScreen />}>
+                <Routes>
+                  <Route path="/" element={<GoldenCityPage />} />
+                  <Route path="/network" element={<StockNetworkPage />} />
+                  <Route path="/agents" element={<AgentReactionsPage />} />
+                  <Route path="/agent-network" element={<AgentNetworkPage />} />
+                  <Route path="/playground" element={<GraphPlaygroundPage />} />
+                  <Route path="/journal" element={<TradeJournalPage />} />
+                </Routes>
+              </Suspense>
+            </div>
+          </>
+        )}
       </div>
     </BrowserRouter>
   );

@@ -7,10 +7,11 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 import { useStore } from '../store/useStore';
 import { SECTORS } from '../data/stockData';
 
-const PAGE_BG = '#1a1a2e';
-const PANEL_BG = '#0f0f23';
-const ACCENT = '#FFD700';
-const BORDER = '#2a2a4a';
+const PAGE_BG = '#FFFFFF';
+const PANEL_BG = 'rgba(255,255,255,0.7)';
+const ACCENT = '#6a00aa';
+const BORDER = 'rgba(106,0,170,0.18)';
+const FONT = `'Leckerli One', cursive`;
 
 interface NetworkNode {
   id: string;
@@ -469,13 +470,12 @@ export default function AgentNetworkPage() {
         background: PANEL_BG,
         borderRight: `1px solid ${BORDER}`,
         display: 'flex', flexDirection: 'column',
-        fontFamily: 'monospace',
+        fontFamily: "'Leckerli One', cursive",
         overflow: 'hidden',
       }}>
-        {/* Header */}
-        <div style={{ padding: '16px 16px 12px', borderBottom: `1px solid ${BORDER}` }}>
-          <h2 style={{ fontSize: 14, color: ACCENT, margin: 0, fontWeight: 700 }}>Agent Network</h2>
-          <div style={{ fontSize: 10, color: '#666', marginTop: 4 }}>
+        <div style={{ padding: '16px 16px 12px', borderBottom: `1px solid ${BORDER}`, background: '#FFFFFF' }}>
+          <h2 style={{ fontSize: 18, color: '#4b0082', margin: 0, fontWeight: 700, fontFamily: FONT }}>Agent Network</h2>
+          <div style={{ fontSize: 10, color: '#7a4800', marginTop: 4, fontFamily: "'Lobster', cursive" }}>
             {nodes.length} nodes &middot; {links.length} connections
           </div>
         </div>
@@ -495,7 +495,7 @@ export default function AgentNetworkPage() {
               style={{
                 display: 'flex', alignItems: 'center', gap: 8,
                 padding: '5px 16px', width: '100%',
-                background: selectedNode === n.id ? 'rgba(255,215,0,0.06)' : 'transparent',
+                background: selectedNode === n.id ? 'rgba(106,0,170,0.06)' : 'transparent',
                 border: 'none', borderLeft: selectedNode === n.id ? `2px solid ${ACCENT}` : '2px solid transparent',
                 cursor: 'pointer', textAlign: 'left',
                 transition: 'background 0.1s',
@@ -511,7 +511,7 @@ export default function AgentNetworkPage() {
               <span style={{ fontSize: 9, color: n.type === 'whale' ? '#666' : 'transparent', flexShrink: 0, fontWeight: 600 }}>
                 {n.type === 'whale' ? 'W' : ''}
               </span>
-              <span style={{ fontSize: 9, color: n.profit >= 0 ? '#00FF7F' : '#FF4500', fontWeight: 600, flexShrink: 0, fontFamily: 'monospace' }}>
+              <span style={{ fontSize: 9, color: n.profit >= 0 ? '#00FF7F' : '#FF4500', fontWeight: 600, flexShrink: 0, fontFamily: "'Lobster', cursive" }}>
                 {n.profit >= 0 ? '+' : ''}{(n.profit / 1000).toFixed(0)}K
               </span>
             </button>
@@ -523,7 +523,7 @@ export default function AgentNetworkPage() {
           <div style={{
             padding: '12px 16px',
             borderTop: `1px solid ${BORDER}`,
-            background: 'rgba(255,215,0,0.02)',
+            background: 'rgba(255,255,255,0.02)',
           }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8 }}>
               <span style={{ width: 10, height: 10, borderRadius: '50%', background: selectedNodeData.color }} />
@@ -561,7 +561,7 @@ export default function AgentNetworkPage() {
                 background: 'rgba(255,69,0,0.08)',
                 border: `1px solid rgba(255,69,0,0.2)`,
                 borderRadius: 4, color: '#FF4500', fontSize: 9,
-                fontWeight: 600, cursor: 'pointer', fontFamily: 'monospace',
+                fontWeight: 600, cursor: 'pointer', fontFamily: "'Leckerli One', cursive",
               }}
             >
               Simulate Shock
