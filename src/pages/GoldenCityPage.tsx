@@ -62,21 +62,9 @@ export default function GoldenCityPage() {
         </div>
       </Suspense>
 
-      {/* Time slider overlay — bottom center (flush to bottom) */}
+      {/* Time slider overlay — fixed bottom bar */}
       <Suspense fallback={null}>
-        <div
-          style={{
-            position: 'absolute',
-            bottom: 0,
-            left: '50%',
-            transform: 'translateX(-50%)',
-            zIndex: 10,
-            pointerEvents: 'auto',
-            overflow: 'visible',
-          }}
-        >
-          <TimeSlider />
-        </div>
+        <TimeSlider />
       </Suspense>
 
       {/* Sector filter overlay — top left (collapsible dropdown) */}

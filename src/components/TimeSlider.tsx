@@ -111,7 +111,17 @@ export const TimeSlider: React.FC = () => {
 
   return (
     <div style={containerStyle}>
-      <style>{`@keyframes tsLivePulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }`}</style>
+      <style>{`
+        @keyframes tsLivePulse { 0%,100% { opacity: 0.7; } 50% { opacity: 1; } }
+        @media (max-width: 700px) {
+          .ts-sep { display: none !important; }
+          .ts-date-picker { display: none !important; }
+          .ts-date-display { font-size: 9px !important; }
+        }
+        @media (max-width: 500px) {
+          .ts-speed-group { display: none !important; }
+        }
+      `}</style>
       {/* Top row: mode buttons | date display | date picker | playback | speed */}
       <div style={topRowStyle}>
         {/* Mode toggle buttons */}
@@ -135,11 +145,12 @@ export const TimeSlider: React.FC = () => {
         </div>
 
         {/* Separator */}
-        <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.15)' }} />
+        <div className="ts-sep" style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.15)' }} />
 
         {/* Date display + picker */}
-        <div style={dateDisplayStyle}>{formatDisplayDate(timeSlider.currentDate)}</div>
+        <div className="ts-date-display" style={dateDisplayStyle}>{formatDisplayDate(timeSlider.currentDate)}</div>
         <input
+          className="ts-date-picker"
           type="date"
           value={timeSlider.currentDate}
           min="2019-01-02"
@@ -158,7 +169,7 @@ export const TimeSlider: React.FC = () => {
         />
 
         {/* Separator */}
-        <div style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.15)' }} />
+        <div className="ts-sep" style={{ width: 1, height: 18, background: 'rgba(255,255,255,0.15)' }} />
 
         {/* Playback buttons */}
         <div style={btnGroupStyle}>
@@ -204,7 +215,7 @@ export const TimeSlider: React.FC = () => {
         </div>
 
         {/* Speed selector */}
-        <div style={btnGroupStyle}>
+        <div className="ts-speed-group" style={btnGroupStyle}>
           {speedOptions.map((spd) => (
             <button
               key={spd}
@@ -257,7 +268,6 @@ const containerStyle: React.CSSProperties = {
   width: '100%',
   height: 'auto',
   minHeight: 56,
-  maxHeight: 96,
   background: 'rgba(26, 26, 46, 0.92)',
   backdropFilter: 'blur(12px)',
   WebkitBackdropFilter: 'blur(12px)',
@@ -268,7 +278,7 @@ const containerStyle: React.CSSProperties = {
   justifyContent: 'center',
   gap: 4,
   zIndex: 1000,
-  padding: '6px 20px',
+  padding: '6px 12px',
   boxSizing: 'border-box',
   fontFamily: "'Inter', 'Segoe UI', sans-serif",
   overflow: 'visible',
