@@ -113,7 +113,20 @@ def _build_payload() -> dict:
         fwd60 = _f(_g(row, "fwd_return_60d", default=0))
         dd = _f(_g(row, "drawdown_pct", default=0))
         vol = _f(_g(row, "realized_vol_20d", default=0))
-        mcp = _f(_g(row, "market_cap_percentile", "market_cap", default=0.5))
+        raw_mcp = _g(row, "market_cap_percentile", default=None)
+        if raw_mcp is not None:
+            mcp = _f(raw_mcp, 0.5)
+        else:
+            # Legacy table has absolute market_cap — normalize to 0-1 range
+            raw_mc = _f(_g(row, "market_cap", default=0), 0)
+            if raw_mc > 100:
+                # Absolute dollar value — map to percentile via log scale
+                import math
+                # log10(1e8)=8, log10(1e12)=12 → map 8-12 to 0-1
+                log_mc = math.log10(max(raw_mc, 1))
+                mcp = max(0.0, min(1.0, (log_mc - 8) / 4))
+            else:
+                mcp = min(raw_mc, 1.0) if raw_mc > 0 else 0.5
 
         # Direction bias: use pre-computed from gold table if available (includes simulation feedback)
         buy_pct = _g(row, "buy_pct")
