@@ -1,9 +1,9 @@
-import { useEffect, useState, lazy, Suspense } from 'react';
+import { useEffect, useRef, useState, lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { useStore } from './store/useStore';
 import { loadStockData, modulateStocksByTime } from './data/stockData';
 import { apiClient } from './services/apiClient';
-import { initTrackedAgents, getLeaderboard } from './services/tradeTracker';
+import { initTrackedAgents, processDay, getLeaderboard } from './services/tradeTracker';
 import { CandyCane, ChartLine, LightningBolt, WebNodes, Gumball, NoteBook, Lollipop } from './components/CandyIcons';
 import type { PageName } from './types';
 
@@ -237,6 +237,16 @@ export default function App() {
     const modulated = modulateStocksByTime(baseStocks, timeSlider.currentDate, timeSlider.mode);
     setModulatedBiases(modulated.map((s) => s.direction_bias));
   }, [baseStocks, timeSlider.currentDate, timeSlider.mode, setModulatedBiases]);
+
+  // Process trades when date changes — drives leaderboard
+  const stocks = useStore((s) => s.stocks);
+  const lastProcessedDate = useRef<string>('');
+  useEffect(() => {
+    if (stocks.length === 0 || timeSlider.currentDate === lastProcessedDate.current) return;
+    lastProcessedDate.current = timeSlider.currentDate;
+    processDay(timeSlider.currentDate, stocks);
+    setAgentLeaderboard(getLeaderboard());
+  }, [stocks, timeSlider.currentDate, setAgentLeaderboard]);
 
   const [minLoadDone, setMinLoadDone] = useState(false);
 

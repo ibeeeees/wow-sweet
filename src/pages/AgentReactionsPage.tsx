@@ -955,6 +955,7 @@ export default function AgentReactionsPage() {
   const storeAgentCounts = useStore((s) => s.storeAgentCounts);
   const storeDoorCounts = useStore((s) => s.storeDoorCounts);
   const storeLaneCounts = useStore((s) => s.storeLaneCounts);
+  const setStoreCrowdData = useStore((s) => s.setStoreCrowdData);
 
   const [whales, setWhales] = useState<WhaleFund[]>(getWhales());
   const [featuredAgents, setFeaturedAgents] = useState<FeaturedAgent[]>(getFeaturedAgents());
@@ -968,6 +969,51 @@ export default function AgentReactionsPage() {
         .catch(() => setStocks(generateStockData()));
     }
   }, [stocks.length, setStocks]);
+
+  // Generate synthetic crowd data when 3D simulation isn't running
+  useEffect(() => {
+    if (stocks.length === 0) return;
+
+    // Check if simulation is producing data
+    const hasLiveData = storeAgentCounts.length > 0 &&
+      Array.prototype.some.call(storeAgentCounts, (v: number) => v > 0);
+    if (hasLiveData) return;
+
+    function generateSyntheticCrowdData() {
+      const n = stocks.length;
+      const agents = new Int16Array(n);
+      const doors = new Int16Array(n);
+      const lanes = new Int16Array(n * 4);
+      const now = Date.now();
+
+      for (let i = 0; i < n; i++) {
+        const s = stocks[i];
+        const base = 5 + s.golden_score * 8 + Math.abs(s.drawdown_current) * 20;
+        const noise = Math.sin(now * 0.001 + i * 0.7) * 3 + Math.cos(now * 0.0007 + i * 1.3) * 2;
+        const total = Math.max(1, Math.round(base + noise));
+
+        const doorCount = Math.round(total * 0.25);
+        const insideCount = total - doorCount;
+        agents[i] = insideCount;
+        doors[i] = doorCount;
+
+        const buyCount = Math.round(insideCount * s.direction_bias.buy);
+        const callCount = Math.round(insideCount * s.direction_bias.call);
+        const putCount = Math.round(insideCount * s.direction_bias.put);
+        const shortCount = Math.max(0, insideCount - buyCount - callCount - putCount);
+        lanes[i * 4] = buyCount;
+        lanes[i * 4 + 1] = callCount;
+        lanes[i * 4 + 2] = putCount;
+        lanes[i * 4 + 3] = shortCount;
+      }
+
+      setStoreCrowdData(agents, doors, lanes);
+    }
+
+    generateSyntheticCrowdData();
+    const interval = setInterval(generateSyntheticCrowdData, 2000);
+    return () => clearInterval(interval);
+  }, [stocks, storeAgentCounts, setStoreCrowdData]);
 
   // Poll real data from services
   useEffect(() => {

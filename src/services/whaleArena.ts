@@ -9,7 +9,7 @@
 // ============================================================
 
 import type { StockData } from '../types';
-import { runHierarchicalCycle, getLatestChain } from './geminiService';
+import { runHierarchicalCycle, getLatestChain, generateAlgorithmicSectorReports, setLatestChain } from './geminiService';
 
 export interface WhaleAllocation {
   ticker: string;
@@ -182,6 +182,21 @@ function runWonkaFallback(stocks: StockData[], now: number, forced = false) {
       ? `Algorithmic mode: ${goldenStocks.length} golden ticket stocks (Gemini OFF)`
       : `Fallback mode (no API key): ${goldenStocks.length} golden ticket stocks. Add VITE_GEMINI_API_KEY for full AI.`;
   }
+
+  // Generate algorithmic sector reports so UI has data even without Gemini
+  const sectorReports = generateAlgorithmicSectorReports(stocks);
+  const finalAllocs = WHALES[0].allocations.map(a => ({
+    ...a,
+    sectorSource: stocks.find(s => s.ticker === a.ticker)?.sector || 'Unknown',
+  }));
+  setLatestChain({
+    sectorReports,
+    portfolioAllocations: finalAllocs,
+    riskReview: null,
+    finalAllocations: finalAllocs,
+    timestamp: now,
+    cycleMs: 0,
+  });
 }
 
 // ── Update all whales ──

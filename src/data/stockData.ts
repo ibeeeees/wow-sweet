@@ -669,8 +669,12 @@ export async function loadStockData(): Promise<{
         stocks: result.stocks,
         correlation_edges: result.correlation_edges,
       });
-      console.log(`[SweetReturns] Loaded ${parsed.stocks.length} stocks from Databricks (live)`);
-      return { ...parsed, source: 'databricks' };
+      // Regenerate edges if API returned empty (Databricks doesn't compute correlations)
+      const edges = parsed.edges.length === 0 && parsed.stocks.length > 0
+        ? getCorrelationEdges(parsed.stocks, 0.5)
+        : parsed.edges;
+      console.log(`[SweetReturns] Loaded ${parsed.stocks.length} stocks, ${edges.length} edges from Databricks (live)`);
+      return { stocks: parsed.stocks, edges, source: 'databricks' };
     }
   } catch {
     console.warn('[SweetReturns] Backend API unavailable');
@@ -679,8 +683,11 @@ export async function loadStockData(): Promise<{
   // Tier 2: Try static JSON
   try {
     const parsed = await loadPipelineData();
-    console.log(`[SweetReturns] Loaded ${parsed.stocks.length} stocks from static payload`);
-    return { ...parsed, source: 'static' };
+    const staticEdges = parsed.edges.length === 0 && parsed.stocks.length > 0
+      ? getCorrelationEdges(parsed.stocks, 0.5)
+      : parsed.edges;
+    console.log(`[SweetReturns] Loaded ${parsed.stocks.length} stocks, ${staticEdges.length} edges from static payload`);
+    return { stocks: parsed.stocks, edges: staticEdges, source: 'static' };
   } catch {
     console.warn('[SweetReturns] Static payload unavailable');
   }

@@ -76,6 +76,74 @@ export function getLatestChain(): ReasoningChain | null {
   return latestChain;
 }
 
+export function setLatestChain(chain: ReasoningChain | null): void {
+  latestChain = chain;
+}
+
+/**
+ * Algorithmic sector analysis — derives sentiment from stock metrics
+ * without needing the Gemini API key.
+ */
+export function generateAlgorithmicSectorReports(stocks: StockData[]): SectorReport[] {
+  const sectorMap = new Map<string, StockData[]>();
+  for (const s of stocks) {
+    const arr = sectorMap.get(s.sector) || [];
+    arr.push(s);
+    sectorMap.set(s.sector, arr);
+  }
+
+  const reports: SectorReport[] = [];
+  for (const [sector, sectorStocks] of sectorMap) {
+    const n = sectorStocks.length;
+    const avgGS = sectorStocks.reduce((sum, s) => sum + s.golden_score, 0) / n;
+    const avgDD = sectorStocks.reduce((sum, s) => sum + s.drawdown_current, 0) / n;
+    const avgFwdMedian = sectorStocks.reduce((sum, s) => sum + s.forward_return_distribution.median, 0) / n;
+    const avgVol = sectorStocks.reduce((sum, s) => sum + s.volatility_percentile, 0) / n;
+
+    const withTech = sectorStocks.filter(s => s.technicals);
+    const avgRSI = withTech.length > 0
+      ? withTech.reduce((sum, s) => sum + s.technicals!.rsi_14, 0) / withTech.length
+      : 50;
+
+    let sentiment: 'bullish' | 'bearish' | 'neutral';
+    if ((avgRSI > 55 && avgFwdMedian > 0.01) || avgGS > 3) {
+      sentiment = 'bullish';
+    } else if ((avgRSI < 40 && avgDD < -0.12) || avgFwdMedian < -0.02) {
+      sentiment = 'bearish';
+    } else {
+      sentiment = 'neutral';
+    }
+
+    const riskLevel: 'low' | 'medium' | 'high' = avgVol > 0.7 ? 'high' : avgVol > 0.4 ? 'medium' : 'low';
+
+    const sorted = [...sectorStocks]
+      .sort((a, b) => b.golden_score - a.golden_score || a.drawdown_current - b.drawdown_current)
+      .slice(0, 3);
+
+    const topPicks = sorted.map(s => {
+      let action: string;
+      if (s.drawdown_current < -0.1 && s.golden_score >= 2) action = 'BUY';
+      else if (avgRSI > 70) action = 'PUT';
+      else if (s.forward_return_distribution.median > 0.03) action = 'CALL';
+      else if (s.forward_return_distribution.median < -0.02) action = 'SHORT';
+      else action = 'BUY';
+
+      const conviction = Math.min(100, Math.round(30 + s.golden_score * 12 + Math.abs(s.drawdown_current) * 50));
+
+      return {
+        ticker: s.ticker,
+        action,
+        conviction,
+        reason: `GS:${s.golden_score} DD:${(s.drawdown_current * 100).toFixed(1)}% Vol:${(s.volatility_percentile * 100).toFixed(0)}%`,
+      };
+    });
+
+    reports.push({ sector, topPicks, sectorSentiment: sentiment, riskLevel });
+  }
+
+  return reports;
+}
+
 // ── Helpers ──
 
 async function callGemini(prompt: string, temperature = 0.7): Promise<string> {

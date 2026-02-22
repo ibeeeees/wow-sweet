@@ -521,6 +521,7 @@ export default function GraphPlaygroundPage() {
   const [regime, setRegime] = useState<Regime>('all');
   const [colorMode, setColorMode] = useState<ColorMode>('sector');
   const [shockMode, setShockMode] = useState(false);
+  const [shockType, setShockType] = useState<'crash' | 'spike'>('crash');
   const [shock, setShock] = useState<ShockState>({ active: false, sourceNode: null, affectedNodes: new Map() });
   const [shockResults, setShockResults] = useState<ShockResults | null>(null);
   const [selectedNode, setSelectedNode] = useState<string | null>(null);
@@ -648,11 +649,42 @@ export default function GraphPlaygroundPage() {
     setSelectedNode(null);
     setShock({ active: true, sourceNode: sourceId, affectedNodes: affected });
 
+    // Apply shock to actual stock data direction_bias
+    const updatedStocks = stocks.map(s => {
+      const shockInfo = affected.get(s.ticker);
+      if (!shockInfo || s.ticker === sourceId) return s;
+
+      const intensity = shockInfo.intensity;
+      const bias = { ...s.direction_bias };
+
+      if (shockType === 'crash') {
+        bias.short = Math.min(0.8, bias.short + intensity * 0.15);
+        bias.put = Math.min(0.8, bias.put + intensity * 0.10);
+        bias.buy = Math.max(0.05, bias.buy - intensity * 0.15);
+        bias.call = Math.max(0.05, bias.call - intensity * 0.10);
+      } else {
+        bias.buy = Math.min(0.8, bias.buy + intensity * 0.15);
+        bias.call = Math.min(0.8, bias.call + intensity * 0.10);
+        bias.short = Math.max(0.05, bias.short - intensity * 0.15);
+        bias.put = Math.max(0.05, bias.put - intensity * 0.10);
+      }
+
+      // Normalize to sum to 1
+      const total = bias.buy + bias.call + bias.put + bias.short;
+      bias.buy /= total;
+      bias.call /= total;
+      bias.put /= total;
+      bias.short /= total;
+
+      return { ...s, direction_bias: bias };
+    });
+    setStocks(updatedStocks);
+
     const maxDelay = Math.max(0, ...Array.from(affected.values()).map((v) => v.timestamp - now));
     setTimeout(() => {
       setShock({ active: false, sourceNode: null, affectedNodes: new Map() });
     }, maxDelay + 3000);
-  }, [adjacency, stocks]);
+  }, [adjacency, stocks, shockType, setStocks]);
 
   // Handle node click
   const handleNodeClick = useCallback((node: any) => {
@@ -902,19 +934,40 @@ export default function GraphPlaygroundPage() {
 
         {/* Center: Shock Propagation button */}
         <div style={{ background: PANEL_BG, backdropFilter: 'blur(8px)', borderRadius: 10, padding: '10px 16px', border: `1px solid ${BORDER_COLOR}`, pointerEvents: 'auto', textAlign: 'center' }}>
+          {/* Crash / Spike toggle */}
+          <div style={{ display: 'flex', gap: 4, marginBottom: 8 }}>
+            {(['crash', 'spike'] as const).map(type => (
+              <button
+                key={type}
+                onClick={() => setShockType(type)}
+                style={{
+                  flex: 1,
+                  background: shockType === type ? (type === 'crash' ? '#FF4500' : '#00FF7F') : '#1e1e3a',
+                  color: shockType === type ? '#000' : TEXT_COLOR,
+                  border: `1px solid ${shockType === type ? (type === 'crash' ? '#FF4500' : '#00FF7F') : BORDER_COLOR}`,
+                  borderRadius: 4, padding: '4px 8px', cursor: 'pointer', fontSize: 10,
+                  fontWeight: shockType === type ? 700 : 400, transition: 'all 0.2s',
+                  textTransform: 'uppercase', letterSpacing: 0.5,
+                }}
+              >
+                {type}
+              </button>
+            ))}
+          </div>
           <button
             onClick={() => setShockMode(!shockMode)}
             style={{
               background: shockMode ? ACCENT : '#1e1e3a', color: shockMode ? '#000' : ACCENT,
               border: `1px solid ${ACCENT}`, borderRadius: 6, padding: '8px 18px',
               cursor: 'pointer', fontSize: 12, fontWeight: 700, letterSpacing: 0.5, transition: 'all 0.2s',
+              width: '100%',
             }}
           >
             {shockMode ? 'Click a node to shock...' : 'Shock Propagation'}
           </button>
           {shock.active && (
-            <div style={{ color: ACCENT, fontSize: 10, marginTop: 4 }}>
-              Shock from {shock.sourceNode} -- {shock.affectedNodes.size} nodes affected
+            <div style={{ color: shockType === 'crash' ? '#FF4500' : '#00FF7F', fontSize: 10, marginTop: 4 }}>
+              {shockType.toUpperCase()} from {shock.sourceNode} -- {shock.affectedNodes.size} nodes affected
             </div>
           )}
         </div>
