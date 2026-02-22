@@ -1,11 +1,8 @@
 """Vercel serverless: GET /api/stocks — live stock payload from Databricks."""
 import json
 import os
-import time
 from http.server import BaseHTTPRequestHandler
 from urllib.request import Request, urlopen
-
-_errors = []
 
 
 def _query_databricks(sql: str, params=None) -> list:
@@ -16,7 +13,6 @@ def _query_databricks(sql: str, params=None) -> list:
     warehouse_id = http_path.rstrip("/").split("/")[-1] if http_path else ""
 
     if not (host and token and warehouse_id):
-        _errors.append("not configured")
         return []
 
     if params:
@@ -24,7 +20,6 @@ def _query_databricks(sql: str, params=None) -> list:
             sql = sql.replace("%s", f"'{str(p)}'", 1)
 
     try:
-        t0 = time.time()
         req = Request(
             f"{host}/api/2.0/sql/statements/",
             data=json.dumps({
@@ -42,20 +37,13 @@ def _query_databricks(sql: str, params=None) -> list:
         with urlopen(req, timeout=9) as resp:
             body = json.loads(resp.read())
 
-        elapsed = round(time.time() - t0, 2)
-        state = body.get("status", {}).get("state", "UNKNOWN")
-
-        if state != "SUCCEEDED":
-            err_msg = body.get("status", {}).get("error", {}).get("message", "")
-            _errors.append(f"query {state} ({elapsed}s): {err_msg[:100]}")
+        if body.get("status", {}).get("state") != "SUCCEEDED":
             return []
 
         columns = [c["name"] for c in body.get("manifest", {}).get("schema", {}).get("columns", [])]
         rows = body.get("result", {}).get("data_array", [])
-        _errors.append(f"ok: {len(rows)} rows in {elapsed}s")
         return [dict(zip(columns, row)) for row in rows]
-    except Exception as e:
-        _errors.append(f"exception: {str(e)[:150]}")
+    except Exception:
         return []
 
 
@@ -182,10 +170,8 @@ def _build_payload() -> dict:
 
 class handler(BaseHTTPRequestHandler):
     def do_GET(self):
-        _errors.clear()
         try:
             payload = _build_payload()
-            payload["debug_queries"] = _errors[:]
             self.send_response(200)
             self.send_header("Content-Type", "application/json")
             self.send_header("Access-Control-Allow-Origin", "*")
@@ -201,5 +187,4 @@ class handler(BaseHTTPRequestHandler):
                 "stocks": [],
                 "source": "error",
                 "error": str(e)[:200],
-                "debug_queries": _errors[:],
             }).encode())
