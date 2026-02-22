@@ -8,7 +8,8 @@ const ACCENT = '#FFD700';
 const PANEL_BG = 'rgba(15, 15, 35, 0.92)';
 const BORDER = 'rgba(255,255,255,0.08)';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// Auto-detect backend URL: use env var if set, otherwise derive from current hostname
+const API_URL = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000`;
 
 interface SentimentResult {
   sentiment: string;

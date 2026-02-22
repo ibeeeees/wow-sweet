@@ -325,7 +325,8 @@ export function useCrowdSimulation(): CrowdSimulationResult {
   const wsFlowQueue = useRef<AgentFlowInstruction[]>([]);
 
   useEffect(() => {
-    const apiUrl = import.meta.env.VITE_API_URL || '';
+    // Auto-detect backend URL: use env var if set, otherwise derive from current hostname
+    const apiUrl = import.meta.env.VITE_API_URL || `http://${window.location.hostname}:8000`;
     if (!apiUrl) return; // No backend configured, skip WebSocket
 
     const wsUrl = apiUrl.replace(/^http/, 'ws') + '/ws/agent-stream';
