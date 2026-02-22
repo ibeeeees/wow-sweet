@@ -15,9 +15,10 @@ def _check_databricks() -> dict:
     if not (host and token and warehouse_id):
         return {"configured": False, "connected": False, "status": "not configured"}
 
+    url = f"{host}/api/2.0/sql/statements/"
     try:
         req = Request(
-            f"{host}/api/2.0/sql/statements/",
+            url,
             data=json.dumps({
                 "warehouse_id": warehouse_id,
                 "statement": "SELECT 1 AS ok",
@@ -38,7 +39,7 @@ def _check_databricks() -> dict:
                 "status": "connected" if state == "SUCCEEDED" else f"query state: {state}",
             }
     except Exception as e:
-        return {"configured": True, "connected": False, "status": f"error: {str(e)[:100]}"}
+        return {"configured": True, "connected": False, "status": f"error: {str(e)[:100]}", "debug_url": url[:60], "debug_host_len": len(host)}
 
 
 class handler(BaseHTTPRequestHandler):
